@@ -3,19 +3,9 @@ var store;
 var wsclient;
 
 module.exports = {
-    getConfig: function(){
-        this.name = "Chips";
-        this.ticker = "CHIPS";
-        this.type = "module";
-    },
-
     setBeta: function(isbeta){
-        if(isbeta){
-            this.socketURL = 'wss://staging.chips.gg';
-        }
-        else {
-            this.socketURL = 'wss://api.chips.gg/prod/socket';
-        }
+        if(isbeta) this.socketURL = 'wss://staging.chips.gg';
+        else this.socketURL = 'wss://api.chips.gg/prod/socket';
     },
 
     getCommands: function(commandlist){
@@ -24,10 +14,6 @@ module.exports = {
         commandlist.divs = {}
         commandlist.divs.description = 'Get the value of The Vault.';
         commandlist.divs.function = 'getDivs(ctx,ARG,Extra);';
-
-        commandlist.mychips = {}
-        commandlist.mychips.description = 'Set your amount of chips, use <code>/mychips AMOUNT</code>';
-        commandlist.mychips.function = 'setChips(ctx,ARG);';
 
         commandlist.events = {}
         commandlist.events.description = 'Get the latest events';
@@ -40,10 +26,6 @@ module.exports = {
         commandlist.top = {}
         commandlist.top.description = 'Show current Top 10 of every event.';
         commandlist.top.function = 'getTops(ctx);';
-
-        commandlist.streamers = {}
-        commandlist.streamers.description = 'Show list of CHIPS streamers';
-        commandlist.streamers.function = 'getStreamers(ctx,Extra);';
 
         commandlist.groups = {}
         commandlist.groups.description = 'Show list of CHIPS groups';
@@ -64,102 +46,6 @@ module.exports = {
         message+="🇩🇪🇩🇪🇩🇪 @Chips_German (Deutsch)\n";
 
         this.parent.sendMessage(ctx,message,'getgroups',false,false);
-    },
-    setUserID: async function(ctx,chipsid){
-
-        const WS = require('ws')
-        const Client = require('ws-api-client')
-        const { Store } = require('ynk')
-
-        this.me = ctx.message.from;
-        this.file = 'users/' + this.me.id + '.txt';
-
-        var parent = this.parent;
-        store = Store()
-        wsclient = await Client(WS, { channels: ["public"], host: this.socketURL });
-        wsclient.actions.public('getUser', {"userid":chipsid}).then(async response => {
-
-            const fs = require('fs');
-            if (fs.existsSync(this.file)) {
-
-                var user = fs.readFileSync(this.file, 'utf8');
-                user = JSON.parse(user);
-
-                user.chipsid=chipsid;
-                user.chipsusername=response.username;
-                user.chipsavatar=response.avatar;
-                fs.writeFileSync(this.file, JSON.stringify(user));
-                parent.sendMessage(ctx,'Your CHIPS profile ID has been saved: '+chipsid,'setchipsid',false,false);
-
-            }
-
-            wsclient.close();
-
-        }).catch(error => {
-            parent.sendMessage(ctx,'Your CHIPS profile ID is not correct!','wrongchipsid',false,false);
-            wsclient.close();
-        });
-    },
-    setChips: async function(ctx,chipsamount){
-
-        this.me = ctx.message.from;
-        this.file = 'users/' + this.me.id + '.txt';
-        var parent = this.parent;
-
-        const fs = require('fs');
-        if (fs.existsSync(this.file)) {
-
-            var user = fs.readFileSync(this.file, 'utf8');
-            user = JSON.parse(user);
-
-            if(parseFloat(chipsamount)>0){
-                user.chipsamount=chipsamount;
-                fs.writeFileSync(this.file, JSON.stringify(user));
-                parent.sendMessage(ctx,'Your CHIPS amount has been saved: '+chipsamount,'chipsamountsaved',false,false);
-            }
-            else if(chipsamount=='' && parseFloat(user.chipsamount)>0){
-                 parent.sendMessage(ctx,'Your CHIPS amount is: '+user.chipsamount,'chipsamountis',false,false);
-            }
-            else {
-                 parent.sendMessage(ctx,'Your CHIPS amount is not valid!','chipsamountnotvalid',false,false);
-            }
-        }
-        else {
-             parent.sendMessage(ctx,'An error occured!','chipsamounterror',false,false);
-        }
-    },
-    getStreamers: async function (ctx,Extra) {
-
-        var live="";
-        var offline="";
-        var message="";
-        var parent = this.parent;
-        message = "<strong>Streamers for CHIPS.gg</strong>\nClick name to enter their Twitch channel.\n\n";
-        var query = this.database.query('SELECT * FROM streamers WHERE display_name!="" ORDER BY senttelegram DESC, stream_amount DESC', async function (error, results) {
-            if (error) console.log(error);
-            else {
-                for (r in results) {
-                    if(results[r]['stream_title']!==""){
-                        live+= "<a href='https://www.twitch.tv/"+results[r]['username']+"'>"+results[r]['display_name']+" ("+results[r]['viewer_count']+" viewers)</a>\n";
-                    }
-                    else {
-                        offline+= "<a href='https://www.twitch.tv/"+results[r]['username']+"'>"+results[r]['display_name']+"</a>\n";
-                    }
-                }
-
-                if(live){
-                    message+= "<strong>Currently LIVE:</strong>\n\n"+live;
-                    message+= "\n-------\n<strong>Other streamers that are live on a regular basis:</strong>\n\n"+offline;
-                }
-                else {
-                    message = "<strong>List of people streaming on a regular basis for CHIPS:</strong>\nClick name to enter their Twitch channel.\n\n"+offline;
-                }
-
-                parent.sendMessage(ctx,message,'getstreamers',false,false);
-            }
-        });
-
-
     },
     getPrices: async function (ctx) {
 
@@ -228,8 +114,7 @@ module.exports = {
         store = Store()
         wsclient = await Client(WS, { channels: ["public"], host: this.socketURL });
         wsclient.actions.public('listActiveRaces', { skip: 0, limit: 10}).then(async response => {
-            if(this.external) message = "<strong>ONGOING EVENTS AT CHIPS.GG</strong>\n";
-            else message = "<strong>ONGOING EVENTS</strong>\n";
+            message = "<strong>ONGOING EVENTS</strong>\n";
             var done=false;
             for(var r in response){
                 event = response[r];
@@ -240,16 +125,6 @@ module.exports = {
                 message += "<em>" + event['subtitle'] + "</em>\n";
                 done=true;
             }
-
-            message += "---------\n<strong>Bitcoin Talk 8 week Promotion - over $2000 to be won!</strong>\n";
-            message += "<a href='https://twitter.com/chipsgg/status/1376451727860367361?s=21'>View on BitcoinTalk</a>\n";
-
-            message += "---------\n<strong>Biggest Live Casino Win Challenge</strong>\n";
-            message += "<em>Share a screenshot of your biggest Live Casino wins at Chips, and you could win the $100 cash prize!</em>\n<a href='https://twitter.com/chipsgg/status/1376451727860367361?s=21'>View on Twitter</a>\n";
-
-            if(this.external) message+="\n---------\n<a href='https://chips.gg/events/?r="+this.chipsref+"'>Click here to find out more about our events!</a>";
-            else message+="\n---------\n<a href='https://chips.gg/events'>Click here to find out more about our events!</a>";
-
 
             if(!done){
                 message="There are no races at the moment!";
@@ -314,17 +189,13 @@ module.exports = {
                 var cd = this.showDate(event['endTime']);
 
                 message += "<strong>" + event['title'] + "</strong>\n";
-
-                if(this.external) message+="<a href='https://chips.gg/event/"+event['id']+"/?r="+this.chipsref+"'><strong>View event</strong></a>\n";
-                else message+="<a href='https://chips.gg/event/"+event['id']+"'><strong>View event</strong></a>\n";
-
+                message+="<a href='https://chips.gg/event/"+event['id']+"'><strong>View event</strong></a>\n";
                 message += "\n<strong>Current Top 10:</strong>\n";
 
                 for (var r in ranks) {
                     var ranknum = (parseFloat(r) + 1);
                     if(ranknum<=10){
-                        if(this.external) var name = "<a href='https://chips.gg/games/home?modal=PlayerProfile&userid="+ranks[r]['user']['id']+"&r="+this.chipsref+"'>"+ranks[r]['user']['username']+"</a>";
-                        else var name = "<a href='https://chips.gg/games/home?modal=PlayerProfile&userid="+ranks[r]['user']['id']+"'>"+ranks[r]['user']['username']+"</a>";
+                        var name = "<a href='https://chips.gg/games/home?modal=PlayerProfile&userid="+ranks[r]['user']['id']+"'>"+ranks[r]['user']['username']+"</a>";
 
                         if(typeof(ranks[r]['multiplier'])!=='undefined' && ranks[r]['multiplier']!=='' && typeof(ranks[r]['bet'])!=='undefined' && ranks[r]['bet']!==null && typeof(ranks[r]['bet']['slotname'])!=='undefined' && ranks[r]['bet']['slotname']!==''){
                             message += "<strong>"+ranknum+".</strong> "+name+", <strong>"+ranks[r]['multiplier']+"x</strong> @ "+ranks[r]['bet']['slotname']+"\n";
@@ -396,8 +267,7 @@ module.exports = {
                             var currencies = {};
                             var doSend=false;
 
-                            if(!this.external) var message = "<strong>The Vault</strong>\n";
-                            else var message = "<strong>Chips.gg Vault</strong>\n";
+                            var message = "<strong>Chips.gg Vault</strong>\n";
 
                             for(c in curs){
                                 if(curs[c].name!=='chips' && curs[c].name!=='chips_staking'){
@@ -456,9 +326,6 @@ module.exports = {
                             //today.setHours(today.getHours() - 1); // REMOVE FOR SUMMER TIME
                             const endDate = new Date(parseFloat(store.get('public.profitShareInfo.distributeAt')));
 
-                            //var mes = bot.telegram.sendMessage(437518354, "Distribute test: "+store.get('public.profitShareInfo.distributeAt'), { parse_mode: 'HTML' });
-
-
                             var days = parseInt((endDate - today) / (1000 * 60 * 60 * 24));
                             var hours = parseInt(Math.abs(endDate - today) / (1000 * 60 * 60) % 24);
                             var minutes = parseInt(Math.abs(endDate.getTime() - today.getTime()) / (1000 * 60) % 60);
@@ -466,7 +333,6 @@ module.exports = {
                             message+="<strong>Next distribution in:</strong>\n"+hours+" hours and "+minutes+" minutes";
 
                             if(doSend){
-
 
                                 var buttons = []
 
