@@ -1,0 +1,15 @@
+*.env
+.env
+node_modules
+docker
+env.json
+secrets.json
+prod.json
+dev.json
+env
+rethinkdb_data
+nats-streaming
+./docker-compose
+./docker-dev
+./_DEPRECIATED
+./k8s

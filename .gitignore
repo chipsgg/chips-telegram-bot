@@ -1,0 +1,21 @@
+node_modules
+*.env
+*.env.*
+*.env.*.*
+log
+*.log
+env.json
+secrets.json
+prod.json
+dev.json
+/env
+secrets.*
+*.secrets.*
+.DS_Store
+# .k8s
+.config
+.vscode
+./docker-compose/rethinkdb_data
+./docker-compose/nats-streaming
+rethinkdb_data
+.yarn
