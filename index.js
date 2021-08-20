@@ -1,5 +1,5 @@
 require("dotenv").config();
-var loader = require("./modules/loader");
+var loader = require("./libs/loader");
 
 const { username, apikey } = process.env;
 
