@@ -50,7 +50,7 @@ module.exports = {
     getPrices: async function (ctx) {
 
         const WS = require('ws')
-        const Client = require('ws-api-client')
+        const Client = require('@chipsgg/ws-api-client')
         const { Store } = require('ynk')
         const number_format = require("number_format-php");
         var isBusy=false;
@@ -108,7 +108,7 @@ module.exports = {
         const chatId = ctx.update.message.chat.id;
 
         const WS = require('ws')
-        const Client = require('ws-api-client')
+        const Client = require('@chipsgg/ws-api-client')
         const { Store } = require('ynk')
 
         store = Store()
@@ -159,7 +159,7 @@ module.exports = {
         const chatId = ctx.update.message.chat.id;
 
         const WS = require('ws')
-        const Client = require('ws-api-client')
+        const Client = require('@chipsgg/ws-api-client')
         const { Store } = require('ynk')
 
         store = Store()
@@ -248,7 +248,7 @@ module.exports = {
             const chatId = ctx.update.message.chat.id;
 
             const WS = require('ws')
-            const Client = require('ws-api-client')
+            const Client = require('@chipsgg/ws-api-client')
             const { Store } = require('ynk')
             const number_format = require("number_format-php");
 
