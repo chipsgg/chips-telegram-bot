@@ -1,7 +1,7 @@
 require("dotenv").config();
 var loader = require("./modules/loader");
 
-const { telegram_key, telegram_username } = process.env;
+const { username, apikey } = process.env;
 
 function Run({ username, apikey }) {
   loader.username = username;
@@ -18,6 +18,6 @@ function Run({ username, apikey }) {
 
 // start the app
 Run({
-  username: telegram_username,
-  apikey: telegram_key,
+  username,
+  apikey,
 });
