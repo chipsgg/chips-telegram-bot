@@ -1,5 +1,5 @@
-
-var lastMessages = {}
+const { Telegraf, Markup, Extra } = require("telegraf");
+let lastMessages = {}
 
 module.exports = {
 
@@ -10,9 +10,6 @@ module.exports = {
 
         var commandList = {};
 
-        const Telegraf = require("telegraf");
-        const Markup = require('telegraf/markup');
-        const Extra = require('telegraf/extra');
         const bot = new Telegraf(this.apikey);
 
         var start="<strong>"+this.startTitle+"</strong>\n";
@@ -93,7 +90,6 @@ module.exports = {
         if(typeof(image)=='undefined') image=''
         if(typeof(video)=='undefined') video=''
 
-        const Extra = require('telegraf/extra');
         const chatId = ctx.update.message.chat.id;
 
         if(typeof(lastMessages[chatId])=='undefined') lastMessages[chatId] = {}

@@ -1,3 +1,8 @@
+const WS = require('ws')
+const Client = require('@chipsgg/ws-api-client')
+const { Store } = require('ynk')
+const number_format = require("number_format-php");
+const axios = require('axios');
 
 var store;
 var wsclient;
@@ -49,10 +54,7 @@ module.exports = {
     },
     getPrices: async function (ctx) {
 
-        const WS = require('ws')
-        const Client = require('@chipsgg/ws-api-client')
-        const { Store } = require('ynk')
-        const number_format = require("number_format-php");
+    
         var isBusy=false;
 
         const store = Store()
@@ -107,9 +109,7 @@ module.exports = {
     getEvents: async function (ctx,Extra) {
         const chatId = ctx.update.message.chat.id;
 
-        const WS = require('ws')
-        const Client = require('@chipsgg/ws-api-client')
-        const { Store } = require('ynk')
+    
 
         store = Store()
         wsclient = await Client(WS, { channels: ["public"], host: this.socketURL });
@@ -158,10 +158,6 @@ module.exports = {
     getTops: async function (ctx) {
         const chatId = ctx.update.message.chat.id;
 
-        const WS = require('ws')
-        const Client = require('@chipsgg/ws-api-client')
-        const { Store } = require('ynk')
-
         store = Store()
         wsclient = await Client(WS, { channels: ["public"], host: this.socketURL });
 
@@ -185,7 +181,6 @@ module.exports = {
 
             wsclient.actions.public('listRaceRanks', {raceid: event['id']}).then(async ranks => {
 
-                const number_format = require("number_format-php");
                 var cd = this.showDate(event['endTime']);
 
                 message += "<strong>" + event['title'] + "</strong>\n";
@@ -239,7 +234,6 @@ module.exports = {
             currency='CNY';
             currencySymbol='¥';
         }
-        var axios = require('axios');
         axios
         .get('https://api.exchangeratesapi.io/latest?base=USD&symbols=EUR,GBP,CNY,CAD')
         .then( async ({ data })=> {
@@ -247,10 +241,7 @@ module.exports = {
             var isBusy=false;
             const chatId = ctx.update.message.chat.id;
 
-            const WS = require('ws')
-            const Client = require('@chipsgg/ws-api-client')
-            const { Store } = require('ynk')
-            const number_format = require("number_format-php");
+            
 
             const store = Store()
             try {
