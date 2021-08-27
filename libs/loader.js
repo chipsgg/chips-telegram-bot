@@ -1,4 +1,4 @@
-const { Telegraf, Markup, Extra } = require("telegraf");
+const { Telegraf, Markup } = require("telegraf");
 let lastMessages = {};
 
 module.exports = {
@@ -52,6 +52,7 @@ module.exports = {
         }
 
         commandFunctions[c] = commandList[m][c].function;
+        console.log(c)
         bot.command([c, c + "@" + this.username], async (ctx) => {
           var command = ctx.message.text.replace(/ /, "&").split("&"); // to split only on first space, replace by other character and split from there
           var arg = "";
