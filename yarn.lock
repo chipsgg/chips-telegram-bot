@@ -12,6 +12,11 @@
     ws "^7.3.1"
     ynk "^0.0.4"
 
+"@coingecko/cryptoformat@^0.4.4":
+  version "0.4.4"
+  resolved "https://registry.yarnpkg.com/@coingecko/cryptoformat/-/cryptoformat-0.4.4.tgz#cd2ca99dc282733b2ee01606f4b731157f95578d"
+  integrity sha512-AF4rgGY+BmSiks+ZjD4nVX+04a5CEriP3a/WA6xQicR+MHu+TSrAfHwts+IwsRsBTJ4wZAPEaPVyOzPo6zW98w==
+
 abort-controller@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/abort-controller/-/abort-controller-3.0.0.tgz#eaf54d53b62bae4138e809ca225c8439a6efb392"
