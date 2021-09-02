@@ -11,7 +11,7 @@
     "ynk": "^0.0.4"
   },
   "name": "chips-telegram-bot",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A community project built for chips.gg",
   "main": "index.js",
   "repository": "git@github.com:chipsgg/chips-telegram-bot.git",
