@@ -12,6 +12,11 @@
     ws "^7.3.1"
     ynk "^0.0.4"
 
+"@coingecko/cryptoformat@^0.4.4":
+  version "0.4.4"
+  resolved "https://registry.yarnpkg.com/@coingecko/cryptoformat/-/cryptoformat-0.4.4.tgz#cd2ca99dc282733b2ee01606f4b731157f95578d"
+  integrity sha512-AF4rgGY+BmSiks+ZjD4nVX+04a5CEriP3a/WA6xQicR+MHu+TSrAfHwts+IwsRsBTJ4wZAPEaPVyOzPo6zW98w==
+
 abort-controller@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/abort-controller/-/abort-controller-3.0.0.tgz#eaf54d53b62bae4138e809ca225c8439a6efb392"
@@ -167,6 +172,11 @@ ws@^8.2.0:
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.2.0.tgz#0b738cd484bfc9303421914b11bb4011e07615bb"
   integrity sha512-uYhVJ/m9oXwEI04iIVmgLmugh2qrZihkywG9y5FfZV2ATeLIzHf93qs+tUNqlttbQK957/VX3mtwAS+UfIwA4g==
+
+yarn@^1.22.11:
+  version "1.22.11"
+  resolved "https://registry.yarnpkg.com/yarn/-/yarn-1.22.11.tgz#d0104043e7349046e0e2aec977c24be106925ed6"
+  integrity sha512-AWje4bzqO9RUn3sdnM5N8n4ZJ0BqCc/kqFJvpOI5/EVkINXui0yuvU7NDCEF//+WaxHuNay2uOHxA4+tq1P3cg==
 
 ynk@^0.0.4:
   version "0.0.4"
