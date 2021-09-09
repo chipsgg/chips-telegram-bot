@@ -9,10 +9,29 @@ API.init()
   .then(() => {
     const bot = new Telegraf(process.env.apikey)
     bot.command('divs', ctx => {
-      const distributeAt = API.get('profitShareInfo', 'distributeAt')
-      const totalMinted = API.get('profitShareInfo', 'totalMinted')
-      const totalStaked = API.get('profitShareInfo', 'totalStaked')
-      bot.telegram.sendMessage(ctx.chat.id, models.divs({ distributeAt, totalMinted, totalStaked }), { parse_mode: "HTML" })
+      const distributeAt = API.get('profitshare', 'profitshareInfo', 'distributeAt')
+      const totalMinted = API.get('profitshare', 'profitshareInfo', 'totalMinted') / 1000000
+      const totalStaked = API.get('profitshare', 'profitshareInfo', 'totalStaked') / 1000000
+
+      const pairs = _.keys(API.get('public', 'prices'))
+
+      const currencies = _.chain(API.get('public', 'currencies'))
+        .filter(x => !x.hidden && x.name !== 'chips' && x.name !== "chips_staking")
+        .map(x => ({
+          name: _.upperCase(x.name),
+          value: (API.get('profitshare', 'profitshare', x.name) / Math.pow(10, x.decimals)) || 0,
+          rate: (API.get('public', 'prices', _.find(pairs, (item) => _.startsWith(item, _.upperCase(x.name))))) || 1
+        }))
+        .value();
+
+      const totalValue = _.chain(currencies)
+        .filter(x => x.value > 0.0)
+        .sumBy(x => x.value * x.rate)
+        .value();
+
+      const perThousand = ((totalValue / 4) / totalStaked) * 1000
+
+      bot.telegram.sendMessage(ctx.chat.id, models.divs({ currencies, distributeAt, totalMinted, totalStaked, totalValue, perThousand }), { parse_mode: "HTML" })
     })
     bot.command('top', async ctx => {
       const activeRaces = await API.listActiveRaces(skip = 0, limit = 10)
@@ -28,8 +47,8 @@ API.init()
       bot.telegram.sendMessage(ctx.chat.id, models.events(activeRaces), { parse_mode: "HTML", disable_web_page_preview: true })
     })
     bot.command('prices', ctx => {
-      const prices = API.get('prices')
-      const currencies = API.get('currencies')
+      const prices = API.get('public', 'prices')
+      const currencies = API.get('public', 'currencies')
       // preprocessing
       const pairs = _.reduce(_.keys(prices), (output, current) => {
         if (current.endsWith("USDT")) {
@@ -56,8 +75,9 @@ API.init()
         }
         return output
       }, [])
+    // TODO: VERIFY
       const pairsFiltered = _.filter(pairs, (item) => currencies.hasOwnProperty(_.toLower(item.pair1)))
-  
+
       bot.telegram.sendMessage(ctx.chat.id, models.prices(pairsFiltered), { parse_mode: "HTML" })
     })
     bot.command('groups', ctx => {

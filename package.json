@@ -2,13 +2,11 @@
   "dependencies": {
     "@chipsgg/ws-api-client": "^2.0.6",
     "@coingecko/cryptoformat": "^0.4.4",
-    "axios": "^0.21.1",
     "dotenv": "^10.0.0",
-    "number_format-php": "^1.0.14",
+    "humanize-plus": "^1.8.2",
     "telegraf": "^4.4.1",
     "ws": "^8.2.0",
-    "yarn": "^1.22.11",
-    "ynk": "^0.0.4"
+    "yarn": "^1.22.11"
   },
   "name": "chips-telegram-bot",
   "version": "2.0.0",

@@ -9,17 +9,30 @@ module.exports = (isbeta) => {
   state = {}
   return {
     async init() {
-      wsclient = await Client(WS, { channels: ['public'], host }, (type, newState) => {
-        if(type === "change"){
+      wsclient = await Client(WS, {
+        channels: [
+          'games',
+          'public',
+          'private',
+          'auth',
+          'affiliates',
+          'stats',
+          'profitshare',
+        ], host
+      }, (type, newState) => {
+        if (type === "change") {
           state = {
-            ...state, 
+            ...state,
             ...newState
           }
         }
       })
+      await wsclient.actions.profitshare('on', { name: "profitshare" })
+      await wsclient.actions.profitshare('on', { name: "profitshareInfo" })
     },
-    get: (...path) =>_.get(state, ['public', ...path]),
+    state: () => state,
+    get: (...path) => _.get(state, path),
     listRaceRanks: (raceid) => wsclient.actions.public('listRaceRanks', { raceid }),
-    listActiveRaces: (skip=0, limit=10) => wsclient.actions.public('listActiveRaces', { skip, limit })
+    listActiveRaces: (skip = 0, limit = 10) => wsclient.actions.public('listActiveRaces', { skip, limit })
   }
 }
