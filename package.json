@@ -8,7 +8,7 @@
     "ws": "^8.2.0"
   },
   "name": "chips-telegram-bot",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "A community project built for chips.gg",
   "main": "index.js",
   "repository": "git@github.com:chipsgg/chips-telegram-bot.git",
