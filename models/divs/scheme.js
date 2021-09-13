@@ -14,11 +14,11 @@ module.exports = ({ currencies, distributeAt, totalMinted, totalStaked, totalVal
   var minutes = parseInt(Math.abs(endDate.getTime() - today.getTime()) / (1000 * 60) % 60);
   
   const content = _.chain(currencies)
-    .map(({ name, value, rate }) => {
+    .map(({ name, value, price }) => {
       if(_.startsWith(name, "USD") || _.endsWith(name, "USD")){
-        return  `${name}: ${formatCurrency(value * rate, "USD", "en")}`
+        return  `${name}: ${formatCurrency(value * price, "USD", "en")}`
       }
-      return `${name}: ${Humanize.formatNumber(value, 2)} (${formatCurrency(value * rate, "USD", "en")})`
+      return `${name}: ${Humanize.formatNumber(value, 2)} (${formatCurrency(value * price, "USD", "en")})`
     })
     .join('\n')
     .value();

@@ -1,5 +1,5 @@
 const WS = require('ws');
-const Client = require('@chipsgg/ws-api-client');
+const Client = require('@chipsgg/openservice-ws-client');
 const _ = require('lodash')
 
 module.exports = (isbeta) => {
@@ -27,7 +27,7 @@ module.exports = (isbeta) => {
           }
         }
       })
-      await wsclient.actions.profitshare('on', { name: "profitshare" })
+      await wsclient.actions.profitshare('on', { name: "profitshareBalance" })
       await wsclient.actions.profitshare('on', { name: "profitshareInfo" })
     },
     state: () => state,
