@@ -27,7 +27,7 @@ module.exports = (isbeta) => {
           }
         }
       })
-      await wsclient.actions.profitshare('on', { name: "profitshare" })
+      await wsclient.actions.profitshare('on', { name: "profitshareBalance" })
       await wsclient.actions.profitshare('on', { name: "profitshareInfo" })
     },
     state: () => state,
