@@ -1,5 +1,5 @@
 const WS = require('ws');
-const Client = require('@chipsgg/ws-api-client');
+const Client = require('@chipsgg/openservice-ws-client');
 const _ = require('lodash')
 
 module.exports = (isbeta) => {
