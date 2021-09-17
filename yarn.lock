@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@chipsgg/ws-client@^1.0.2":
+"@chipsgg/ws-client@^1.0.15":
   version "1.0.15"
   resolved "https://registry.yarnpkg.com/@chipsgg/ws-client/-/ws-client-1.0.15.tgz#b7facdfd96757b7056de136fc69ccda08579c46d"
   integrity sha512-i9Tj3bMR7MK+tqntnM1mRDfSBBRFl7EVj6Vkcz1nIzyUi9AQ5AaKEy8wf5JK/YWYUrdMfFdWqYw3s5Nw3quhAA==

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@chipsgg/ws-client": "^1.0.2",
+    "@chipsgg/ws-client": "^1.0.15",
     "@coingecko/cryptoformat": "^0.4.4",
     "dotenv": "^10.0.0",
     "humanize-plus": "^1.8.2",
