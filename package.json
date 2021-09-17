@@ -10,7 +10,7 @@
     "telegraf": "^4.4.1",
     "ws": "^8.2.0"
   },
-  "name": "chips-telegram-bot",
+  "name": "@chipsgg/telegram-bot",
   "version": "2.3.0",
   "description": "A community supported project built for chips.gg",
   "main": "index.js",
