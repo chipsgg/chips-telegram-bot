@@ -12,11 +12,10 @@
   },
   "name": "chips-telegram-bot",
   "version": "2.3.0",
-  "description": "A community project built for chips.gg",
+  "description": "A community supported project built for chips.gg",
   "main": "index.js",
   "repository": "git@github.com:chipsgg/chips-telegram-bot.git",
-  "author": "chips <admin@chips.gg>",
-  "license": "MIT",
+  "author": "Chips.gg <admin@chips.gg>",
   "scripts": {
     "start": "node index.js"
   }
