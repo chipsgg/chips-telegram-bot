@@ -8,6 +8,7 @@ const API = require('./libs/chipsapi')(isbeta = false)
 return API.init()
   .then(() => {
     const bot = new Telegraf(process.env.apikey)
+    console.log('Bot Started!')
     bot.command('divs', ctx => {
       const distributeAt = API.get('profitshare', 'profitshareInfo', 'distributeAt')
       const totalMinted = API.get('profitshare', 'profitshareInfo', 'totalMinted') / 1000000
