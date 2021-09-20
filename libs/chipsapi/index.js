@@ -14,7 +14,7 @@ module.exports = () => {
         'auth',
         'affiliates',
         'stats',
-        'profitshare',
+        'profitshare'
       ], (type, newState) => {
         switch (type) {
           case "change": {
@@ -26,12 +26,16 @@ module.exports = () => {
           }
         }
       })
+      await api.actions.stats('on', { game: "bets", type: "recentBets" })
+      await api.actions.stats('on', { game: "bets", type: "luckiest" })
       await api.actions.profitshare('on', { name: "profitshareBalance" })
       await api.actions.profitshare('on', { name: "profitshareInfo" })
     },
     state: () => state,
     get: (...path) => _.get(state, path),
     listRaceRanks: (raceid) => api.actions.public('listRaceRanks', { raceid }),
-    listActiveRaces: (skip = 0, limit = 10) => api.actions.public('listActiveRaces', { skip, limit })
+    listRacePrizes: (raceid) => api.actions.public('listRacePrizes', { raceid }),
+    listActiveRaces: (skip = 0, limit = 100) => api.actions.public('listActiveRaces', { skip, limit }),
+    listDoneRaces: (skip = 0, limit = 100) => api.actions.public('listDoneRaces', { skip, limit }),
   }
 }
