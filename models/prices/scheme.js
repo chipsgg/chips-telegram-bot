@@ -6,6 +6,8 @@ module.exports = (prices) => {
   assert(prices, "requires prices")
   assert(prices.length > 0, "requires at least one price")
   const content = _.chain(prices)
+    .sortBy('price')
+    .reverse()
     .map(({ name, price }) => (`${_.upperCase(name)}/USD: ${formatCurrency(price, "USD", "en")}`))
     .join("\n")
     .value()

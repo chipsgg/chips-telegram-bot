@@ -1,9 +1,9 @@
 require("dotenv").config();
-const _ = require('lodash')
-const { Telegraf } = require('telegraf')
-const models = require('./models')
-const config = require('./config')
-const API = require('./libs/chipsapi')(isbeta = false)
+const _ = require('lodash');
+const { Telegraf } = require('telegraf');
+const models = require('./models');
+const config = require('./config');
+const API = require('./libs/chipsapi')();
 
 API.init()
   .then(() => {

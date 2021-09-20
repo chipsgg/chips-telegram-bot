@@ -3,7 +3,7 @@ const _ = require('lodash')
 const Humanize = require('humanize-plus')
 const { formatCurrency } = require('@coingecko/cryptoformat')
 
-module.exports = ({ currencies, distributeAt, totalMinted, totalStaked, totalValue, perThousand }) => { 
+module.exports = ({ currencies, distributeAt, totalMinted, totalStaked, totalValue, perThousand }) => {
 
   const today = new Date();
   //today.setHours(today.getHours() - 1); // REMOVE FOR SUMMER TIME
@@ -12,13 +12,18 @@ module.exports = ({ currencies, distributeAt, totalMinted, totalStaked, totalVal
   var days = parseInt((endDate - today) / (1000 * 60 * 60 * 24));
   var hours = parseInt(Math.abs(endDate - today) / (1000 * 60 * 60) % 24);
   var minutes = parseInt(Math.abs(endDate.getTime() - today.getTime()) / (1000 * 60) % 60);
-  
+
   const content = _.chain(currencies)
+    .sortBy((curr) => curr.value * curr.price)
+    .reverse()
     .map(({ name, value, price }) => {
-      if(_.startsWith(name, "USD") || _.endsWith(name, "USD")){
-        return  `${name}: ${formatCurrency(value * price, "USD", "en")}`
+      const balance = value * price
+      const isUnderline = (content, balanceValue) => balanceValue < 0 ? `<s>${content}</s>` : content
+
+      if (_.startsWith(name, "USD") || _.endsWith(name, "USD")) {
+        return isUnderline(`${name}: ${formatCurrency(balance, "USD", "en")}`, balance)
       }
-      return `${name}: ${Humanize.formatNumber(value, 2)} (${formatCurrency(value * price, "USD", "en")})`
+      return isUnderline(`${name}: ${Humanize.formatNumber(value, 2)} (${formatCurrency(balance, "USD", "en")})`, balance)
     })
     .join('\n')
     .value();

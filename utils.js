@@ -1,14 +1,14 @@
 exports.formatDate = (date) => {
   var d = new Date(date),
-  month = '' + (d.getMonth() + 1),
-  day = '' + d.getDate(),
-  year = d.getFullYear(),
-  hours = d.getHours();
+    month = '' + (d.getMonth() + 1),
+    day = '' + d.getDate(),
+    year = d.getFullYear(),
+    hours = d.getHours();
 
   if (month.length < 2)
-      month = '0' + month;
+    month = '0' + month;
   if (day.length < 2)
-      day = '0' + day;
+    day = '0' + day;
 
   if (hours == 2) hours = 0;
   if (hours == 14) hours = 12;
