@@ -30,6 +30,7 @@ module.exports = () => {
       await api.actions.stats('on', { game: "bets", type: "luckiest" })
       await api.actions.profitshare('on', { name: "profitshareBalance" })
       await api.actions.profitshare('on', { name: "profitshareInfo" })
+
     },
     state: () => state,
     get: (...path) => _.get(state, path),
@@ -37,5 +38,7 @@ module.exports = () => {
     listRacePrizes: (raceid) => api.actions.public('listRacePrizes', { raceid }),
     listActiveRaces: (skip = 0, limit = 100) => api.actions.public('listActiveRaces', { skip, limit }),
     listDoneRaces: (skip = 0, limit = 100) => api.actions.public('listDoneRaces', { skip, limit }),
+    listSlotCategories: () => api.actions.public('listSlotCategories'),
+    listSlotsByCategory: (args) => api.actions.public('listSlotsByCategory', args),
   }
 }
