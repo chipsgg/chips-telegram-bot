@@ -98,6 +98,26 @@ const actions = {
       }
     })
   })
+  bot.command('luckiest', ctx => {
+    const luckiest = API.get('stats', 'bets', 'luckiest')
+    const top = _.chain(luckiest)
+      .keys()
+      .orderBy((obj) => luckiest[obj].bet.multiplier)
+      .takeRight(10)
+      .reverse()
+      .map(bet => luckiest[bet])
+      .map(bet => {
+        const currency = API.get('public', 'currencies', bet.bet.currency)
+        bet.bet.amountInDollar = (bet.bet.amount / Math.pow(10, currency.decimals)) * currency.price
+        bet.bet.winningsInDollar = (bet.bet.winnings / Math.pow(10, currency.decimals)) * currency.price
+        return bet
+      })
+      .value();
+    ctx.reply(models.luckiest(top), {
+      parse_mode: "HTML",
+      disable_web_page_preview: false
+    })
+  })
   bot.help((ctx) => ctx.reply('help'))
   bot.launch()
   // Enable graceful stop
