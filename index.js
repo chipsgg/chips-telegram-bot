@@ -4,11 +4,26 @@ const { Telegraf } = require('telegraf');
 const models = require('./models');
 const config = require('./config');
 const API = require('./libs/chipsapi')();
+const HttpServer = require("actions-http");
+
+// your desired application interface.
+const actions = {
+  async ping(params) {
+    return "pong";
+  },
+  async echo(params) {
+    return params;
+  },
+};
+
+// start the bot
+
 (async () => {
   await API.init()
   const slots = []
   const slotsCategories = await API.listSlotCategories();
   for (let i = 0; i < slotsCategories.length; i++) {
+    console.log(`loading ${slotsCategories[i]}`)
     let page = 0
     while (true) {
       const result = await API.listSlotsByCategory({ category: slotsCategories[i], skip: 1000 * page, limit: 1000 })
@@ -88,5 +103,12 @@ const API = require('./libs/chipsapi')();
   // Enable graceful stop
   process.once('SIGINT', () => bot.stop('SIGINT'))
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
+  return HttpServer(
+    {
+      port: process.env.PORT || 3000
+    },
+    actions
+  );
 })()
+  .then(() => console.log('The bot Chips is successfully loaded'))
   .catch(console.error)
