@@ -7,7 +7,7 @@ module.exports = () => {
   let state = {};
   return {
     async init() {
-      let init = true;
+      let initSubs = true;
       api = await Client(WS, [
         'games',
         'public',
@@ -23,18 +23,18 @@ module.exports = () => {
               ...state,
               ...newState
             }
-            if(init){
+            if(initSubs){
               await api.actions.stats('on', { game: "bets", type: "recentBets" });
               await api.actions.stats('on', { game: "bets", type: "luckiest" });
               await api.actions.profitshare('on', { name: "profitshareBalance" });
               await api.actions.profitshare('on', { name: "profitshareInfo" });
-              init = false;
+              initSubs = false;
             }
             break;
           }
           case 'open': {
             console.log('Server Connected!');
-            init = true;
+            initSubs = true;
             break;
           }
           case 'close': {
@@ -43,7 +43,7 @@ module.exports = () => {
           }
           case 'reconnect': {
             console.log('Server Reconnect!');
-            init = true;
+            initSubs = true;
             break;
           }
         }
