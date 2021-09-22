@@ -1,12 +1,13 @@
 const WS = require('ws');
 const Client = require('@chipsgg/ws-client');
-const _ = require('lodash')
+const _ = require('lodash');
 
 module.exports = () => {
-  let api = null
-  let state = {}
+  let api = null;
+  let state = {};
   return {
     async init() {
+      let init = true;
       api = await Client(WS, [
         'games',
         'public',
@@ -15,21 +16,38 @@ module.exports = () => {
         'affiliates',
         'stats',
         'profitshare'
-      ], (type, newState) => {
+      ], async(type, newState) => {
         switch (type) {
           case "change": {
             state = {
               ...state,
               ...newState
             }
+            if(init){
+              await api.actions.stats('on', { game: "bets", type: "recentBets" });
+              await api.actions.stats('on', { game: "bets", type: "luckiest" });
+              await api.actions.profitshare('on', { name: "profitshareBalance" });
+              await api.actions.profitshare('on', { name: "profitshareInfo" });
+              init = false;
+            }
+            break;
+          }
+          case 'open': {
+            console.log('Server Connected!');
+            init = true;
+            break;
+          }
+          case 'close': {
+            console.log('Server Disconnected!');
+            break;
+          }
+          case 'reconnect': {
+            console.log('Server Reconnect!');
+            init = true;
             break;
           }
         }
       })
-      await api.actions.stats('on', { game: "bets", type: "recentBets" })
-      await api.actions.stats('on', { game: "bets", type: "luckiest" })
-      await api.actions.profitshare('on', { name: "profitshareBalance" })
-      await api.actions.profitshare('on', { name: "profitshareInfo" })
 
     },
     state: () => state,
