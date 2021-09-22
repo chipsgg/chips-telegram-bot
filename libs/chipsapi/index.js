@@ -26,6 +26,7 @@ module.exports = () => {
             if(initSubs){
               await api.actions.stats('on', { game: "bets", type: "recentBets" });
               await api.actions.stats('on', { game: "bets", type: "luckiest" });
+              await api.actions.stats('on', { game: "bets", type: "bigwins" });
               await api.actions.profitshare('on', { name: "profitshareBalance" });
               await api.actions.profitshare('on', { name: "profitshareInfo" });
               initSubs = false;

@@ -102,20 +102,45 @@ const actions = {
     const luckiest = API.get('stats', 'bets', 'luckiest')
     const top = _.chain(luckiest)
       .keys()
-      .orderBy((obj) => luckiest[obj].bet.multiplier)
-      .takeRight(10)
+      .map(id => luckiest[id])
+      .filter(obj => _.keys(obj.bet).length > 0)
+      .orderBy(obj => obj.bet.multiplier)
       .reverse()
-      .map(bet => luckiest[bet])
-      .map(bet => {
-        const currency = API.get('public', 'currencies', bet.bet.currency)
-        bet.bet.amountInDollar = (bet.bet.amount / Math.pow(10, currency.decimals)) * currency.price
-        bet.bet.winningsInDollar = (bet.bet.winnings / Math.pow(10, currency.decimals)) * currency.price
-        return bet
+      .uniqBy('userid')
+      .take(10)
+      .map(obj => {
+        const currency = API.get('public', 'currencies', obj.bet.currency)
+        obj.bet.amountInDollar = (obj.bet.amount / Math.pow(10, currency.decimals)) * currency.price
+        obj.bet.winningsInDollar = (obj.bet.winnings / Math.pow(10, currency.decimals)) * currency.price
+        return obj
       })
       .value();
     ctx.reply(models.luckiest(top), {
-      parse_mode: "HTML",
-      disable_web_page_preview: false
+      parse_mode: "HTML"
+    })
+  })
+  bot.command('bigwins', ctx => {
+    const bigwins = API.get('stats', 'bets', 'bigwins')
+    const top = _.chain(bigwins)
+      .keys()
+      .map(id => bigwins[id])
+      .filter(obj => _.keys(obj.bet).length > 0)
+      .orderBy(obj => {
+        const currency = API.get('public', 'currencies', obj.bet.currency)
+        return obj.bet.winnings / Math.pow(10, currency.decimals)
+      })
+      .reverse()
+      .uniqBy('userid')
+      .take(10)
+      .map(obj => {
+        const currency = API.get('public', 'currencies', obj.bet.currency)
+        obj.bet.amountInDollar = (obj.bet.amount / Math.pow(10, currency.decimals)) * currency.price
+        obj.bet.winningsInDollar = (obj.bet.winnings / Math.pow(10, currency.decimals)) * currency.price
+        return obj
+      })
+      .value();
+    ctx.reply(models.bigwins(top), {
+      parse_mode: "HTML"
     })
   })
   bot.help((ctx) => ctx.reply('help'))

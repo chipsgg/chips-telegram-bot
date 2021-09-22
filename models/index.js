@@ -5,6 +5,7 @@ const prices = require('./prices')
 const top = require('./top')
 const slotcall = require('./slotcall')
 const luckiest = require('./luckiest')
+const bigwins = require('./bigwins')
 
 module.exports = {
   divs,
@@ -13,5 +14,6 @@ module.exports = {
   prices,
   top,
   slotcall,
-  luckiest
+  luckiest,
+  bigwins
 }
