@@ -26,11 +26,15 @@ module.exports = () => {
           }
         }
       })
-      await api.actions.stats('on', { game: "bets", type: "recentBets" })
-      await api.actions.stats('on', { game: "bets", type: "luckiest" })
-      await api.actions.profitshare('on', { name: "profitshareBalance" })
-      await api.actions.profitshare('on', { name: "profitshareInfo" })
 
+      const subscription = async () => {
+        await api.actions.stats('on', { game: "bets", type: "recentBets" })
+        await api.actions.stats('on', { game: "bets", type: "luckiest" })
+        await api.actions.profitshare('on', { name: "profitshareBalance" })
+        await api.actions.profitshare('on', { name: "profitshareInfo" })
+        setTimeout(subscription, 60 * 1000)
+      }
+      await subscription()
     },
     state: () => state,
     get: (...path) => _.get(state, path),
