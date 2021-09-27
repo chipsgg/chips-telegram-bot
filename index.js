@@ -62,7 +62,8 @@ const actions = {
             },
           ]
         ],
-      }
+      },
+      disable_notification: true
     }
     const doWork = () => {
       const distributeAt = API.get('profitshare', 'profitshareInfo', 'distributeAt')
@@ -110,7 +111,7 @@ const actions = {
         .then(ranks => resolve({ ...race, ranks }))
         .catch(reject)
     })))
-    ctx.replyWithHTML(models.top(racesRanks))
+    ctx.replyWithHTML(models.top(racesRanks), { disable_notification: true })
   })
   bot.command('events', async ctx => {
     const activeRaces = await API.listActiveRaces(skip = 0, limit = 10)
@@ -125,7 +126,8 @@ const actions = {
             },
           ]
         ],
-      }
+      },
+      disable_notification: true
     })
   })
   bot.command('prices', ctx => {
@@ -133,7 +135,7 @@ const actions = {
       .filter(x => !x.hidden && x.name !== 'chips' && x.name !== "chips_staking" && !_.startsWith(x.name, "usd") && !_.endsWith(x.name, "usd"))
       .value();
     let lastContent = models.prices(doWork())
-    ctx.replyWithHTML(lastContent)
+    ctx.replyWithHTML(lastContent, { disable_notification: true })
       .then(newCtx => {
         if (refreshs.last_prices) {
           clearInterval(refreshs.last_prices)
@@ -143,7 +145,8 @@ const actions = {
           if (content !== lastContent) {
             try {
               ctx.telegram.editMessageText(newCtx.chat.id, newCtx.message_id, undefined, content, {
-                parse_mode: "HTML"
+                parse_mode: "HTML",
+                disable_notification: true
               })
               lastContent = content
             } catch (e) {
@@ -154,7 +157,7 @@ const actions = {
       })
   })
   bot.command('groups', ctx => {
-    ctx.replyWithHTML(models.groups(config.ambassadors))
+    ctx.replyWithHTML(models.groups(config.ambassadors), { disable_notification: true })
   })
   bot.command('slotcall', ctx => {
     const slot = _.sample(slots)
@@ -172,7 +175,8 @@ const actions = {
             },
           ]
         ],
-      }
+      },
+      disable_notification: true
     })
   })
   bot.command('luckiest', ctx => {
@@ -192,7 +196,7 @@ const actions = {
         return obj
       })
       .value();
-    ctx.replyWithHTML(models.luckiest(top))
+    ctx.replyWithHTML(models.luckiest(top), { disable_notification: true })
   })
   bot.command('bigwins', ctx => {
     const bigwins = API.get('stats', 'bets', 'bigwins')
@@ -214,7 +218,7 @@ const actions = {
         return obj
       })
       .value();
-    ctx.replyWithHTML(models.bigwins(top))
+    ctx.replyWithHTML(models.bigwins(top), { disable_notification: true })
   })
   bot.command('listTimers', async ctx => {
     if (ctx.chat.type != "private") return
@@ -282,11 +286,7 @@ const actions = {
   setInterval(async () => {
     const timer = await Timer.poll()
     if (timer) {
-      bot.telegram.sendMessage(config.mainGroup, timer.response, {
-        parse_mode: "HTML",
-        disable_notification: true
-      })
-      //console.log('show', timer)
+      bot.telegram.sendMessage(config.mainGroup, timer.response, { parse_mode: "HTML" })
     }
   }, 60*1000)
   return HttpServer(

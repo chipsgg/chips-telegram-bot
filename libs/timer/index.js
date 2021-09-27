@@ -49,7 +49,7 @@ module.exports = (...args) => {
     })
     const timer = _.sample(result)
     if(timer){
-      const newTimer = { ...timer, lines: 0, lastImpression: Date.now() }
+      const newTimer = { ...timer, lines: 0, lastImpression: Date.now(), updated: Date.now() }
       await redis.set(compactKey(newTimer.name), encoder(newTimer))
       return newTimer
     }
