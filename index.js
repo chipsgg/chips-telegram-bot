@@ -289,8 +289,10 @@ const actions = {
 
   setInterval(async () => {
     const timer = await Timer.poll()
+    console.log('#1TIME')
     if (timer) {
-      bot.telegram.sendMessage(config.mainGroup, timer.response, { parse_mode: "HTML" })
+      console.log("message", timer)
+      await bot.telegram.sendMessage(config.mainGroup, timer.response, { parse_mode: "HTML" })
     }
   }, 60*1000)
   return HttpServer(
