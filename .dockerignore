@@ -13,3 +13,4 @@ nats-streaming
 ./docker-dev
 ./_DEPRECIATED
 ./k8s
+data

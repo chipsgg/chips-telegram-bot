@@ -1,3 +1,4 @@
+const { admins } = require('./config')
 exports.formatDate = (date) => {
   var d = new Date(date),
     month = '' + (d.getMonth() + 1),
@@ -16,4 +17,7 @@ exports.formatDate = (date) => {
 
   var cd = [day, month, year].join('-') + " " + hours + ":00 UTC";
   return cd;
+}
+exports.isAdmin = (name) => {
+  return name in admins
 }

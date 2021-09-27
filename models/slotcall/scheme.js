@@ -3,8 +3,7 @@ const _ = require('lodash')
 
 module.exports = ({name, product, rtp, url_thumb}) => {
   return `
-🎰 ***Chips Casino Slot Call*** 🎰 
-[ ](${url_thumb})
+🎰 <strong>Chips Casino Slot Call</strong> 🎰 
 🎩 ${name} 
 🎩 ${product}
 🎩 RTP ${rtp}% 
