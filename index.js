@@ -91,11 +91,11 @@ const actions = {
         if (refreshs.last_divs) {
           clearInterval(refreshs.last_divs)
         }
-        refreshs.last_divs = setInterval(() => {
+        refreshs.last_divs = setInterval(async() => {
           const content = models.divs(doWork())
           if (content !== lastContent) {
             try {
-              ctx.telegram.editMessageText(newCtx.chat.id, newCtx.message_id, undefined, content, message_config)
+              await ctx.telegram.editMessageText(newCtx.chat.id, newCtx.message_id, undefined, content, message_config)
               lastContent = content
             } catch (e) {
               clearInterval(refreshs.last_divs)
@@ -140,11 +140,11 @@ const actions = {
         if (refreshs.last_prices) {
           clearInterval(refreshs.last_prices)
         }
-        refreshs.last_prices = setInterval(() => {
+        refreshs.last_prices = setInterval(async() => {
           const content = models.prices(doWork())
           if (content !== lastContent) {
             try {
-              ctx.telegram.editMessageText(newCtx.chat.id, newCtx.message_id, undefined, content, {
+              await ctx.telegram.editMessageText(newCtx.chat.id, newCtx.message_id, undefined, content, {
                 parse_mode: "HTML",
                 disable_notification: true
               })
