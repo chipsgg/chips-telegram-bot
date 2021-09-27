@@ -282,19 +282,14 @@ const actions = {
   // Enable graceful stop
   process.once('SIGINT', () => bot.stop('SIGINT'))
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
-  bot.on('text', ctx => {
-    console.log("update", ctx.update)
-    Timer.incLines()
-  })
+  bot.on('text', ctx => Timer.incLines())
   bot.launch({
     dropPendingUpdates: true
   })
 
   setInterval(async () => {
     const timer = await Timer.poll()
-    console.log('#1TIME')
     if (timer) {
-      console.log("message", timer)
       await bot.telegram.sendMessage(config.mainGroup, timer.response, { parse_mode: "HTML" })
     }
   }, 60*1000)
