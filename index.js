@@ -6,7 +6,7 @@ const { fillMarkdownEntitiesMarkup } = require('@rundik/telegram-text-entities-f
 const models = require('./models');
 const config = require('./config');
 const API = require('./libs/chipsapi')();
-const Timer = require('./libs/timer')()
+const Timer = require('./libs/timer')(process.env.REDIS_URL)
 const HttpServer = require("actions-http");
 const AutodeleteMiddleware = require('./libs/autodelete')
 const AdminMiddleware = require('./libs/admin')(config.superAdmins)
@@ -62,7 +62,8 @@ const actions = {
             },
           ]
         ],
-      }
+      },
+      disable_notification: true
     }
     const doWork = () => {
       const distributeAt = API.get('profitshare', 'profitshareInfo', 'distributeAt')
@@ -90,11 +91,11 @@ const actions = {
         if (refreshs.last_divs) {
           clearInterval(refreshs.last_divs)
         }
-        refreshs.last_divs = setInterval(() => {
+        refreshs.last_divs = setInterval(async() => {
           const content = models.divs(doWork())
           if (content !== lastContent) {
             try {
-              ctx.telegram.editMessageText(newCtx.chat.id, newCtx.message_id, undefined, content, message_config)
+              await ctx.telegram.editMessageText(newCtx.chat.id, newCtx.message_id, undefined, content, message_config)
               lastContent = content
             } catch (e) {
               clearInterval(refreshs.last_divs)
@@ -110,7 +111,7 @@ const actions = {
         .then(ranks => resolve({ ...race, ranks }))
         .catch(reject)
     })))
-    ctx.replyWithHTML(models.top(racesRanks))
+    ctx.replyWithHTML(models.top(racesRanks), { disable_notification: true })
   })
   bot.command('events', async ctx => {
     const activeRaces = await API.listActiveRaces(skip = 0, limit = 10)
@@ -125,7 +126,8 @@ const actions = {
             },
           ]
         ],
-      }
+      },
+      disable_notification: true
     })
   })
   bot.command('prices', ctx => {
@@ -133,17 +135,18 @@ const actions = {
       .filter(x => !x.hidden && x.name !== 'chips' && x.name !== "chips_staking" && !_.startsWith(x.name, "usd") && !_.endsWith(x.name, "usd"))
       .value();
     let lastContent = models.prices(doWork())
-    ctx.replyWithHTML(lastContent)
+    ctx.replyWithHTML(lastContent, { disable_notification: true })
       .then(newCtx => {
         if (refreshs.last_prices) {
           clearInterval(refreshs.last_prices)
         }
-        refreshs.last_prices = setInterval(() => {
+        refreshs.last_prices = setInterval(async() => {
           const content = models.prices(doWork())
           if (content !== lastContent) {
             try {
-              ctx.telegram.editMessageText(newCtx.chat.id, newCtx.message_id, undefined, content, {
-                parse_mode: "HTML"
+              await ctx.telegram.editMessageText(newCtx.chat.id, newCtx.message_id, undefined, content, {
+                parse_mode: "HTML",
+                disable_notification: true
               })
               lastContent = content
             } catch (e) {
@@ -154,7 +157,7 @@ const actions = {
       })
   })
   bot.command('groups', ctx => {
-    ctx.replyWithHTML(models.groups(config.ambassadors))
+    ctx.replyWithHTML(models.groups(config.ambassadors), { disable_notification: true })
   })
   bot.command('slotcall', ctx => {
     const slot = _.sample(slots)
@@ -172,7 +175,8 @@ const actions = {
             },
           ]
         ],
-      }
+      },
+      disable_notification: true
     })
   })
   bot.command('luckiest', ctx => {
@@ -192,7 +196,7 @@ const actions = {
         return obj
       })
       .value();
-    ctx.replyWithHTML(models.luckiest(top))
+    ctx.replyWithHTML(models.luckiest(top), { disable_notification: true })
   })
   bot.command('bigwins', ctx => {
     const bigwins = API.get('stats', 'bets', 'bigwins')
@@ -214,7 +218,7 @@ const actions = {
         return obj
       })
       .value();
-    ctx.replyWithHTML(models.bigwins(top))
+    ctx.replyWithHTML(models.bigwins(top), { disable_notification: true })
   })
   bot.command('listTimers', async ctx => {
     if (ctx.chat.type != "private") return
@@ -227,8 +231,12 @@ const actions = {
     if (ctx.chat.type != "private") return
     if (!ctx.from._is_in_admin_list) return
     ctx.ask('What\'s timer to delete?')
-      .then(result => {
+      .then(async result => {
         const name = result.message.text
+        if (!await Timer.getTimer(name)) {
+          ctx.replyWithHTML(models.error("Error", "The timer does not exist"))
+          return;
+        }
         Timer.deleteTimer(name)
           .then(result => {
             ctx.replyWithHTML(models.deleteTimer(name, result))
@@ -243,7 +251,7 @@ const actions = {
     ctx.ask('What is the name of your timer?')
       .then(async result => {
         const name = result.message.text
-        if (await Timer.hasTimer(name)) {
+        if (await Timer.getTimer(name)) {
           ctx.replyWithHTML(models.error("Error", "A timer already exists under the same name"))
           return;
         }
@@ -278,10 +286,7 @@ const actions = {
   setInterval(async () => {
     const timer = await Timer.poll()
     if (timer) {
-      bot.telegram.sendMessage(config.mainGroup, timer.response, {
-        parse_mode: "HTML"
-      })
-      //console.log('show', timer)
+      bot.telegram.sendMessage(config.mainGroup, timer.response, { parse_mode: "HTML" })
     }
   }, 60*1000)
   return HttpServer(
