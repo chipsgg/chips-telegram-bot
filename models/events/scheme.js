@@ -13,7 +13,8 @@ module.exports = (events) => {
       .join("\n")
       .value()
     // { title, endTime, subtitle }
-    return `<strong>ONGOING EVENTS</strong>\n${content}
+    return `✨ <strong>ONGOING EVENTS</strong> ✨
+${content}
 
 ---------
 <a href="https://chips.gg/events">Click here to find out more about our events!</a>`

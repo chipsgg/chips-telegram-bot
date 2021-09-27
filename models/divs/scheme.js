@@ -27,7 +27,7 @@ module.exports = ({ currencies, distributeAt, totalMinted, totalStaked, totalVal
     })
     .join('\n')
     .value();
-  return `<strong>The Vault</strong>
+  return `💰 <strong>The Vault</strong> 💰
 ${content}
 
 <strong>Total value: ${formatCurrency(totalValue, "USD", "en")}</strong>

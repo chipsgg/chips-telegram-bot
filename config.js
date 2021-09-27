@@ -33,7 +33,18 @@ const ambassadors = [
     country: "Deutsch"
   }
 ]
+const superAdmins = [
+  "tacyargs",
+  "Bexbexsta",
+  "aabbdev"
+]
 
+let mainGroup = -1380278636; // production
+if (process.env.NODE_ENV === "development") {
+  mainGroup = -599487309;
+}
 module.exports = {
-  ambassadors
+  ambassadors,
+  superAdmins,
+  mainGroup
 }
