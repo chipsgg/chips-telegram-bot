@@ -1,96 +1,60 @@
 const _ = require('lodash');
-const Datastore = require('nedb');
+const Redis = require("ioredis");
+const { compact } = require('lodash');
 
-module.exports = (filename = `data/timer.db`) => {
-  const db = new Datastore({ filename, autoload: true });
-  db.loadDatabase();
-  db.persistence.setAutocompactionInterval(10 * 1000)
-  db.ensureIndex({ fieldName: 'name', unique: true }, function (err) {
-    if (err) {
-      throw new Error(err)
-    }
-  });
-  const minutesToTimestamp = (minutes) => minutes * 60 * 1000;
+module.exports = (...args) => {
+  const redis = new Redis(...args)
+  const compactKey = (name) => `timer:${name}`
   const incLines = async () => {
     const timers = await listTimers()
-    _.forEach(timers, (timer) => db.update(timer, { ...timer, lines: timer.lines + 1 }))
-  }
-  const hasTimer = (name) => new Promise((resolve, reject) => {
-    db.count({ name }, (err, n) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(n > 0)
-      }
+    _.forEach(timers, (timer) => {
+      redis.set(compactKey(timer.name), encoder({ ...timer, lines: timer.lines + 1, updated: Date.now() }))
     })
-  })
-  const addTimer = (name, response, interval, lineMinimum) => new Promise((resolve, reject) => {
-    const now = Date.now();
-    db.insert({
+  }
+  const encoder = (data) => JSON.stringify(data)
+  const decoder = (data) => JSON.parse(data)
+
+  const getTimer = async(name) => await redis.get(compactKey(name))
+  const deleteTimer = async(name) => await redis.del(compactKey(name))
+  const addTimer = async(name, response, interval, lineMinimum) => {
+    const timer = {
       name,
       response,
       interval,
       lines: 0,
       lineMinimum,
-      lastImpression: now,
-      created: now,
-      updated: now
-    }, (err, doc) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(doc);
-      }
-    });
-  });
-  const listTimers = () => new Promise((resolve, reject) => {
-    db.find({}, (err, docs) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(docs);
-      }
-    });
-  });
-  const deleteTimer = (name) => new Promise((resolve, reject) => {
-    db.remove({ name }, {}, function (err, n) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(n > 0);
-      }
-    });
-  });
-  const poll = () => new Promise((resolve, reject) => {
-    db.find({
-      $where: function () {
-        const linesRequired = this.lines >= this.lineMinimum;
-        const showTime = (Date.now() - this.lastImpression) >= minutesToTimestamp(this.interval);
-        return linesRequired && showTime;
-      }
-    }, (err, docs) => {
-      if (err) {
-        reject(err);
-      } else {
-        const doc = _.sample(docs)
-        if (doc) {
-          const newDoc = { ...doc, lines: 0, lastImpression: Date.now() }
-          db.update(doc, newDoc, (err, n) => {
-            if (err) {
-              reject(err)
-            } else {
-              resolve(n > 0 ? newDoc : doc)
-            }
-          })
-        } else {
-          resolve(doc)
-        }
-      }
-    });
-  });
-
+      lastImpression: Date.now(),
+      created: Date.now(),
+      updated: Date.now()
+    }
+    await redis.set(compactKey(name), encoder(timer))
+    return timer
+  }
+  const listTimers = async() =>{
+    const keys = await redis.keys(compactKey('*'))
+    const timers = []
+    for(var i = 0; i < keys.length;i++){
+      const timer = decoder(await redis.get(keys[i]))
+      timers.push(timer)
+    }
+    return timers
+  }
+  const poll = async() => {
+    const timers = await listTimers()
+    const result = _.filter(timers, (timer) => {
+      const linesRequired = timer.lines >= timer.lineMinimum;
+      const showTime = (Date.now() - timer.lastImpression) >= timer.interval * 60 * 1000;
+      return linesRequired && showTime;
+    })
+    const timer = _.sample(result)
+    if(timer){
+      const newTimer = { ...timer, lines: 0, lastImpression: Date.now() }
+      await redis.set(compactKey(newTimer.name), newTimer)
+      return newTimer
+    }
+  }
   return {
-    hasTimer,
+    getTimer,
     listTimers,
     addTimer,
     deleteTimer,

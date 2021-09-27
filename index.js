@@ -6,7 +6,7 @@ const { fillMarkdownEntitiesMarkup } = require('@rundik/telegram-text-entities-f
 const models = require('./models');
 const config = require('./config');
 const API = require('./libs/chipsapi')();
-const Timer = require('./libs/timer')()
+const Timer = require('./libs/timer')(process.env.REDIS_URL)
 const HttpServer = require("actions-http");
 const AutodeleteMiddleware = require('./libs/autodelete')
 const AdminMiddleware = require('./libs/admin')(config.superAdmins)
@@ -227,8 +227,12 @@ const actions = {
     if (ctx.chat.type != "private") return
     if (!ctx.from._is_in_admin_list) return
     ctx.ask('What\'s timer to delete?')
-      .then(result => {
+      .then(async result => {
         const name = result.message.text
+        if (!await Timer.getTimer(name)) {
+          ctx.replyWithHTML(models.error("Error", "The timer does not exist"))
+          return;
+        }
         Timer.deleteTimer(name)
           .then(result => {
             ctx.replyWithHTML(models.deleteTimer(name, result))
@@ -243,7 +247,7 @@ const actions = {
     ctx.ask('What is the name of your timer?')
       .then(async result => {
         const name = result.message.text
-        if (await Timer.hasTimer(name)) {
+        if (await Timer.getTimer(name)) {
           ctx.replyWithHTML(models.error("Error", "A timer already exists under the same name"))
           return;
         }
