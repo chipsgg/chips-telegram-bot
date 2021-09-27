@@ -10,4 +10,5 @@ Checkout the demo on Telegram:
 ```env
 username=
 apikey=
+REDIS_URL=
 ```
