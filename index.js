@@ -282,7 +282,10 @@ const actions = {
   // Enable graceful stop
   process.once('SIGINT', () => bot.stop('SIGINT'))
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
-  bot.hears((ctx) => Timer.incLines())
+  bot.on('text', ctx => {
+    console.log("update", ctx.update)
+    Timer.incLines()
+  })
   bot.launch({
     dropPendingUpdates: true
   })
