@@ -6,7 +6,11 @@ const { fillMarkdownEntitiesMarkup } = require('@rundik/telegram-text-entities-f
 const models = require('./models');
 const config = require('./config');
 const API = require('./libs/chipsapi')();
-const Timer = require('./libs/timer')(process.env.REDIS_URL)
+const Timer = require('./libs/timer')(process.env.REDIS_URL, {
+   tls: {
+        rejectUnauthorized: false
+    }
+})
 const HttpServer = require("actions-http");
 const AutodeleteMiddleware = require('./libs/autodelete')
 const AdminMiddleware = require('./libs/admin')(config.superAdmins)
