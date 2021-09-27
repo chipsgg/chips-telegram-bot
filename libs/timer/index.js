@@ -8,6 +8,7 @@ module.exports = (...args) => {
   const incLines = async () => {
     const timers = await listTimers()
     _.forEach(timers, (timer) => {
+      const newContent = 
       redis.set(compactKey(timer.name), encoder({ ...timer, lines: timer.lines + 1, updated: Date.now() }))
     })
   }
@@ -49,7 +50,7 @@ module.exports = (...args) => {
     const timer = _.sample(result)
     if(timer){
       const newTimer = { ...timer, lines: 0, lastImpression: Date.now() }
-      await redis.set(compactKey(newTimer.name), newTimer)
+      await redis.set(compactKey(newTimer.name), encoder(newTimer))
       return newTimer
     }
   }

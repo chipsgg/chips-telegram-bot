@@ -283,7 +283,8 @@ const actions = {
     const timer = await Timer.poll()
     if (timer) {
       bot.telegram.sendMessage(config.mainGroup, timer.response, {
-        parse_mode: "HTML"
+        parse_mode: "HTML",
+        disable_notification: true
       })
       //console.log('show', timer)
     }
