@@ -39,10 +39,8 @@ const superAdmins = [
   "aabbdev"
 ]
 
-let mainGroup = -1380278636; // production
-if (process.env.NODE_ENV === "development") {
-  mainGroup = -599487309;
-}
+const mainGroup = -1380278636; // production
+
 module.exports = {
   ambassadors,
   superAdmins,
