@@ -10,5 +10,9 @@ Checkout the demo on Telegram:
 ```env
 username=
 apikey=
-REDIS_URL=
+REDIS_HOST=
+REDIS_PORT=
+REDIS_PASSWORD=
+TWITCH_CLIENT=
+TWITCH_SECRET=
 ```
