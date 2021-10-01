@@ -39,7 +39,7 @@ const superAdmins = [
   "aabbdev"
 ]
 
-const mainGroup = -599487309//-1001380278636; // production
+const mainGroup = -1001380278636; // production
 
 module.exports = {
   ambassadors,
