@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const Redis = require("ioredis");
-const { compact } = require('lodash');
 
 module.exports = (...args) => {
   const redis = new Redis(...args)
@@ -8,7 +7,6 @@ module.exports = (...args) => {
   const incLines = async () => {
     const timers = await listTimers()
     _.forEach(timers, (timer) => {
-      const newContent = 
       redis.set(compactKey(timer.name), encoder({ ...timer, lines: timer.lines + 1, updated: Date.now() }))
     })
   }
