@@ -11,6 +11,10 @@ const bigwins = require('./bigwins')
 const addTimer = require('./addTimer')
 const listTimers = require('./listTimers')
 const deleteTimer = require('./deleteTimer')
+const addStreamer = require('./addStreamer')
+const listStreamers = require('./listStreamers')
+const deleteStreamer = require('./deleteStreamer')
+const showStreamer = require('./showStreamer')
 
 module.exports = {
   error,
@@ -25,5 +29,9 @@ module.exports = {
   bigwins,
   addTimer,
   listTimers,
-  deleteTimer
+  deleteTimer,
+  addStreamer,
+  listStreamers,
+  deleteStreamer,
+  showStreamer
 }

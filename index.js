@@ -6,10 +6,27 @@ const { fillMarkdownEntitiesMarkup } = require('@rundik/telegram-text-entities-f
 const models = require('./models');
 const config = require('./config');
 const API = require('./libs/chipsapi')();
-const Timer = require('./libs/timer')(process.env.REDIS_URL, {
-   tls: {
-        rejectUnauthorized: false
+const Timer = require('./libs/timer')({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD,
+  tls: {
+    rejectUnauthorized: false
+  }
+})
+const Streamer = require('./libs/streamer')({
+  redis: {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+    tls: {
+      rejectUnauthorized: false
     }
+  },
+  twitch: {
+    client_id: process.env.TWITCH_CLIENT,
+    client_secret: process.env.TWITCH_SECRET
+  }
 })
 const HttpServer = require("actions-http");
 const AutodeleteMiddleware = require('./libs/autodelete')
@@ -44,7 +61,7 @@ const actions = {
     }
   }
   const bot = new Telegraf(process.env.apikey)
-   // for real time update
+  // for real time update
   const refreshs = {
     last_divs: null,
     last_prices: null
@@ -95,7 +112,7 @@ const actions = {
         if (refreshs.last_divs) {
           clearInterval(refreshs.last_divs)
         }
-        refreshs.last_divs = setInterval(async() => {
+        refreshs.last_divs = setInterval(async () => {
           const content = models.divs(doWork())
           if (content !== lastContent) {
             try {
@@ -144,7 +161,7 @@ const actions = {
         if (refreshs.last_prices) {
           clearInterval(refreshs.last_prices)
         }
-        refreshs.last_prices = setInterval(async() => {
+        refreshs.last_prices = setInterval(async () => {
           const content = models.prices(doWork())
           if (content !== lastContent) {
             try {
@@ -277,6 +294,48 @@ const actions = {
           })
       })
   })
+
+
+  bot.command('listStreamers', async ctx => {
+    if (ctx.chat.type != "private") return
+    if (!ctx.from._is_in_admin_list) return
+
+    const streams = await Streamer.listStreamers()
+    ctx.replyWithHTML(models.listStreamers(streams), { 
+      disable_web_page_preview: true
+     })
+  })
+  bot.command('deleteStreamer', async ctx => {
+    if (ctx.chat.type != "private") return
+    if (!ctx.from._is_in_admin_list) return
+    ctx.ask('What is the streamer\'s Twitch username?')
+      .then(async result => {
+        const name = result.message.text
+        if (!await Streamer.getStreamer(name)) {
+          ctx.replyWithHTML(models.error("Error", "The streamer does not exist"))
+          return;
+        }
+        Streamer.deleteStreamer(name)
+          .then(result => ctx.replyWithHTML(models.deleteStreamer(name, result)))
+
+      })
+  })
+  bot.command('addStreamer', ctx => {
+    if (ctx.chat.type != "private") return
+    if (!ctx.from._is_in_admin_list) return
+
+    ctx.ask('What is the streamer\'s Twitch username?')
+      .then(async result => {
+        const name = result.message.text
+        if (await Streamer.getStreamer(name)) {
+          ctx.replyWithHTML(models.error("Error", "The streamer already exists under the same name"))
+          return;
+        }
+        Streamer.addStreamer(name)
+          .then(doc => ctx.replyWithHTML(models.addStreamer(doc)))
+          .catch((e) => ctx.replyWithHTML(models.error("Fatal", "An error has occurred")))
+      })
+  })
   bot.start((ctx) => ctx.replyWithHTML(models.help(ctx.from._is_in_admin_list)))
   bot.help((ctx) => ctx.replyWithHTML(models.help(ctx.from._is_in_admin_list)))
   // Enable graceful stop
@@ -292,7 +351,27 @@ const actions = {
     if (timer) {
       await bot.telegram.sendMessage(config.mainGroup, timer.response, { parse_mode: "HTML" })
     }
-  }, 60*1000)
+  }, 60 * 1000)
+
+  setInterval(async () => {
+    const streamer = await Streamer.poll()
+    if (streamer) {
+      await bot.telegram.sendPhoto(config.mainGroup, { url: streamer.thumbnailUrl }, {
+        parse_mode: "HTML",
+        caption: models.showStreamer(streamer),
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "📺 WATCH NOW 📺",
+                url: streamer.url,
+              },
+            ]
+          ],
+        },
+      })
+    }
+  }, 30 * 60 * 1000)
   return HttpServer(
     {
       port: process.env.PORT || 3000

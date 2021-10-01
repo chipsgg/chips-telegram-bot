@@ -4,11 +4,13 @@
     "@coingecko/cryptoformat": "^0.4.4",
     "@rundik/telegram-text-entities-filler": "^0.2.2",
     "actions-http": "^2.1.0",
+    "dayjs": "^1.10.7",
     "dotenv": "^10.0.0",
     "humanize-plus": "^1.8.2",
     "hyperid": "^2.3.1",
     "ioredis": "^4.27.9",
     "lodash": "^4.17.21",
+    "node-twitch": "^0.4.5",
     "telegraf": "^4.4.1",
     "telegraf-question": "^1.1.4",
     "ws": "^8.2.0"
