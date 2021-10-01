@@ -177,9 +177,10 @@ const actions = {
         }, 4000)
       })
   })
+   /*
   bot.command('groups', ctx => {
     ctx.replyWithHTML(models.groups(config.ambassadors), { disable_notification: true })
-  })
+  })*/
   bot.command('slotcall', ctx => {
     const slot = _.sample(slots)
     ctx.replyWithPhoto({
