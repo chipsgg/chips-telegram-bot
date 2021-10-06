@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@chipsgg/ws-api-client": "^2.0.6",
     "@chipsgg/ws-client": "^1.0.15",
     "@coingecko/cryptoformat": "^0.4.4",
     "@rundik/telegram-text-entities-filler": "^0.2.2",
