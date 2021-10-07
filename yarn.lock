@@ -2,6 +2,16 @@
 # yarn lockfile v1
 
 
+"@chipsgg/ws-api-client@^2.0.6":
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/@chipsgg/ws-api-client/-/ws-api-client-2.0.6.tgz#2992637889fdd8c450da8d06e00dcbcd758d72c9"
+  integrity sha512-n9TtM4TXI0cd8u7WN325tvLxEEIAoxhLP0et3PVEObJg0Lqij8G8yp0Xab1iIx4wJjv7Sz/dlbdLd+uWpAKXNw==
+  dependencies:
+    minimist "^1.2.5"
+    msgpackr "^1.2.10"
+    ws "^7.3.1"
+    ynk "^0.0.4"
+
 "@chipsgg/ws-client@^1.0.15":
   version "1.0.15"
   resolved "https://registry.yarnpkg.com/@chipsgg/ws-client/-/ws-client-1.0.15.tgz#b7facdfd96757b7056de136fc69ccda08579c46d"
@@ -442,6 +452,26 @@ ms@2.1.2:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
 
+msgpackr-extract@^1.0.14:
+  version "1.0.14"
+  resolved "https://registry.yarnpkg.com/msgpackr-extract/-/msgpackr-extract-1.0.14.tgz#87d3fe825d226e7f3d9fe136375091137f958561"
+  integrity sha512-t8neMf53jNZRF+f0H9VvEUVvtjGZ21odSBRmFfjZiyxr9lKYY0mpY3kSWZAIc7YWXtCZGOvDQVx2oqcgGiRBrw==
+  dependencies:
+    nan "^2.14.2"
+    node-gyp-build "^4.2.3"
+
+msgpackr@^1.2.10:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/msgpackr/-/msgpackr-1.4.4.tgz#872f03fc99eb8f8c1c99615072c7ea12205429be"
+  integrity sha512-MFK+aGsB3WqUWt1tb4hOTK+px4PvZE/kT7jQCr1exYQimkqPAfEkJ9OMFiW1XKBtWAvN93VwUPQWhOaPuSuZXQ==
+  optionalDependencies:
+    msgpackr-extract "^1.0.14"
+
+nan@^2.14.2:
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.15.0.tgz#3f34a473ff18e15c1b5626b62903b5ad6e665fee"
+  integrity sha512-8ZtvEnA2c5aYCZYd1cvgdnU6cqwixRoYg70xPLWUws5ORTa/lnw+u4amixRS/Ac5U5mQVgp9pnlSUnbNWFaWZQ==
+
 negotiator@0.6.2:
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.2.tgz#feacf7ccf525a77ae9634436a64883ffeca346fb"
@@ -458,6 +488,11 @@ node-fetch@^2.6.1:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
   integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
+
+node-gyp-build@^4.2.3:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.3.0.tgz#9f256b03e5826150be39c764bf51e993946d71a3"
+  integrity sha512-iWjXZvmboq0ja1pUGULQBexmxq8CV4xBhX7VDOTbL7ZR4FOowwY/VOtRxBN/yKxmdGoIp4j5ysNT4u3S2pDQ3Q==
 
 node-twitch@^0.4.5:
   version "0.4.5"
@@ -717,3 +752,10 @@ ws@^8.2.0:
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.2.0.tgz#0b738cd484bfc9303421914b11bb4011e07615bb"
   integrity sha512-uYhVJ/m9oXwEI04iIVmgLmugh2qrZihkywG9y5FfZV2ATeLIzHf93qs+tUNqlttbQK957/VX3mtwAS+UfIwA4g==
+
+ynk@^0.0.4:
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/ynk/-/ynk-0.0.4.tgz#c44162b93ef3a3192954132999d492892fc6e79b"
+  integrity sha512-6FvA+D+S61u7gDp2WnXvWYqoHGcRJIhp6NJgQ7cHLcNBJIsPujgjKEDK/BUzrPfgBnJXSxL7fgoSMWPHAM19EA==
+  dependencies:
+    lodash "^4.17.15"

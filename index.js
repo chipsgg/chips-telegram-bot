@@ -28,6 +28,7 @@ const Streamer = require('./libs/streamer')({
     client_secret: process.env.TWITCH_SECRET
   }
 })
+const Autoevents = require('./libs/autoevents')(API)
 const HttpServer = require("actions-http");
 const AutodeleteMiddleware = require('./libs/autodelete')
 const AdminMiddleware = require('./libs/admin')(config.superAdmins)
@@ -177,10 +178,10 @@ const actions = {
         }, 4000)
       })
   })
-   /*
-  bot.command('groups', ctx => {
-    ctx.replyWithHTML(models.groups(config.ambassadors), { disable_notification: true })
-  })*/
+  /*
+ bot.command('groups', ctx => {
+   ctx.replyWithHTML(models.groups(config.ambassadors), { disable_notification: true })
+ })*/
   bot.command('slotcall', ctx => {
     const slot = _.sample(slots)
     ctx.replyWithPhoto({
@@ -247,7 +248,7 @@ const actions = {
     if (!ctx.from._is_in_admin_list) return
 
     const timers = await Timer.listTimers()
-    ctx.replyWithHTML(models.listTimers(timers))
+    ctx.replyWithHTML(models.timer.listTimers(timers))
   })
   bot.command('deleteTimer', async ctx => {
     if (ctx.chat.type != "private") return
@@ -261,7 +262,7 @@ const actions = {
         }
         Timer.deleteTimer(name)
           .then(result => {
-            ctx.replyWithHTML(models.deleteTimer(name, result))
+            ctx.replyWithHTML(models.timer.deleteTimer(name, result))
           })
 
       })
@@ -288,7 +289,7 @@ const actions = {
                   .then(result => {
                     const lineMinimum = _.parseInt(result.message.text) || 0
                     Timer.addTimer(name, response, interval, lineMinimum)
-                      .then(doc => ctx.replyWithHTML(models.addTimer(doc)))
+                      .then(doc => ctx.replyWithHTML(models.timer.addTimer(doc)))
                       .catch((e) => ctx.replyWithHTML(models.error("Fatal", "An error has occurred")))
                   })
               })
@@ -302,9 +303,9 @@ const actions = {
     if (!ctx.from._is_in_admin_list) return
 
     const streams = await Streamer.listStreamers()
-    ctx.replyWithHTML(models.listStreamers(streams), { 
+    ctx.replyWithHTML(models.streamer.listStreamers(streams), {
       disable_web_page_preview: true
-     })
+    })
   })
   bot.command('deleteStreamer', async ctx => {
     if (ctx.chat.type != "private") return
@@ -317,7 +318,7 @@ const actions = {
           return;
         }
         Streamer.deleteStreamer(name)
-          .then(result => ctx.replyWithHTML(models.deleteStreamer(name, result)))
+          .then(result => ctx.replyWithHTML(models.streamer.deleteStreamer(name, result)))
 
       })
   })
@@ -333,7 +334,7 @@ const actions = {
           return;
         }
         Streamer.addStreamer(name)
-          .then(doc => ctx.replyWithHTML(models.addStreamer(doc)))
+          .then(doc => ctx.replyWithHTML(models.streamer.addStreamer(doc)))
           .catch((e) => ctx.replyWithHTML(models.error("Fatal", "An error has occurred")))
       })
   })
@@ -347,6 +348,52 @@ const actions = {
     dropPendingUpdates: true
   })
 
+  setInterval(async () => {
+    const { bigwins, luckiest } = Autoevents.poll()
+    if (bigwins.length > 0) {
+      const fetched = _.first(bigwins)
+      if (!fetched.bet.slotname) return
+      const currencyInfo = API.get('public', 'currencies', fetched.bet.currency)
+      const slot = _.find(slots, (slot) => slot.game_code == fetched.bet.gamecode)
+      await bot.telegram.sendPhoto(config.mainGroup, {
+        url: slot.url_thumb
+      }, {
+        caption: models.autoevents.bigwin({ ...fetched.bet, currencyInfo }),
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "🎩 PLAY NOW 🎩",
+                url: `https://chips.gg/casino/${fetched.bet.gamecode}`,
+              },
+            ]
+          ],
+        }
+      })
+    } else if (luckiest.length > 0) {
+      const fetched = _.first(luckiest)
+      if (!fetched.bet.slotname) return
+      const currencyInfo = API.get('public', 'currencies', fetched.bet.currency)
+      const slot = _.find(slots, (slot) => slot.game_code == fetched.bet.gamecode)
+      await bot.telegram.sendPhoto(config.mainGroup, {
+        url: slot.url_thumb
+      }, {
+        caption: models.autoevents.luckiest({ ...fetched.bet, currencyInfo }),
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "🎩 PLAY NOW 🎩",
+                url: `https://chips.gg/casino/${fetched.bet.gamecode}`,
+              },
+            ]
+          ],
+        }
+      })
+    }
+  }, 5 * 60 * 1000) // every 5 min
   setInterval(async () => {
     const timer = await Timer.poll()
     if (timer) {
