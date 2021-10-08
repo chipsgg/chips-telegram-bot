@@ -106,7 +106,7 @@ const actions = {
         .filter(x => x.value > 0.0)
         .sumBy(x => x.value * x.price)
         .value();
-      const perThousand = ((totalValue / 4) / totalStaked) * 1000
+      const perThousand = ((totalValue / 4) / totalStaked) * 100
       return { currencies, distributeAt, totalMinted, totalStaked, totalValue, perThousand }
     }
 
