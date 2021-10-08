@@ -374,6 +374,7 @@ const actions = {
     } else if (luckiest.length > 0) {
       const fetched = _.first(luckiest)
       if (!fetched.bet.slotname) return
+      if (fetched.bet.multiplier < 100) return
       const currencyInfo = API.get('public', 'currencies', fetched.bet.currency)
       const slot = _.find(slots, (slot) => slot.game_code == fetched.bet.gamecode)
       await bot.telegram.sendPhoto(config.mainGroup, {
@@ -393,7 +394,7 @@ const actions = {
         }
       })
     }
-  }, 5 * 60 * 1000) // every 5 min
+  }, 15 * 60 * 1000) // every 5 min
   setInterval(async () => {
     const timer = await Timer.poll()
     if (timer) {

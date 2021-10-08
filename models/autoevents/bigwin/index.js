@@ -7,7 +7,7 @@ module.exports = ({ slotname, multiplier, amount, currency, currencyInfo, winnin
 
 🕹 ${slotname}
 ✖️ Multiplier ${Humanize.formatNumber(multiplier, 2)}x
-🔥 ${Humanize.toFixed(amount / Math.pow(10, currencyInfo.decimals), currencyInfo.decimals)} ${_.upperCase(currency)}
+🪙 ${amount / Math.pow(10, currencyInfo.decimals)} ${_.upperCase(currency)}
 
 💰 <strong>${formatCurrency((winnings / Math.pow(10, currencyInfo.decimals)) * currencyInfo.price, "USD", "en")}</strong> 💰
 
