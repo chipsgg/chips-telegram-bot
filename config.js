@@ -1,3 +1,4 @@
+require("dotenv").config();
 const ambassadors = [
   {
     flag: "🇷🇺",
@@ -39,7 +40,7 @@ const superAdmins = [
   "aabbdev"
 ]
 
-const mainGroup = -1001380278636; // production
+const mainGroup = process.env.MAIN_GROUP; //-1001380278636; // production
 
 module.exports = {
   ambassadors,

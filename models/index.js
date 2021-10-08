@@ -8,13 +8,9 @@ const top = require('./top')
 const slotcall = require('./slotcall')
 const luckiest = require('./luckiest')
 const bigwins = require('./bigwins')
-const addTimer = require('./addTimer')
-const listTimers = require('./listTimers')
-const deleteTimer = require('./deleteTimer')
-const addStreamer = require('./addStreamer')
-const listStreamers = require('./listStreamers')
-const deleteStreamer = require('./deleteStreamer')
-const showStreamer = require('./showStreamer')
+const timer = require('./timer')
+const streamer = require('./streamer')
+const autoevents = require('./autoevents')
 
 module.exports = {
   error,
@@ -27,11 +23,7 @@ module.exports = {
   slotcall,
   luckiest,
   bigwins,
-  addTimer,
-  listTimers,
-  deleteTimer,
-  addStreamer,
-  listStreamers,
-  deleteStreamer,
-  showStreamer
+  timer,
+  streamer,
+  autoevents
 }
