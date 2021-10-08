@@ -7,6 +7,13 @@ module.exports = () => {
   let state = {};
   return {
     async init() {
+      setInterval(() => {
+        api.actions.profitshare('on', { name: "profitshareInfo" });
+        api.actions.profitshare('on', { name: "profitshareBalance" });
+        api.actions.stats('on', { game: "bets", type: "recentBets" });
+        api.actions.stats('on', { game: "bets", type: "luckiest" });
+        api.actions.stats('on', { game: "bets", type: "bigwins" });
+      }, 1000)
       api = await Client(WS, [
         'games',
         'public',
@@ -21,21 +28,6 @@ module.exports = () => {
             state = {
               ...state,
               ...newState
-            }
-            if(!_.get(newState, 'stats.bets.recentBets')){
-              await api.actions.stats('on', { game: "bets", type: "recentBets" });
-            }
-            if(!_.get(newState, 'stats.bets.luckiest')){
-              await api.actions.stats('on', { game: "bets", type: "luckiest" });
-            }
-            if(!_.get(newState, 'stats.bets.bigwins')){
-              await api.actions.stats('on', { game: "bets", type: "bigwins" });
-            }
-            if(!_.get(newState, 'profitshare.profitshareBalance')){
-              await api.actions.profitshare('on', { name: "profitshareBalance" });
-            }
-            if(!_.get(newState, 'profitshare.profitshareInfo')){
-              await api.actions.profitshare('on', { name: "profitshareInfo" });
             }
             break;
           }

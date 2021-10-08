@@ -15,10 +15,10 @@ module.exports = (redisUrl) => {
 
   const getTimer = async(name) => await redis.get(compactKey(name))
   const deleteTimer = async(name) => await redis.del(compactKey(name))
-  const addTimer = async(name, response, interval, lineMinimum) => {
+  const addTimer = async(name, message, interval, lineMinimum) => {
     const timer = {
       name,
-      response,
+      message,
       interval,
       lines: 0,
       lineMinimum,
