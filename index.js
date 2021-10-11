@@ -75,7 +75,7 @@ const actions = {
     cancelTimeout: 300000 // 5 min
   }));
   bot.use(AutodeleteMiddleware)
-  bot.command('divs', ctx => {
+  bot.command('vault', ctx => {
     const message_config = {
       parse_mode: "HTML",
       reply_markup: {
