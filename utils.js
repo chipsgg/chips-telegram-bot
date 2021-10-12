@@ -21,3 +21,7 @@ exports.formatDate = (date) => {
 exports.isAdmin = (name) => {
   return name in admins
 }
+exports.convertDecimals = (num, decimals) => Number(num).toLocaleString(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: decimals < 2 ? 2 : Math.min(8, decimals),
+})
