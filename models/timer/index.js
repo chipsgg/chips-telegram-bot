@@ -1,9 +1,5 @@
-const addTimer = require('./addTimer')
-const listTimers = require('./listTimers')
-const deleteTimer = require('./deleteTimer')
-
 module.exports = {
-  addTimer,
-  listTimers,
-  deleteTimer
-}
+  addTimer: require('./addTimer'),
+  listTimers: require('./listTimers'),
+  deleteTimer: require('./deleteTimer')
+};

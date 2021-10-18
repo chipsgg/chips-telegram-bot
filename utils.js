@@ -1,3 +1,4 @@
+const fs = require('fs')
 const { admins } = require('./config')
 exports.formatDate = (date) => {
   var d = new Date(date),
@@ -25,3 +26,8 @@ exports.convertDecimals = (num, decimals) => Number(num).toLocaleString(undefine
   minimumFractionDigits: 2,
   maximumFractionDigits: decimals < 2 ? 2 : Math.min(8, decimals),
 })
+exports.getDirectories = (path) => {
+  return fs.readdirSync(path).filter(function (file) {
+    return fs.statSync(path+'/'+file).isDirectory();
+  });
+}

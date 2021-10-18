@@ -9,7 +9,6 @@ const slotcall = require('./slotcall')
 const luckiest = require('./luckiest')
 const bigwins = require('./bigwins')
 const timer = require('./timer')
-const streamer = require('./streamer')
 const autoevents = require('./autoevents')
 
 module.exports = {
@@ -24,6 +23,5 @@ module.exports = {
   luckiest,
   bigwins,
   timer,
-  streamer,
   autoevents
 }

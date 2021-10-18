@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const Humanize = require('humanize-plus')
-const { formatCurrency } = require('@coingecko/cryptoformat')
+//const { formatCurrency } = require('@coingecko/cryptoformat')
 const { convertDecimals } = require('../../../utils')
 
 module.exports = ({ slotname, multiplier, amount, currency, currencyInfo, winnings }) => {
@@ -10,9 +10,9 @@ module.exports = ({ slotname, multiplier, amount, currency, currencyInfo, winnin
 
 🕹️ ${slotname}
 ✖️ Multiplier ${Humanize.formatNumber(multiplier, 2)}x
-🤞 ${convertDecimals(amountValue, currencyInfo.decimals)} ${_.upperCase(currency)} (${formatCurrency(amountValue * currencyInfo.price, "USD", "en")})
+🤞 ${convertDecimals(amountValue, currencyInfo.decimals)} ${_.upperCase(currency)}
 
-💰 <strong>${formatCurrency(winningsValue * currencyInfo.price, "USD", "en")}</strong> 💰
+💰 <strong>${convertDecimals(winningsValue, currencyInfo.decimals)} ${_.upperCase(currency)}</strong> 💰
 
 Congratulations to the lucky player on their big win!`
 }
