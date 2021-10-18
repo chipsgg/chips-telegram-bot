@@ -1,10 +1,19 @@
 const WS = require('ws');
 const Client = require('@chipsgg/ws-client');
 const _ = require('lodash');
-
+const wait = (timeout) => new Promise((resolve, reject) => setTimeout(resolve, timeout))
 module.exports = () => {
   let api = null;
   let state = {};
+  const slots = [];
+  const getSlots = _.constant(slots);
+  const getRandomSlot = () => _.sample(getSlots());
+  const listRaceRanks = (raceid) => api.actions.public('listRaceRanks', { raceid });
+  const listRacePrizes = (raceid) => api.actions.public('listRacePrizes', { raceid });
+  const listActiveRaces = (skip = 0, limit = 100) => api.actions.public('listActiveRaces', { skip, limit });
+  const listDoneRaces = (skip = 0, limit = 100) => api.actions.public('listDoneRaces', { skip, limit });
+  const listSlotCategories = () => api.actions.public('listSlotCategories');
+  const listSlotsByCategory = (args) => api.actions.public('listSlotsByCategory', args);
   return {
     async init() {
       setInterval(() => {
@@ -22,7 +31,7 @@ module.exports = () => {
         'affiliates',
         'stats',
         'profitshare'
-      ], async(type, newState) => {
+      ], async (type, newState) => {
         switch (type) {
           case "change": {
             state = {
@@ -44,16 +53,33 @@ module.exports = () => {
             break;
           }
         }
-      })
-
+      });
+      await wait(100);
+      listSlotCategories()
+        .then(async slotsCategories => {
+          for (let i = 0; i < slotsCategories.length; i++) {
+            let page = 0;
+            while (true) {
+              const result = await listSlotsByCategory({ category: slotsCategories[i], skip: 1000 * page, limit: 1000 });
+              if (result && result.length > 0) {
+                slots.push(...result);
+                page += 1;
+              } else {
+                break;
+              }
+            }
+          }
+        });
     },
     state: () => state,
     get: (...path) => _.get(state, path),
-    listRaceRanks: (raceid) => api.actions.public('listRaceRanks', { raceid }),
-    listRacePrizes: (raceid) => api.actions.public('listRacePrizes', { raceid }),
-    listActiveRaces: (skip = 0, limit = 100) => api.actions.public('listActiveRaces', { skip, limit }),
-    listDoneRaces: (skip = 0, limit = 100) => api.actions.public('listDoneRaces', { skip, limit }),
-    listSlotCategories: () => api.actions.public('listSlotCategories'),
-    listSlotsByCategory: (args) => api.actions.public('listSlotsByCategory', args),
+    getSlots,
+    getRandomSlot,
+    listRaceRanks,
+    listRacePrizes,
+    listActiveRaces,
+    listDoneRaces,
+    listSlotCategories,
+    listSlotsByCategory
   }
 }

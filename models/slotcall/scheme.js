@@ -3,8 +3,7 @@ const _ = require('lodash')
 const Humanize = require('humanize-plus')
 
 module.exports = ({name, product, rtp, url_thumb}) => {
-  return `
-🎰 <strong>Chips Casino Slot Call</strong> 🎰 
+  return `🎰 <strong>Chips Casino Slot Call</strong> 🎰 
 🎩 ${name} 
 🎩 ${product}
 🎩 RTP ${Humanize.formatNumber(rtp,2)}% 

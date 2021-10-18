@@ -1,5 +1,5 @@
-const assert = require('assert')
-const _ = require('lodash')
+const assert = require('assert');
+const _ = require('lodash');
 
 module.exports = (timers) => {
   assert(timers, "requires timers");
@@ -9,7 +9,7 @@ Interval: ${interval} mins
 lineMinimum: ${lineMinimum}
 `)
     .join("\n")
-    .value()
+    .value();
   return `⏰ <strong>Timers</strong> ⏰
 ${timers.length > 0?listTimers: '<i>No timers, to add one do /addTimer</i>'}`;
-}
+};
