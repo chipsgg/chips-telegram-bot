@@ -65,10 +65,8 @@ API.init()
         const fetched = _.first(bigwins);
         if (!fetched.bet.slotname) return;
         const currencyInfo = API.get('public', 'currencies', fetched.bet.currency);
-        const slot = _.find(slots, (slot) => slot.game_code == fetched.bet.gamecode);
-        await bot.telegram.sendPhoto(config.mainGroup, {
-          url: slot.url_thumb
-        }, {
+        const slot = _.find(API.getSlots(), (slot) => slot.game_code == fetched.bet.gamecode);
+        await bot.telegram.sendPhoto(config.mainGroup, { url: slot.url_thumb }, {
           caption: models.autoevents.bigwin({ ...fetched.bet, currencyInfo }),
           parse_mode: "HTML",
           reply_markup: {
@@ -87,10 +85,8 @@ API.init()
         if (!fetched.bet.slotname) return;
         if (fetched.bet.multiplier < 100) return;
         const currencyInfo = API.get('public', 'currencies', fetched.bet.currency);
-        const slot = _.find(slots, (slot) => slot.game_code == fetched.bet.gamecode);
-        await bot.telegram.sendPhoto(config.mainGroup, {
-          url: slot.url_thumb
-        }, {
+        const slot = _.find(API.getSlots(), (slot) => slot.game_code == fetched.bet.gamecode);
+        await bot.telegram.sendPhoto(config.mainGroup, { url: slot.url_thumb }, {
           caption: models.autoevents.luckiest({ ...fetched.bet, currencyInfo }),
           parse_mode: "HTML",
           reply_markup: {
@@ -112,27 +108,6 @@ API.init()
         await bot.telegram.sendMessage(config.mainGroup, timer.message.text, { entities: timer.message.entities })
       }
     }, 60 * 1000);
-
-    setInterval(async () => {
-      const streamer = await Streamer.poll()
-      if (streamer) {
-        await bot.telegram.sendPhoto(config.mainGroup, { url: streamer.thumbnailUrl }, {
-          parse_mode: "HTML",
-          caption: models.showStreamer(streamer),
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "📺 WATCH NOW 📺",
-                  url: streamer.url,
-                },
-              ]
-            ],
-          },
-        })
-      }
-    }, 30 * 60 * 1000);
-
     await HttpServer(
       {
         port: process.env.PORT || 3000
