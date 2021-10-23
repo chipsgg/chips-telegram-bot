@@ -1,5 +1,5 @@
-const fs = require('fs')
-const { admins } = require('./config')
+const _ = require('lodash');
+const fs = require('fs');
 exports.formatDate = (date) => {
   var d = new Date(date),
     month = '' + (d.getMonth() + 1),
@@ -18,16 +18,14 @@ exports.formatDate = (date) => {
 
   var cd = [day, month, year].join('-') + " " + hours + ":00 UTC";
   return cd;
-}
-exports.isAdmin = (name) => {
-  return name in admins
-}
+};
 exports.convertDecimals = (num, decimals) => Number(num).toLocaleString(undefined, {
   minimumFractionDigits: 2,
   maximumFractionDigits: decimals < 2 ? 2 : Math.min(8, decimals),
-})
+});
 exports.getDirectories = (path) => {
   return fs.readdirSync(path).filter(function (file) {
     return fs.statSync(path+'/'+file).isDirectory();
   });
-}
+};
+exports.makeBroadcast = (listMethods, funcName) => (...args) => _.forEach(listMethods, (methods) => _.get(methods, funcName)(...args));
