@@ -55,21 +55,19 @@ module.exports = () => {
         }
       });
       await wait(100);
-      listSlotCategories()
-        .then(async slotsCategories => {
-          for (let i = 0; i < slotsCategories.length; i++) {
-            let page = 0;
-            while (true) {
-              const result = await listSlotsByCategory({ category: slotsCategories[i], skip: 1000 * page, limit: 1000 });
-              if (result && result.length > 0) {
-                slots.push(...result);
-                page += 1;
-              } else {
-                break;
-              }
-            }
+      const slotsCategories = await listSlotCategories()
+      for (let i = 0; i < slotsCategories.length; i++) {
+        let page = 0;
+        while (true) {
+          const result = await listSlotsByCategory({ category: slotsCategories[i], skip: 1000 * page, limit: 1000 });
+          if (result && result.length > 0) {
+            slots.push(...result);
+            page += 1;
+          } else {
+            break;
           }
-        });
+        }
+      }
     },
     state: () => state,
     get: (...path) => _.get(state, path),

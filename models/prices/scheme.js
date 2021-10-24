@@ -11,6 +11,9 @@ module.exports = (prices) => {
     .map(({ name, price }) => (`${_.upperCase(name)}/USD: ${formatCurrency(price, "USD", "en")}`))
     .join("\n")
     .value()
-  return `📈 <strong>Market prices</strong> 📈
-${content}`
+  return {
+    emoji: "📈", 
+    title: "Market prices", 
+    content
+  }
 }
