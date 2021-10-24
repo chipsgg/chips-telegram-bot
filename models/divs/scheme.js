@@ -27,20 +27,15 @@ module.exports = ({ currencies, distributeAt, totalMinted, totalStaked, totalVal
     })
     .join('\n')
     .value();
+  return `💰 <strong>The Vault</strong> 💰
+${content}
 
-  return {
-    emoji: "💰", 
-    title: "The Vault", 
-    content: `${content}
-
-**Total value: ${formatCurrency(totalValue, "USD", "en")}**
+<strong>Total value: ${formatCurrency(totalValue, "USD", "en")}</strong>
 Distribution per 1000 CHIPS: ${formatCurrency(perThousand, "USD", "en")}
 Total CHIPS minted: ${Humanize.formatNumber(totalMinted, 2)}
 Total CHIPS locked: ${Humanize.formatNumber(totalStaked, 2)}
 
-**Next distribution in:**
-${hours} hours and ${minutes} minutes`,
-url: 'https://chips.gg/vault',
-buttonLabel: '💰 GO TO VAULT 💰'
-  }
+<strong>Next distribution in: </strong>
+${hours} hours and ${minutes} minutes
+`
 }

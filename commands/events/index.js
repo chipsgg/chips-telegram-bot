@@ -3,9 +3,25 @@ module.exports = (context) => {
   return {
     events: {
       description: "Ongoing events",
-      handler: async(ctx) => {
-        const activeRaces = await API.listActiveRaces(skip = 0, limit = 10)
-        ctx.sendForm(models.events(activeRaces));
+      onlyAdmin: false,
+      handler: (ctx) => {
+        API.listActiveRaces(skip = 0, limit = 10)
+          .then(activeRaces => {
+            ctx.replyWithHTML(models.events(activeRaces), {
+              disable_web_page_preview: true,
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "✨ GO TO EVENTS ✨",
+                      url: `https://chips.gg/events`,
+                    },
+                  ]
+                ],
+              },
+              disable_notification: true
+            });
+          });
       }
     }
   };

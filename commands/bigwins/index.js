@@ -4,6 +4,7 @@ module.exports = (context) => {
   return {
     bigwins: {
       description: "Ranking of players with big wins",
+      onlyAdmin: false,
       handler: (ctx) => {
         const bigwins = API.get('stats', 'bets', 'bigwins')
         const top = _.chain(bigwins)
@@ -24,7 +25,7 @@ module.exports = (context) => {
             return obj;
           })
           .value();
-        ctx.sendForm(models.bigwins(top));
+        ctx.replyWithHTML(models.bigwins(top), { disable_notification: true });
       }
     }
   };

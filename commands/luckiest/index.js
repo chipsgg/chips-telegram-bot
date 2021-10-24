@@ -4,6 +4,7 @@ module.exports = (context) => {
   return {
     luckiest: {
       description: "Ranking of the luckiest players",
+      onlyAdmin: false,
       handler: (ctx) => {
         const luckiest = API.get('stats', 'bets', 'luckiest');
         const top = _.chain(luckiest)
@@ -21,7 +22,7 @@ module.exports = (context) => {
             return obj;
           })
           .value();
-        ctx.sendForm(models.luckiest(top));
+        ctx.replyWithHTML(models.luckiest(top), { disable_notification: true });
       }
     }
   };

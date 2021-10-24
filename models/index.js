@@ -1,19 +1,27 @@
-const help = require('./help');
-const vault = require('./vault');
-const events = require('./events');
-const prices = require('./prices');
-const slotcall = require('./slotcall');
-const luckiest = require('./luckiest');
-const bigwins = require('./bigwins');
-const autoevents = require('./autoevents');
+const error = require('./error')
+const help = require('./help')
+const divs = require('./divs')
+const events = require('./events')
+const groups = require('./groups')
+const prices = require('./prices')
+const top = require('./top')
+const slotcall = require('./slotcall')
+const luckiest = require('./luckiest')
+const bigwins = require('./bigwins')
+const timer = require('./timer')
+const autoevents = require('./autoevents')
 
 module.exports = {
+  error,
   help,
-  vault,
+  divs,
   events,
+  groups,
   prices,
+  top,
   slotcall,
   luckiest,
   bigwins,
+  timer,
   autoevents
 }
