@@ -25,5 +25,8 @@
   "author": "Chips.gg <admin@chips.gg>",
   "scripts": {
     "start": "node index.js"
+  },
+  "engines": {
+    "node": "17.0.1"
   }
 }
