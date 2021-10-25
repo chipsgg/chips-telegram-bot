@@ -28,4 +28,10 @@ exports.getDirectories = (path) => {
     return fs.statSync(path+'/'+file).isDirectory();
   });
 };
-exports.makeBroadcast = (listMethods, funcName) => (...args) => _.forEach(listMethods, (methods) => _.get(methods, funcName)(...args));
+exports.makeBroadcast = (listMethods, funcName) => (...args) => _.forEach(listMethods, (methods) => {
+  try{
+    _.get(methods, funcName)(...args);
+  }catch(e){
+    console.log('ERROR', e.message);
+  }
+});
