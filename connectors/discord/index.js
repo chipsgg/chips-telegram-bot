@@ -60,7 +60,22 @@ module.exports = (token, commands) => new Promise((resolve, reject)=> {
     const wrapper = WrapperDiscord(ctx);
     await Promise.resolve(commands[ctx.commandName].handler(wrapper));
   });
-  const broadcast = (form) => client.guilds.cache.forEach(guild => guild.channels.cache.get(guild.systemChannelId).send(form));
+    const broadcast = (form) => {
+      try {
+        client.guilds.cache.forEach(guild => {
+          const chan = guild.channels.cache.filter(
+            (channel) =>
+              channel.permissionsFor(client.user).has("SEND_MESSAGES") &&
+              channel.isText()
+          ).first();
+          if(chan){
+            chan.send(form).catch((e) => console.log("ERROR", e.message));
+          }
+        });
+      }catch(e){
+        console.log('ERROR', e.message);
+      }
+    };
   const broadcastText = (message) => broadcast({ content: message });
   const broadcastForm = (...args) => broadcast(discordMakeForm(...args));
   client.login(token);
