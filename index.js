@@ -101,6 +101,9 @@ API.init()
   })
   .then(({ broadcastText }) => {
     console.log("The bot Chips is successfully loaded");
-    setTimeout(() => broadcastText('**The bot Chips is successfully loaded. /help**'), 60 * 1000);
+    setTimeout(
+      () => broadcastText("**The bot Chips is successfully loaded. /help**"),
+      60 * 1000
+    );
   })
   .catch(console.error);
