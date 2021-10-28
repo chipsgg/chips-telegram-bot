@@ -1,4 +1,4 @@
 module.exports = {
-  discord: require('./discord'),
-  telegram: require('./telegram')
-}
+  discord: require("./discord"),
+  telegram: require("./telegram"),
+};

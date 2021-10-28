@@ -10,7 +10,7 @@ const discordMakeForm = (options) => {
   const { emoji, title, content, footer, banner, url, buttonLabel } = options;
   const row = new MessageActionRow().addComponents(
     new MessageButton()
-      .setStyle("LINK")  
+      .setStyle("LINK")
       .setLabel(buttonLabel || "Click on link")
       .setURL(url || "https://chips.gg/")
   );
@@ -24,8 +24,12 @@ const discordMakeForm = (options) => {
     );
   if (banner) embed.setImage(banner);
   if (url) embed.setURL(url);
-  return { content: " ", embeds: [embed], components: (url && buttonLabel)?[row]:[] };
-}
+  return {
+    content: " ",
+    embeds: [embed],
+    components: url && buttonLabel ? [row] : [],
+  };
+};
 
 const WrapperDiscord = (context) => {
   const sendForm = (...args) => context.reply(discordMakeForm(...args));
@@ -36,47 +40,55 @@ const WrapperDiscord = (context) => {
   };
 };
 
-module.exports = (token, commands) => new Promise((resolve, reject)=> {
-  const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
-  client.on("ready", async() => {
-    console.log(`Logged in as ${client.user.tag}!`);
-    _.forEach(_.keys(commands), (name) => {
-      const command = commands[name];
-      client.api.applications(client.user.id).commands.post({data: {
-        name,
-        description: command.description
-      }})
-      .catch(console.error);
+module.exports = (token, commands) =>
+  new Promise((resolve, reject) => {
+    const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
+    client.on("ready", async () => {
+      console.log(`Logged in as ${client.user.tag}!`);
+      _.forEach(_.keys(commands), (name) => {
+        const command = commands[name];
+        client.api
+          .applications(client.user.id)
+          .commands.post({
+            data: {
+              name,
+              description: command.description,
+            },
+          })
+          .catch(console.error);
+      });
+      resolve({
+        broadcastText,
+        broadcastForm,
+      });
     });
-    resolve({
-      broadcastText,
-      broadcastForm
-    });
-  });
 
-  client.on("interactionCreate", async (ctx) => {
-    if (!ctx.isCommand()) return;
-    if (!_.has(commands, ctx.commandName)) return ctx.reply("the command does not exist")
-    const wrapper = WrapperDiscord(ctx);
-    await Promise.resolve(commands[ctx.commandName].handler(wrapper));
-  });
+    client.on("interactionCreate", async (ctx) => {
+      if (!ctx.isCommand()) return;
+      if (!_.has(commands, ctx.commandName))
+        return ctx.reply("the command does not exist");
+      const wrapper = WrapperDiscord(ctx);
+      await Promise.resolve(commands[ctx.commandName].handler(wrapper));
+    });
     const broadcast = (form) => {
       try {
-        client.guilds.cache.forEach(guild => {
-          const chan = guild.channels.cache.filter(
-            (channel) =>
-              channel.permissionsFor(client.user).has("SEND_MESSAGES") &&
-              channel.isText()
-          ).first();
-          if(chan){
+        client.guilds.cache.forEach((guild) => {
+          const chan = guild.channels.cache
+            .filter(
+              (channel) =>
+                channel.permissionsFor(client.user).has("SEND_MESSAGES") &&
+                channel.isText()
+            )
+            .first();
+          if (chan) {
             chan.send(form).catch((e) => console.log("ERROR", e.message));
           }
         });
-      }catch(e){
-        console.log('ERROR', e.message);
+      } catch (e) {
+        console.log("ERROR", e.message);
       }
     };
-  const broadcastText = (message) => broadcast({ content: message });
-  const broadcastForm = (...args) => broadcast(discordMakeForm(...args));
-  client.login(token);
-});
+    const broadcastText = (message) => broadcast({ content: message });
+    const broadcastForm = (...args) => broadcast(discordMakeForm(...args));
+    client.login(token);
+  });
