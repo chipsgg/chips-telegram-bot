@@ -89,7 +89,7 @@ API.init()
           })
         );
       }
-    }, 1 * 1 * 1000); // every 15 min, 15 * 60 * 1000
+    }, 15 * 60 * 1000); // every 15 min, 15 * 60 * 1000
 
     await HttpServer(
       {
@@ -104,6 +104,6 @@ API.init()
   })
   .then(({ broadcastText }) => {
     console.log("The bot Chips is successfully loaded");
-    //setTimeout(() => broadcastText('**The bot Chips is successfully loaded. /help**'), 10 * 1000);
+    setTimeout(() => broadcastText('**The bot Chips is successfully loaded. /help**'), 60 * 1000);
   })
   .catch(console.error);
