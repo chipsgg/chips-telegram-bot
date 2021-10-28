@@ -28,13 +28,10 @@ API.init()
       description: "Description of all commands",
       handler: (ctx) => ctx.sendForm(models.help(commands)),
     };
-    const connectors = [];
-    connectors.push(
-      ...(await Promise.all([
-        discord(process.env.DISCORD_TOKEN, commands),
-        telegram(process.env.TELEGRAM_TOKEN, commands),
-      ]))
-    );
+    const connectors = await Promise.all([
+      discord(process.env.DISCORD_TOKEN, commands),
+      telegram(process.env.TELEGRAM_TOKEN, commands),
+    ]);
     const broadcastText = makeBroadcast(connectors, "broadcastText");
     const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
