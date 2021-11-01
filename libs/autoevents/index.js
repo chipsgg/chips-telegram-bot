@@ -1,6 +1,8 @@
+const assert = require("assert");
 const _ = require("lodash");
 
 module.exports = (API) => {
+  assert(API, "requires API");
   let lastBigwins = [];
   let lastLuckiest = [];
 

@@ -74,6 +74,7 @@ module.exports = (token, commands) =>
         const { chat } = message;
         assert(message, "requires message");
         assert(chat, "requires chat");
+        console.log('chat', chat);
         if (chat.type == "group") {
           addGroup(chat.id);
         }
@@ -87,6 +88,7 @@ module.exports = (token, commands) =>
       const { chat } = message;
       assert(message, "requires message");
       assert(chat, "requires chat");
+      console.log('chat', chat);
       if (chat.type == "group") {
         addGroup(chat.id);
       }
