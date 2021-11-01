@@ -64,7 +64,6 @@ module.exports = (token, commands) =>
     const addGroup = (id) => {
       if (!_.includes(allGroups, id)) {
         allGroups.push(id);
-        console.log("NEW GROUP", id);
       }
     };
     const bot = new Telegraf(token);
@@ -74,8 +73,7 @@ module.exports = (token, commands) =>
         const { chat } = message;
         assert(message, "requires message");
         assert(chat, "requires chat");
-        console.log('chat', chat);
-        if (chat.type == "group") {
+        if (chat.type == "group" || chat.type == "supergroup") {
           addGroup(chat.id);
         }
         const wrapper = WrapperTelegram(ctx);
@@ -88,8 +86,7 @@ module.exports = (token, commands) =>
       const { chat } = message;
       assert(message, "requires message");
       assert(chat, "requires chat");
-      console.log('chat', chat);
-      if (chat.type == "group") {
+      if (chat.type == "group" || chat.type == "supergroup") {
         addGroup(chat.id);
       }
     });
