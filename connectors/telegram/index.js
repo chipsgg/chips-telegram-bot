@@ -3,63 +3,10 @@ const _ = require("lodash");
 const marked = require("marked");
 const { Telegraf } = require("telegraf");
 
-const telegramMakeForm = ({ emoji, title, content, footer }) => `${_.trim(
-  emoji
-)} <strong>${_.trim(title)}</strong> ${_.trim(emoji)}
-${marked.parseInline(_.trim(content))}${
-  footer ? `\n\n${marked.parseInline(_.trim(footer))}` : ""
-}`;
-const WrapperTelegram = (context) => {
-  function sendForm(options) {
-    const { banner, url, buttonLabel } = options;
-    const caption = telegramMakeForm(options);
-    if (banner) {
-      return context.replyWithPhoto(
-        { url: banner },
-        {
-          caption,
-          parse_mode: "HTML",
-          reply_markup: {
-            inline_keyboard: [
-              url && buttonLabel
-                ? [
-                    {
-                      text: buttonLabel,
-                      url,
-                    },
-                  ]
-                : [],
-            ],
-          },
-        }
-      );
-    } else {
-      return context.replyWithHTML(caption, {
-        reply_markup: {
-          inline_keyboard: [
-            url && buttonLabel
-              ? [
-                  {
-                    text: buttonLabel,
-                    url,
-                  },
-                ]
-              : [],
-          ],
-        },
-      });
-    }
-  }
-  function sendText(content) {
-    return context.replyWithHTML(marked.parseInline(_.trim(content)));
-  }
-  return {
-    sendForm,
-    sendText,
-  };
-};
-module.exports = (token, commands) =>
-  new Promise((resolve, reject) => {
+module.exports = (token, commands) => {
+  assert(token, "requires token");
+  assert(commands, "requires commands");
+  return new Promise((resolve, reject) => {
     const allGroups = [];
     const addGroup = (id) => {
       if (!_.includes(allGroups, id)) {
@@ -74,6 +21,7 @@ module.exports = (token, commands) =>
         const { chat } = message;
         assert(message, "requires message");
         assert(chat, "requires chat");
+        console.log('chat', chat);
         if (chat.type == "group") {
           addGroup(chat.id);
         }
@@ -87,19 +35,20 @@ module.exports = (token, commands) =>
       const { chat } = message;
       assert(message, "requires message");
       assert(chat, "requires chat");
+      console.log('chat', chat);
       if (chat.type == "group") {
         addGroup(chat.id);
       }
     });
-    function broadcastText(message) {
+    const broadcastText = (message) => {
       assert(message, "requires message");
       _.forEach(allGroups, (groupId) =>
         bot.telegram.sendMessage(groupId, marked.parseInline(message), {
           parse_mode: "HTML",
         })
       );
-    }
-    function broadcastForm(options) {
+    };
+    const broadcastForm = (options) => {
       const { banner, url, buttonLabel } = options;
       const caption = telegramMakeForm(options);
       if (banner) {
@@ -144,7 +93,7 @@ module.exports = (token, commands) =>
           })
         );
       }
-    }
+    };
     bot
       .launch({
         dropPendingUpdates: true,
@@ -157,3 +106,61 @@ module.exports = (token, commands) =>
       )
       .catch(reject);
   });
+};
+function telegramMakeForm({ emoji, title, content, footer }) {
+  return `${_.trim(emoji)} <strong>${_.trim(title)}</strong> ${_.trim(emoji)}
+  ${marked.parseInline(_.trim(content))}${
+    footer ? `\n\n${marked.parseInline(_.trim(footer))}` : ""
+  }`;
+}
+function WrapperTelegram(context) {
+  const sendForm = (options) => {
+    assert(options, "requires options");
+    const { banner, url, buttonLabel } = options;
+    const caption = telegramMakeForm(options);
+    if (banner) {
+      return context.replyWithPhoto(
+        { url: banner },
+        {
+          caption,
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              url && buttonLabel
+                ? [
+                    {
+                      text: buttonLabel,
+                      url,
+                    },
+                  ]
+                : [],
+            ],
+          },
+        }
+      );
+    } else {
+      return context.replyWithHTML(caption, {
+        reply_markup: {
+          inline_keyboard: [
+            url && buttonLabel
+              ? [
+                  {
+                    text: buttonLabel,
+                    url,
+                  },
+                ]
+              : [],
+          ],
+        },
+      });
+    }
+  };
+  const sendText = (content) => {
+    assert(content, "requires content");
+    return context.replyWithHTML(marked.parseInline(_.trim(content)));
+  };
+  return {
+    sendForm,
+    sendText,
+  };
+}
