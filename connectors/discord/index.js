@@ -1,4 +1,3 @@
-const assert = require("assert");
 const _ = require("lodash");
 const {
   Client,
@@ -7,11 +6,42 @@ const {
   MessageButton,
   MessageEmbed,
 } = require("discord.js");
+const discordMakeForm = (options) => {
+  const { emoji, title, content, footer, banner, url, buttonLabel } = options;
+  const row = new MessageActionRow().addComponents(
+    new MessageButton()
+      .setStyle("LINK")
+      .setLabel(buttonLabel || "Click on link")
+      .setURL(url || "https://chips.gg/")
+  );
+  const embed = new MessageEmbed()
+    .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`)
+    .setDescription(_.trim(content));
+  if (footer)
+    embed.setFooter(
+      _.trim(footer),
+      "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png"
+    );
+  if (banner) embed.setImage(banner);
+  if (url) embed.setURL(url);
+  return {
+    content: " ",
+    embeds: [embed],
+    components: url && buttonLabel ? [row] : [],
+  };
+};
 
-module.exports = (token, commands) => {
-  assert(token, "requires token");
-  assert(commands, "requires commands");
-  return new Promise((resolve, reject) => {
+const WrapperDiscord = (context) => {
+  const sendForm = (...args) => context.reply(discordMakeForm(...args));
+  const sendText = (content) => context.reply({ content });
+  return {
+    sendForm,
+    sendText,
+  };
+};
+
+module.exports = (token, commands) =>
+  new Promise((resolve, reject) => {
     const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
     client.on("ready", async () => {
       console.log(`Logged in as ${client.user.tag}!`);
@@ -37,18 +67,8 @@ module.exports = (token, commands) => {
       if (!ctx.isCommand()) return;
       if (!_.has(commands, ctx.commandName))
         return ctx.reply("the command does not exist");
-      await Promise.resolve(
-        commands[ctx.commandName].handler({
-          sendForm: (options) => {
-            require(options, "requires options");
-            context.reply(discordMakeForm(options));
-          },
-          sendText: (content) => {
-            assert(content, "requires content");
-            return context.reply({ content });
-          },
-        })
-      );
+      const wrapper = WrapperDiscord(ctx);
+      await Promise.resolve(commands[ctx.commandName].handler(wrapper));
     });
     const broadcast = (form) => {
       try {
@@ -68,40 +88,7 @@ module.exports = (token, commands) => {
         console.log("ERROR", e.message);
       }
     };
-    const broadcastText = (message) => {
-      assert(message, "requires message");
-      return broadcast({ content: message });
-    };
-    const broadcastForm = (options) => {
-      assert(options, "requires options");
-      return broadcast(discordMakeForm(options));
-    };
+    const broadcastText = (message) => broadcast({ content: message });
+    const broadcastForm = (...args) => broadcast(discordMakeForm(...args));
     client.login(token);
   });
-};
-
-function discordMakeForm(options) {
-  assert(options, "requires options");
-  const { emoji, title, content, footer, banner, url, buttonLabel } = options;
-  const row = new MessageActionRow().addComponents(
-    new MessageButton()
-      .setStyle("LINK")
-      .setLabel(buttonLabel || "Click on link")
-      .setURL(url || "https://chips.gg/")
-  );
-  const embed = new MessageEmbed()
-    .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`)
-    .setDescription(_.trim(content));
-  if (footer)
-    embed.setFooter(
-      _.trim(footer),
-      "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png"
-    );
-  if (banner) embed.setImage(banner);
-  if (url) embed.setURL(url);
-  return {
-    content: " ",
-    embeds: [embed],
-    components: url && buttonLabel ? [row] : [],
-  };
-}
