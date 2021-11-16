@@ -27,7 +27,6 @@ exports.getDirectories = (path) => {
     return fs.statSync(path + "/" + file).isDirectory();
   });
 };
-<<<<<<< HEAD
 exports.makeBroadcast = (listMethods, funcName) => (...args) => _.forEach(listMethods, (methods) => _.get(methods, funcName)(...args));
 
 exports.Stack = class {
@@ -70,9 +69,3 @@ exports.Stack = class {
     return this.stack.length == 0;
   }
 }
-=======
-exports.makeBroadcast =
-  (listMethods, funcName) =>
-  (...args) =>
-    _.forEach(listMethods, (methods) => _.get(methods, funcName)(...args));
->>>>>>> d4381ecafb4ad1e690b74fd5eaa607eab52fbf8d

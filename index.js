@@ -38,7 +38,6 @@ API.init()
     // background tasks
     setInterval(() => {
       const { bigwins, luckiest } = Autoevents.poll();
-<<<<<<< HEAD
       if(bigwins){
         const currency =  _.get(bigwins, "bet.currency")
         const gamecode =  _.get(bigwins, "bet.gamecode")
@@ -69,57 +68,6 @@ API.init()
         }));
       }
     }, 1000 || 15*60*1000); // every 15 min
-=======
-      if (bigwins.length > 0) {
-        const fetched = _.first(bigwins);
-        if (!fetched) return;
-        if (!fetched.bet.slotname) return;
-        const currencyInfo = API.get(
-          "public",
-          "currencies",
-          fetched.bet.currency
-        );
-        const slot = _.find(
-          API.getSlots(),
-          (slot) => slot.game_code == fetched.bet.gamecode
-        );
-        if (!slot) return;
-        if (!slot.url_thumb) return;
-        broadcastForm(
-          models.autoevents.luckiest({
-            ...fetched.bet,
-            currencyInfo,
-            banner: slot.url_thumb,
-            url: `https://chips.gg/casino/${fetched.bet.gamecode}`,
-          })
-        );
-      } else if (luckiest.length > 0) {
-        const fetched = _.first(luckiest);
-        if (!fetched) return;
-        if (!fetched.bet.slotname) return;
-        if (fetched.bet.multiplier < 100) return;
-        const currencyInfo = API.get(
-          "public",
-          "currencies",
-          fetched.bet.currency
-        );
-        const slot = _.find(
-          API.getSlots(),
-          (slot) => slot.game_code == fetched.bet.gamecode
-        );
-        if (!slot) return;
-        if (!slot.url_thumb) return;
-        broadcastForm(
-          models.autoevents.luckiest({
-            ...fetched.bet,
-            currencyInfo,
-            banner: slot.url_thumb,
-            url: `https://chips.gg/casino/${fetched.bet.gamecode}`,
-          })
-        );
-      }
-    }, 15 * 60 * 1000); // every 15 min, 15 * 60 * 1000
->>>>>>> d4381ecafb4ad1e690b74fd5eaa607eab52fbf8d
 
     await HttpServer(
       {
