@@ -1,31 +1,34 @@
 const _ = require('lodash')
-
+const { Stack } = require('../../utils')
 module.exports = (API) => {
-  let lastBigwins = []
-  let lastLuckiest = []
+  let cacheBigwins = new Stack(300);
+  let cacheLuckiest = new Stack(300);
 
-  function getKeysBigwins() {
-    return _.keys(API.get('stats', 'bets', 'bigwins'))
-  }
-  function getKeysLuckiest() {
-    return _.keys(API.get('stats', 'bets', 'luckiest'))
-  }
-  const init = () => {
-    lastBigwins = getKeysBigwins()
-    lastLuckiest = getKeysLuckiest()
-  }
-  const poll = () => {
-    const bigwins = _.filter(getKeysBigwins(), (newKey) => !_.includes(lastBigwins, newKey)) || []
-    const luckiest = _.filter(getKeysLuckiest(), (newKey) => !_.includes(lastLuckiest, newKey)) || []
-    lastBigwins = _.takeRight([...lastBigwins, ...bigwins], 200)
-    lastLuckiest = _.takeRight([...lastLuckiest, ...luckiest], 200)
-    return {
-      bigwins: _.map(bigwins, (key) => API.get('stats', 'bets', 'bigwins', key)),
-      luckiest: _.map(luckiest, (key) => API.get('stats', 'bets', 'luckiest', key))
+  function poll() {
+    function parseNewData(cache, newData) {
+      return _.chain(newData)
+        .keys()
+        .map(k => _.get(newData, k))
+        .filter(({ id }) => !_.includes(cache.stack, id))
+        .value();
     }
+    const filterEvents = (events, mMultiplier = 1.01) => _.chain(events)
+      .filter("bet.done")
+      .filter("bet.win")
+      .filter(v => _.gte(_.get(v, "bet.multiplier"), mMultiplier))
+      .sortBy("bet.updated")
+      .last()
+      .value();
+    const bigwins = parseNewData(cacheBigwins, API.get('stats', 'bets', 'bigwins'));
+    const luckiest = parseNewData(cacheLuckiest, API.get('stats', 'bets', 'luckiest'));
+    cacheBigwins.push(..._.map(bigwins, "id"));
+    cacheLuckiest.push(..._.map(luckiest, "id"));
+    return {
+      bigwins: filterEvents(bigwins),
+      luckiest: filterEvents(luckiest, 100)
+    };
   }
   return {
-    init,
     poll
   }
 }
