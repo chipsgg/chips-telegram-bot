@@ -27,7 +27,45 @@ exports.getDirectories = (path) => {
     return fs.statSync(path + "/" + file).isDirectory();
   });
 };
-exports.makeBroadcast =
-  (listMethods, funcName) =>
-  (...args) =>
-    _.forEach(listMethods, (methods) => _.get(methods, funcName)(...args));
+exports.makeBroadcast = (listMethods, funcName) => (...args) => _.forEach(listMethods, (methods) => _.get(methods, funcName)(...args));
+
+exports.Stack = class {
+  // Array is used to implement stack 
+  constructor(maxsize) {
+    this.stack = [];
+    this.maxsize = maxsize;
+  }
+  // push function 
+  push(...elements) {
+    for(let i=0; i < elements.length;i++){
+      while (this.stack.length >= this.maxsize){
+        this.stack.splice(0, 1)
+      }
+      this.stack.push(elements[i])
+    }
+  }
+  // pop function 
+  pop() {
+    if (this.stack.length == 0) throw new Error("Underflow");
+    return this.stack.pop();
+  }
+  *popAll(){
+    while(!this.isEmpty()){
+      yield this.pop()
+    }
+  }
+  top(){
+    if(this.isEmpty()) throw new Error("no items in stack")
+    return this.stack[this.length - 1];
+  }
+  // length function 
+  length() {
+    // return stack legth
+    return this.stack.length;
+  }
+  // isEmpty function 
+  isEmpty() {
+    // return true if stack is empty 
+    return this.stack.length == 0;
+  }
+}
