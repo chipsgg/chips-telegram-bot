@@ -67,7 +67,7 @@ API.init()
           url: `https://chips.gg/casino/${gamecode}` 
         }));
       }
-    }, 1000 || 15*60*1000); // every 15 min
+    }, 15*60*1000); // every 15 min
 
     await HttpServer(
       {
