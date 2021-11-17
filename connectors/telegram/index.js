@@ -2,12 +2,12 @@ const assert = require("assert");
 const _ = require("lodash");
 const marked = require("marked");
 const { Telegraf } = require("telegraf");
-
+const parseAndClean = (content) => _.replace(marked.parseInline(_.trim(content)), "<br>", "\n")
 const telegramMakeForm = ({ emoji, title, content, footer }) => `${_.trim(
   emoji
 )} <strong>${_.trim(title)}</strong> ${_.trim(emoji)}
-${marked.parseInline(_.trim(content))}${
-  footer ? `\n\n${marked.parseInline(_.trim(footer))}` : ""
+${parseAndClean(content)}${
+  footer ? `\n\n${parseAndClean(footer)}` : ""
 }`;
 const WrapperTelegram = (context) => {
   function sendForm(options) {
@@ -51,7 +51,7 @@ const WrapperTelegram = (context) => {
     }
   }
   function sendText(content) {
-    return context.replyWithHTML(marked.parseInline(_.trim(content)));
+    return context.replyWithHTML(parseAndClean(content));
   }
   return {
     sendForm,
@@ -93,7 +93,7 @@ module.exports = (token, commands) =>
     function broadcastText(message) {
       assert(message, "requires message");
       _.forEach(allGroups, (groupId) =>
-        bot.telegram.sendMessage(groupId, marked.parseInline(message), {
+        bot.telegram.sendMessage(groupId, parseAndClean(message), {
           parse_mode: "HTML",
         })
       );
