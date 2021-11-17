@@ -23,7 +23,7 @@ module.exports = ({
 🤞 ${convertDecimals(amountValue, currencyInfo.decimals)} ${_.upperCase(
       currency
     )}
-    
+
 💰 **${convertDecimals(winningsValue, currencyInfo.decimals)} ${_.upperCase(
       currency
     )}** 💰`,
