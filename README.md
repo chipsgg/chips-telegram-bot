@@ -8,6 +8,7 @@ Checkout the demo on Telegram:
 ## ENV
 
 ```env
-apikey=
-alertInterval=15
+DISCORD_TOKEN=
+TELEGRAM_TOKEN=
+alertInterval=
 ```
