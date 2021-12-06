@@ -35,17 +35,18 @@ API.init()
     const broadcastText = makeBroadcast(connectors, "broadcastText");
     const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
-    // background tasks
-    setInterval(async () => {
+    const timer = async () => {
       const trigger = _.eq(
         _.ceil(_.divide(Date.now(), 1000)) %
           _.multiply(60, process.env.alertInterval || 15),
         0
       );
       if (!trigger) {
+        setTimeout(timer, 100);
         return;
       }
-      await wait(1100);
+      setTimeout(timer, 1100);
+      console.log("trigger");
       const { bigwins, luckiest } = Autoevents.poll();
       if (bigwins) {
         const currency = _.get(bigwins, "bet.currency");
@@ -56,7 +57,7 @@ API.init()
         );
         if (!slot) return;
         if (!slot.url_thumb) return;
-
+        console.log("BROADCAST");
         broadcastForm(
           models.autoevents.bigwin({
             ...bigwins.bet,
@@ -74,7 +75,7 @@ API.init()
         );
         if (!slot) return;
         if (!slot.url_thumb) return;
-
+        console.log("BROADCAST");
         broadcastForm(
           models.autoevents.luckiest({
             ...luckiest.bet,
@@ -84,8 +85,8 @@ API.init()
           })
         );
       }
-    }, 100);
-
+    };
+    setImmediate(timer);
     await HttpServer(
       {
         port: process.env.PORT || 3000,
