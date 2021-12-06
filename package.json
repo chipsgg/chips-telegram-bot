@@ -2,7 +2,6 @@
   "dependencies": {
     "@chipsgg/ws-client": "^1.0.15",
     "@coingecko/cryptoformat": "^0.4.4",
-    "@rundik/telegram-text-entities-filler": "^0.2.2",
     "actions-http": "^2.1.0",
     "dayjs": "^1.10.7",
     "discord.js": "^13.2.0",
@@ -27,6 +26,6 @@
     "start": "node index.js"
   },
   "engines": {
-    "node": "17.0.1"
+    "node": "17"
   }
 }
