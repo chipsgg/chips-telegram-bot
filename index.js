@@ -46,7 +46,6 @@ API.init()
         return;
       }
       setTimeout(timer, 1100);
-      console.log("trigger");
       const { bigwins, luckiest } = Autoevents.poll();
       if (bigwins) {
         const currency = _.get(bigwins, "bet.currency");
@@ -57,7 +56,6 @@ API.init()
         );
         if (!slot) return;
         if (!slot.url_thumb) return;
-        console.log("BROADCAST");
         broadcastForm(
           models.autoevents.bigwin({
             ...bigwins.bet,
@@ -75,7 +73,6 @@ API.init()
         );
         if (!slot) return;
         if (!slot.url_thumb) return;
-        console.log("BROADCAST");
         broadcastForm(
           models.autoevents.luckiest({
             ...luckiest.bet,
