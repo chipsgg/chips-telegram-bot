@@ -11,4 +11,5 @@ Checkout the demo on Telegram:
 DISCORD_TOKEN=
 TELEGRAM_TOKEN=
 alertInterval=
+alertMinimumDollar=
 ```
