@@ -4,7 +4,7 @@ const models = require("./models");
 const API = require("./libs/chipsapi")();
 const Autoevents = require("./libs/autoevents")(API);
 const HttpServer = require("actions-http");
-const { makeBroadcast } = require("./utils");
+const { makeBroadcast, wait } = require("./utils");
 const { discord, telegram } = require("./connectors");
 // your desired application interface.
 const actions = {
@@ -35,40 +35,55 @@ API.init()
     const broadcastText = makeBroadcast(connectors, "broadcastText");
     const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
-    // background tasks
-    setInterval(() => {
-      const { bigwins, luckiest } = Autoevents.poll();
-      if(bigwins){
-        const currency =  _.get(bigwins, "bet.currency")
-        const gamecode =  _.get(bigwins, "bet.gamecode")
-        const currencyInfo = API.get('public', 'currencies', currency);
-        const slot = _.find(API.getSlots(), (s) => _.eq(_.get(s, "game_code"), gamecode));
-        if(!slot) return;
-        if(!slot.url_thumb) return;
-        
-        broadcastForm(models.autoevents.bigwin({
-          ...bigwins.bet, 
-          currencyInfo, 
-          banner: slot.url_thumb, 
-          url: `https://chips.gg/casino/${gamecode}`
-        }));
-      }else if(luckiest){
-        const currency =  _.get(luckiest, "bet.currency")
-        const gamecode =  _.get(luckiest, "bet.gamecode")
-        const currencyInfo = API.get('public', 'currencies', currency);
-        const slot = _.find(API.getSlots(), (s) => _.eq(_.get(s, "game_code"), gamecode));
-        if(!slot) return;
-        if(!slot.url_thumb) return;
-
-        broadcastForm(models.autoevents.luckiest({
-          ...luckiest.bet, 
-          currencyInfo, 
-          banner: slot.url_thumb, 
-          url: `https://chips.gg/casino/${gamecode}` 
-        }));
+    const timer = async () => {
+      const trigger = _.eq(
+        _.ceil(_.divide(Date.now(), 1000)) %
+          _.multiply(60, process.env.alertInterval || 15),
+        0
+      );
+      if (!trigger) {
+        setTimeout(timer, 100);
+        return;
       }
-    }, 15*60*1000); // every 15 min
-
+      setTimeout(timer, 1100);
+      const { bigwins, luckiest } = Autoevents.poll();
+      if (bigwins) {
+        const currency = _.get(bigwins, "bet.currency");
+        const gamecode = _.get(bigwins, "bet.gamecode");
+        const currencyInfo = API.get("public", "currencies", currency);
+        const slot = _.find(API.getSlots(), (s) =>
+          _.eq(_.get(s, "game_code"), gamecode)
+        );
+        if (!slot) return;
+        if (!slot.url_thumb) return;
+        broadcastForm(
+          models.autoevents.bigwin({
+            ...bigwins.bet,
+            currencyInfo,
+            banner: slot.url_thumb,
+            url: `https://chips.gg/casino/${gamecode}`,
+          })
+        );
+      } else if (luckiest) {
+        const currency = _.get(luckiest, "bet.currency");
+        const gamecode = _.get(luckiest, "bet.gamecode");
+        const currencyInfo = API.get("public", "currencies", currency);
+        const slot = _.find(API.getSlots(), (s) =>
+          _.eq(_.get(s, "game_code"), gamecode)
+        );
+        if (!slot) return;
+        if (!slot.url_thumb) return;
+        broadcastForm(
+          models.autoevents.luckiest({
+            ...luckiest.bet,
+            currencyInfo,
+            banner: slot.url_thumb,
+            url: `https://chips.gg/casino/${gamecode}`,
+          })
+        );
+      }
+    };
+    setImmediate(timer);
     await HttpServer(
       {
         port: process.env.PORT || 3000,
