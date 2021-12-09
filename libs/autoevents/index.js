@@ -38,7 +38,10 @@ module.exports = (API) => {
     cacheLuckiest.push(..._.map(luckiest, "id"));
     return {
       bigwins: filterEvents(bigwins),
-      luckiest: filterEvents(luckiest, 100),
+      luckiest: filterEvents(
+        luckiest,
+        process.env.alertMinimumMultiplier || 100
+      ),
     };
   }
   return {

@@ -12,4 +12,5 @@ DISCORD_TOKEN=
 TELEGRAM_TOKEN=
 alertInterval=
 alertMinimumDollar=
+alertMinimumMultiplier=
 ```
