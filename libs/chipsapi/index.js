@@ -43,10 +43,11 @@ module.exports = () => {
         async (type, newState) => {
           switch (type) {
             case "change": {
-              state = {
+              /*state = {
                 ...state,
                 ...newState,
-              };
+              };*/
+              state = newState;
               break;
             }
             case "open": {
