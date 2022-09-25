@@ -1,11 +1,14 @@
 require("dotenv").config();
 const _ = require("lodash");
 const models = require("./models");
+
 const API = require("./libs/sdk")();
 const Autoevents = require("./libs/autoevents")(API);
 const HttpServer = require("actions-http");
-const { makeBroadcast, wait } = require("./utils");
+
+const { makeBroadcast } = require("./utils");
 const { discord, telegram } = require("./connectors");
+
 // your desired application interface.
 const actions = {
   async ping(params) {
@@ -17,21 +20,24 @@ const actions = {
 };
 
 // start the bot
-
 API.init()
   .then(async () => {
+    
     const commands = require("./commands")({
       API,
       models,
     });
+    
     commands.help = {
       description: "Description of all commands",
       handler: (ctx) => ctx.sendForm(models.help(commands)),
     };
+    
     const connectors = await Promise.all([
       discord(process.env.DISCORD_TOKEN, commands),
       telegram(process.env.TELEGRAM_TOKEN, commands),
     ]);
+
     const broadcastText = makeBroadcast(connectors, "broadcastText");
     const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
@@ -83,13 +89,16 @@ API.init()
         );
       }
     };
+
     setImmediate(timer);
+
     await HttpServer(
       {
         port: process.env.PORT || 3000,
       },
       actions
     );
+
     return {
       broadcastForm,
       broadcastText,
