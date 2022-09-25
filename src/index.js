@@ -1,12 +1,12 @@
 require("dotenv").config();
 // const _ = require("lodash");
-const models = require("./models");
-const SDK = require("./libs/sdk");
-// const Autoevents = require("./libs/autoevents")(API);
 const HttpServer = require("actions-http");
-
-const { makeBroadcast } = require("./utils");
-const { Discord, Telegram } = require("./connectors");
+// const Autoevents = require("./libs/autoevents")(API);
+const models = require("./libs/models");
+const SDK = require("./libs/sdk");
+const { makeBroadcast } = require("./libs/utils");
+const { Discord, Telegram } = require("./libs/connectors");
+const Commands = require("./libs/commands");
 
 // your desired application interface.
 const actions = {
@@ -22,7 +22,7 @@ const actions = {
 (async () => {
   const api = await SDK();
 
-  const commands = require("./commands")({
+  const commands = Commands({
     api,
     models,
   });
@@ -98,13 +98,13 @@ const actions = {
 
   // setImmediate(timer);
 
-  await HttpServer(
-    {
-      port: process.env.PORT || 3000,
-    },
-    actions
-  );
+  // await HttpServer(
+  //   {
+  //     port: process.env.PORT || 3000,
+  //   },
+  //   actions
+  // );
 
   console.log("The bot Chips is successfully loaded");
-  broadcastText("**The bot Chips is successfully loaded. /help**")
+  broadcastText("**The bot Chips is successfully loaded. /help**");
 })();

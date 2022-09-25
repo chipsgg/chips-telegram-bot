@@ -4,6 +4,8 @@ const lodash = require("lodash");
 // const assert = require("assert");
 
 module.exports = async (config) => {
+  let state = {};
+  
   const channels = [
     "games",
     "public",
@@ -46,11 +48,10 @@ module.exports = async (config) => {
     }
   );
 
-  let state = {};
-  const slots = [];
+  // const slots = [];
 
-  const getSlots = lodash.constant(slots);
-  const getRandomSlot = () => lodash.sample(getSlots());
+  // const getSlots = lodash.constant(slots);
+  // const getRandomSlot = () => lodash.sample(getSlots());
 
   const listRaceRanks = (raceid) =>
     api.actions.public("listRaceRanks", { raceid });
@@ -64,23 +65,23 @@ module.exports = async (config) => {
   const listSlotsByCategory = (args) =>
     api.actions.public("listSlotsByCategory", args);
 
-  const slotsCategories = await listSlotCategories();
-  for (let i = 0; i < slotsCategories.length; i++) {
-    let page = 0;
-    while (true) {
-      const result = await listSlotsByCategory({
-        category: slotsCategories[i],
-        skip: 1000 * page,
-        limit: 1000,
-      });
-      if (result && result.length > 0) {
-        slots.push(...result);
-        page += 1;
-      } else {
-        break;
-      }
-    }
-  }
+  // const slotsCategories = await listSlotCategories();
+  // for (let i = 0; i < slotsCategories.length; i++) {
+  //   let page = 0;
+  //   while (true) {
+  //     const result = await listSlotsByCategory({
+  //       category: slotsCategories[i],
+  //       skip: 1000 * page,
+  //       limit: 1000,
+  //     });
+  //     if (result && result.length > 0) {
+  //       slots.push(...result);
+  //       page += 1;
+  //     } else {
+  //       break;
+  //     }
+  //   }
+  // }
 
   setInterval(() => {
     api.actions.profitshare("on", { name: "profitshareInfo" });
@@ -93,8 +94,8 @@ module.exports = async (config) => {
   return {
     state: () => state,
     get: (...path) => lodash.get(state, path),
-    getSlots,
-    getRandomSlot,
+    // getSlots,
+    // getRandomSlot,
     listRaceRanks,
     listRacePrizes,
     listActiveRaces,
