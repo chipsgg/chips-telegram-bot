@@ -15,7 +15,4 @@ secrets.*
 # .k8s
 .config
 .vscode
-./docker-compose/rethinkdb_data
-./docker-compose/nats-streaming
-rethinkdb_data
 .yarn

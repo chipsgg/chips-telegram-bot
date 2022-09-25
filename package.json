@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@chipsgg/ws-client": "^1.0.15",
+    "@chipsgg/openservice-ws-client": "^1.0.34",
     "@coingecko/cryptoformat": "^0.4.4",
     "actions-http": "^2.1.0",
     "dayjs": "^1.10.7",
@@ -19,13 +19,18 @@
   "name": "@chipsgg/telegram-bot",
   "version": "2.7.2",
   "description": "A community supported project built for chips.gg",
-  "main": "index.js",
+  "main": "./src/index.js",
   "repository": "git@github.com:chipsgg/chips-telegram-bot.git",
   "author": "Chips.gg <admin@chips.gg>",
   "scripts": {
-    "start": "node index.js"
+    "start": "node ./src/index.js",
+    "lint": "prettier ./src/**/*.js --write && eslint --fix ./src/**/*.js"
   },
   "engines": {
     "node": "17"
+  },
+  "devDependencies": {
+    "eslint": "^8.24.0",
+    "prettier": "^2.7.1"
   }
 }
