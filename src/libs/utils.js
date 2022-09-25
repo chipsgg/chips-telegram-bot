@@ -25,7 +25,7 @@ exports.convertDecimals = (num, decimals) =>
     maximumFractionDigits: decimals < 2 ? 2 : Math.min(8, decimals),
   });
 
-  exports.getDirectories = (path) => {
+exports.getDirectories = (path) => {
   return fs.readdirSync(path).filter(function (file) {
     return fs.statSync(path + "/" + file).isDirectory();
   });

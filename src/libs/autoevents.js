@@ -1,22 +1,25 @@
-const _ = require("lodash");
+const lodash = require("lodash");
 const { Stack } = require("../../utils");
+
 module.exports = (API) => {
   let cacheBigwins = new Stack(300);
   let cacheLuckiest = new Stack(300);
 
   function poll() {
     function parseNewData(cache, newData) {
-      return _.chain(newData)
+      return lodash
+        .chain(newData)
         .keys()
-        .map((k) => _.get(newData, k))
-        .filter(({ id }) => !_.includes(cache.stack, id))
+        .map((k) => lodash.get(newData, k))
+        .filter(({ id }) => !lodash.includes(cache.stack, id))
         .value();
     }
     const filterEvents = (events, mMultiplier = 1.01) =>
-      _.chain(events)
+      lodash
+        .chain(events)
         .filter("bet.done")
         .filter("bet.win")
-        .filter(({ bet }) => _.gte(bet.multiplier, mMultiplier))
+        .filter(({ bet }) => lodash.gte(bet.multiplier, mMultiplier))
         .filter(({ bet }) => {
           const currency = API.get("public", "currencies", bet.currency);
           const winnings =
@@ -34,8 +37,8 @@ module.exports = (API) => {
       cacheLuckiest,
       API.get("stats", "bets", "luckiest")
     );
-    cacheBigwins.push(..._.map(bigwins, "id"));
-    cacheLuckiest.push(..._.map(luckiest, "id"));
+    cacheBigwins.push(...lodash.map(bigwins, "id"));
+    cacheLuckiest.push(...lodash.map(luckiest, "id"));
     return {
       bigwins: filterEvents(bigwins),
       luckiest: filterEvents(
