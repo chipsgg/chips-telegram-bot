@@ -1,13 +1,17 @@
+const assert = require("assert");
 const _ = require("lodash");
+const models = require("./models");
 
-module.exports = (context) => {
-  const { api, models } = context;
-  return {
+module.exports = (api) => {
+  assert(api, "requires api");
+
+  const commands = {
     slotcall: {
       description: "Get a random slot",
       handler: (ctx) => {
         const slot = api.getRandomSlot();
-        ctx.sendForm(
+
+        return ctx.sendForm(
           models.slotcall({
             ...slot,
             url: `https://chips.gg/casino/${slot.id}`,
@@ -28,14 +32,15 @@ module.exports = (context) => {
               !_.endsWith(x.name, "usd")
           )
           .value();
-        ctx.sendForm(models.prices(content));
+
+        return ctx.sendForm(models.prices(content));
       },
     },
     events: {
       description: "Ongoing events",
       handler: async (ctx) => {
         const activeRaces = await api.listActiveRaces(0, 10);
-        ctx.sendForm(models.events(activeRaces));
+        return ctx.sendForm(models.events(activeRaces));
       },
     },
     bigwins: {
@@ -66,7 +71,8 @@ module.exports = (context) => {
             return obj;
           })
           .value();
-        ctx.sendForm(models.bigwins(top));
+
+        return ctx.sendForm(models.bigwins(top));
       },
     },
     vault: {
@@ -99,7 +105,8 @@ module.exports = (context) => {
           .sumBy(({ value, price }) => value * price)
           .value();
         const perThousand = (totalValue / 4 / totalStaked) * 100;
-        ctx.sendForm(
+
+        return ctx.sendForm(
           models.vault({
             currencies,
             distributeAt,
@@ -134,8 +141,17 @@ module.exports = (context) => {
             return obj;
           })
           .value();
-        ctx.sendForm(models.luckiest(top));
+
+        return ctx.sendForm(models.luckiest(top));
       },
     },
   };
+
+  // help menu
+  commands.help = {
+    description: "Description of all commands",
+    handler: (ctx) => ctx.sendForm(models.help(commands)),
+  };
+
+  return commands;
 };

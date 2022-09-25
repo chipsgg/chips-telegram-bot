@@ -2,7 +2,6 @@ require("dotenv").config();
 // const _ = require("lodash");
 const HttpServer = require("actions-http");
 // const Autoevents = require("./libs/autoevents")(API);
-const models = require("./libs/models");
 const SDK = require("./libs/sdk");
 const { makeBroadcast } = require("./libs/utils");
 const { Discord, Telegram } = require("./libs/connectors");
@@ -21,16 +20,7 @@ const actions = {
 // start the bot
 (async () => {
   const api = await SDK();
-
-  const commands = Commands({
-    api,
-    models,
-  });
-
-  commands.help = {
-    description: "Description of all commands",
-    handler: (ctx) => ctx.sendForm(models.help(commands)),
-  };
+  const commands = Commands(api);
 
   const connectors = [];
 
