@@ -1,9 +1,6 @@
 # Chips.gg Chat Bot
 
-A chat bot for Chips.gg
-
-Checkout the demo on Telegram:
-<http://t.me/chipsgg_dev_bot>
+Checkout the demo on Telegram: <http://t.me/chipsgg_dev_bot>
 
 ## ENV
 
