@@ -3,7 +3,7 @@
 A chat bot for Chips.gg
 
 Checkout the demo on Telegram:
-<https://t.me/chipsgg_test_bot>
+<http://t.me/chipsgg_dev_bot>
 
 ## ENV
 
