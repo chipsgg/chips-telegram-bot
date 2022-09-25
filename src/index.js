@@ -1,7 +1,7 @@
 require("dotenv").config();
 const _ = require("lodash");
 const models = require("./models");
-const API = require("./libs/chipsapi")();
+const API = require("./libs/sdk")();
 const Autoevents = require("./libs/autoevents")(API);
 const HttpServer = require("actions-http");
 const { makeBroadcast, wait } = require("./utils");
