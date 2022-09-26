@@ -48,11 +48,6 @@ module.exports = async (config) => {
     }
   );
 
-  // const slots = [];
-
-  // const getSlots = lodash.constant(slots);
-  // const getRandomSlot = () => lodash.sample(getSlots());
-
   const listRaceRanks = (raceid) =>
     api.actions.public("listRaceRanks", { raceid });
   const listRacePrizes = (raceid) =>
@@ -64,24 +59,6 @@ module.exports = async (config) => {
   const listSlotCategories = () => api.actions.public("listSlotCategories");
   const listSlotsByCategory = (args) =>
     api.actions.public("listSlotsByCategory", args);
-
-  // const slotsCategories = await listSlotCategories();
-  // for (let i = 0; i < slotsCategories.length; i++) {
-  //   let page = 0;
-  //   while (true) {
-  //     const result = await listSlotsByCategory({
-  //       category: slotsCategories[i],
-  //       skip: 1000 * page,
-  //       limit: 1000,
-  //     });
-  //     if (result && result.length > 0) {
-  //       slots.push(...result);
-  //       page += 1;
-  //     } else {
-  //       break;
-  //     }
-  //   }
-  // }
 
   async function getRandomSlot() {
     const slots = await api.actions.public('listGamesMostPlayed', { skip: 0, limit: 100 })
@@ -99,7 +76,6 @@ module.exports = async (config) => {
   return {
     state: () => state,
     get: (...path) => lodash.get(state, path),
-    // getSlots,
     getRandomSlot,
     listRaceRanks,
     listRacePrizes,
