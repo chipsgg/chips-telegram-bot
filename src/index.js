@@ -8,14 +8,7 @@ const { Discord, Telegram } = require("./libs/connectors");
 const Commands = require("./libs/commands");
 
 // your desired application interface.
-const actions = {
-  async ping(params) {
-    return "pong";
-  },
-  async echo(params) {
-    return params;
-  },
-};
+const actions = {};
 
 // start the bot
 (async () => {
@@ -88,13 +81,20 @@ const actions = {
 
   // setImmediate(timer);
 
-  // await HttpServer(
-  //   {
-  //     port: process.env.PORT || 3000,
-  //   },
-  //   actions
-  // );
-
   console.log("The bot Chips is successfully loaded");
   broadcastText("**The bot Chips is successfully loaded. /help**");
+
+  return HttpServer(
+    {
+      port: process.env.HTTP_PORT || 3000,
+    },
+    {
+      async ping(params) {
+        return "pong";
+      },
+      async echo(params) {
+        return params;
+      },
+    }
+  );
 })();
