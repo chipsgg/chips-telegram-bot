@@ -15,6 +15,6 @@ alertMinimumMultiplier=
 ## Quickstart
 
 ```bash
-    yarn install
-    yarn start
+yarn install
+yarn start
 ```
