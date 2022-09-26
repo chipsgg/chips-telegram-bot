@@ -6,5 +6,5 @@ COPY . .
 FROM node:alpine
 COPY --from=build /app /
 
-#EXPOSE 3000 4000
-CMD ["dumb-init", "node", "./src/index.js" ]
+EXPOSE 3000
+CMD [ "yarn", "start" ]
