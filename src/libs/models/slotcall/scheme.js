@@ -2,14 +2,14 @@ const assert = require("assert");
 const _ = require("lodash");
 const Humanize = require("humanize-plus");
 
-module.exports = ({ name, product, rtp, url, url_thumb }) => ({
+module.exports = ({ id, title, producer, rtp, images }) => ({
   emoji: "🎰",
   title: "Chips Casino Slot Call",
-  content: `🎩 ${name}
-🎩 ${product}
+  content: `🎩 ${title}
+🎩 ${producer}
 🎩 RTP ${Humanize.formatNumber(rtp, 2)}%`,
   footer: "Good Luck and may the Chips be forever stacked in your favour ⭐️",
-  banner: url_thumb,
-  url,
+  banner: images.s2,
+  url:`https://chips.gg/casino/${id}`,
   buttonLabel: "🎰 PLAY NOW 🎰",
 });

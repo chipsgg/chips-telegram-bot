@@ -83,6 +83,11 @@ module.exports = async (config) => {
   //   }
   // }
 
+  async function getRandomSlot() {
+    const slots = await api.actions.public('listGamesMostPlayed', { skip: 0, limit: 100 })
+    return lodash.sample(slots)
+  }
+
   setInterval(() => {
     api.actions.profitshare("on", { name: "profitshareInfo" });
     api.actions.profitshare("on", { name: "profitshareBalance" });
@@ -95,7 +100,7 @@ module.exports = async (config) => {
     state: () => state,
     get: (...path) => lodash.get(state, path),
     // getSlots,
-    // getRandomSlot,
+    getRandomSlot,
     listRaceRanks,
     listRacePrizes,
     listActiveRaces,

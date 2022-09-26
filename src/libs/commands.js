@@ -8,13 +8,12 @@ module.exports = (api) => {
   const commands = {
     slotcall: {
       description: "Get a random slot",
-      handler: (ctx) => {
-        const slot = api.getRandomSlot();
+      handler: async (ctx) => {
+        const slot = await api.getRandomSlot();
 
         return ctx.sendForm(
           models.slotcall({
             ...slot,
-            url: `https://chips.gg/casino/${slot.id}`,
           })
         );
       },
@@ -36,45 +35,13 @@ module.exports = (api) => {
         return ctx.sendForm(models.prices(content));
       },
     },
-    events: {
-      description: "Ongoing events",
-      handler: async (ctx) => {
-        const activeRaces = await api.listActiveRaces(0, 10);
-        return ctx.sendForm(models.events(activeRaces));
-      },
-    },
-    bigwins: {
-      description: "Ranking of players with big wins",
-      handler: (ctx) => {
-        const bigwins = api.get("stats", "bets", "bigwins");
-        const top = _.chain(bigwins)
-          .keys()
-          .map((id) => bigwins[id])
-          .filter(({ bet }) => _.keys(bet).length > 0)
-          .orderBy(({ bet }) => {
-            const { decimals } = api.get("public", "currencies", bet.currency);
-            return bet.winnings / Math.pow(10, decimals);
-          })
-          .reverse()
-          .uniqBy("userid")
-          .take(10)
-          .map((obj) => {
-            const { price, decimals } = api.get(
-              "public",
-              "currencies",
-              obj.bet.currency
-            );
-            obj.bet.amountInDollar =
-              (obj.bet.amount / Math.pow(10, decimals)) * price;
-            obj.bet.winningsInDollar =
-              (obj.bet.winnings / Math.pow(10, decimals)) * price;
-            return obj;
-          })
-          .value();
-
-        return ctx.sendForm(models.bigwins(top));
-      },
-    },
+    // events: {
+    //   description: "Ongoing events",
+    //   handler: async (ctx) => {
+    //     const activeRaces = await api.listActiveRaces(0, 10);
+    //     return ctx.sendForm(models.events(activeRaces));
+    //   },
+    // },
     vault: {
       description: "The vault and rewards related",
       handler: (ctx) => {
@@ -116,6 +83,38 @@ module.exports = (api) => {
             perThousand,
           })
         );
+      },
+    },
+    bigwins: {
+      description: "Ranking of players with big wins",
+      handler: (ctx) => {
+        const bigwins = api.get("stats", "bets", "bigwins");
+        const top = _.chain(bigwins)
+          .keys()
+          .map((id) => bigwins[id])
+          .filter(({ bet }) => _.keys(bet).length > 0)
+          .orderBy(({ bet }) => {
+            const { decimals } = api.get("public", "currencies", bet.currency);
+            return bet.winnings / Math.pow(10, decimals);
+          })
+          .reverse()
+          .uniqBy("userid")
+          .take(10)
+          .map((obj) => {
+            const { price, decimals } = api.get(
+              "public",
+              "currencies",
+              obj.bet.currency
+            );
+            obj.bet.amountInDollar =
+              (obj.bet.amount / Math.pow(10, decimals)) * price;
+            obj.bet.winningsInDollar =
+              (obj.bet.winnings / Math.pow(10, decimals)) * price;
+            return obj;
+          })
+          .value();
+
+        return ctx.sendForm(models.bigwins(top));
       },
     },
     luckiest: {
