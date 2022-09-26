@@ -86,7 +86,7 @@ const actions = {};
 
   return HttpServer(
     {
-      port: process.env.HTTP_PORT || 3000,
+      port: process.env.PORT || process.env.HTTP_PORT || 3000,
     },
     {
       async ping(params) {
