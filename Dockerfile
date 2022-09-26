@@ -7,4 +7,4 @@ FROM node:alpine
 COPY --from=build /app /
 
 EXPOSE 3000
-CMD [ "yarn", "start" ]
+CMD [ "node", "index.js" ]

@@ -19,12 +19,12 @@
   "name": "@chipsgg/telegram-bot",
   "version": "3.0.0",
   "description": "A community supported project built for chips.gg",
-  "main": "./src/index.js",
+  "main": "index.js",
   "repository": "git@github.com:chipsgg/chips-telegram-bot.git",
   "author": "Chips.gg <admin@chips.gg>",
   "scripts": {
-    "start": "node ./src/index.js",
-    "lint": "prettier ./src/**/*.js --write && eslint --fix ./src/**/*.js"
+    "start": "node index.js",
+    "lint": "prettier ./**/*.js --write && eslint --fix ./**/*.js"
   },
   "devDependencies": {
     "eslint": "^8.24.0",
