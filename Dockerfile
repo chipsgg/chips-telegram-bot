@@ -1,7 +1,7 @@
 FROM node:latest as build
 WORKDIR /app
-RUN yarn install --production=true
 COPY . .
+RUN yarn install --production=true
 
 FROM node:alpine
 COPY --from=build /app /
