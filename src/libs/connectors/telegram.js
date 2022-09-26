@@ -2,13 +2,12 @@ const assert = require("assert");
 const _ = require("lodash");
 const marked = require("marked");
 const { Telegraf } = require("telegraf");
-const parseAndClean = (content) => _.replace(marked.parseInline(_.trim(content)), "<br>", "\n")
+const parseAndClean = (content) =>
+  _.replace(marked.parseInline(_.trim(content)), "<br>", "\n");
 const telegramMakeForm = ({ emoji, title, content, footer }) => `${_.trim(
   emoji
 )} <strong>${_.trim(title)}</strong> ${_.trim(emoji)}
-${parseAndClean(content)}${
-  footer ? `\n\n${parseAndClean(footer)}` : ""
-}`;
+${parseAndClean(content)}${footer ? `\n\n${parseAndClean(footer)}` : ""}`;
 const WrapperTelegram = (context) => {
   function sendForm(options) {
     const { banner, url, buttonLabel } = options;
@@ -60,7 +59,7 @@ const WrapperTelegram = (context) => {
 };
 module.exports = (token, commands) =>
   new Promise((resolve, reject) => {
-    const allGroups = [];
+    const allGroups = [147051786];
     const addGroup = (id) => {
       if (!_.includes(allGroups, id)) {
         allGroups.push(id);
@@ -90,6 +89,7 @@ module.exports = (token, commands) =>
         addGroup(chat.id);
       }
     });
+
     function broadcastText(message) {
       assert(message, "requires message");
       _.forEach(allGroups, (groupId) =>
@@ -98,6 +98,7 @@ module.exports = (token, commands) =>
         })
       );
     }
+
     function broadcastForm(options) {
       const { banner, url, buttonLabel } = options;
       const caption = telegramMakeForm(options);
@@ -144,6 +145,7 @@ module.exports = (token, commands) =>
         );
       }
     }
+
     bot
       .launch({
         dropPendingUpdates: true,

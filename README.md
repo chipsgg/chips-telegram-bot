@@ -1,9 +1,6 @@
-# Chips.gg Telegram Bot
+# Chips.gg Chat Bot
 
-A Telegram bot for Chips.gg
-
-Checkout the demo on Telegram:
-<https://t.me/chipsgg_test_bot>
+Checkout the demo on Telegram: <http://t.me/chipsgg_dev_bot>
 
 ## ENV
 
@@ -13,4 +10,11 @@ TELEGRAM_TOKEN=
 alertInterval=
 alertMinimumDollar=
 alertMinimumMultiplier=
+```
+
+## Quickstart
+
+```bash
+    yarn install
+    yarn start
 ```
