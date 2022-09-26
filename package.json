@@ -26,9 +26,6 @@
     "start": "node ./src/index.js",
     "lint": "prettier ./src/**/*.js --write && eslint --fix ./src/**/*.js"
   },
-  "engines": {
-    "node": "17"
-  },
   "devDependencies": {
     "eslint": "^8.24.0",
     "prettier": "^2.7.1"
