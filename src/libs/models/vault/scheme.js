@@ -11,16 +11,6 @@ module.exports = ({
   totalValue,
   perThousand,
 }) => {
-  const today = new Date();
-  //today.setHours(today.getHours() - 1); // REMOVE FOR SUMMER TIME
-  const endDate = new Date(parseFloat(distributeAt));
-
-  var days = parseInt((endDate - today) / (1000 * 60 * 60 * 24));
-  var hours = parseInt((Math.abs(endDate - today) / (1000 * 60 * 60)) % 24);
-  var minutes = parseInt(
-    (Math.abs(endDate.getTime() - today.getTime()) / (1000 * 60)) % 60
-  );
-
   const content = _.chain(currencies)
     .sortBy((curr) => curr.value * curr.price)
     .reverse()
@@ -56,9 +46,7 @@ module.exports = ({
 Distribution per 1000 CHIPS: ${formatCurrency(perThousand, "USD", "en")}
 Total CHIPS minted: ${Humanize.formatNumber(totalMinted, 2)}
 Total CHIPS locked: ${Humanize.formatNumber(totalStaked, 2)}
-
-**Next distribution in:**
-${hours} hours and ${minutes} minutes`,
+`,
     url: "https://chips.gg/vault",
     buttonLabel: "💰 GO TO VAULT 💰",
   };
