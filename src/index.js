@@ -12,7 +12,7 @@ const actions = {};
 
 // start the bot
 (async () => {
-  const api = await SDK();
+  const api = await SDK(process.env.CHIPS_TOKEN);
   const commands = Commands(api);
 
   const connectors = [];
@@ -26,6 +26,7 @@ const actions = {};
   if (process.env.TELEGRAM_TOKEN) {
     connectors.push(await Telegram(process.env.TELEGRAM_TOKEN, commands));
   }
+
 
   const broadcastText = makeBroadcast(connectors, "broadcastText");
   const broadcastForm = makeBroadcast(connectors, "broadcastForm");
