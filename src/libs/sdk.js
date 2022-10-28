@@ -69,6 +69,11 @@ module.exports = async (CHIPS_TOKEN) => {
 
   const { userid, tokenid } = await Authenticate(actions, CHIPS_TOKEN);
 
+  console.log("sdk:auth", {
+    tokenid,
+    userid
+  })
+
   // authenticated mode
   if (userid) {
     const user = await actions.private("me");
