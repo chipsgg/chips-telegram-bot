@@ -24,7 +24,8 @@
   "author": "Chips.gg <admin@chips.gg>",
   "scripts": {
     "start": "node index.js",
-    "lint": "prettier ./**/*.js --write && eslint --fix ./**/*.js"
+    "shake": "prettier ./**/*.js --write",
+    "lint": "yarn shake && eslint --fix ./**/*.js"
   },
   "devDependencies": {
     "eslint": "^8.24.0",

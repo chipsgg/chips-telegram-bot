@@ -27,7 +27,6 @@ const actions = {};
     connectors.push(await Telegram(process.env.TELEGRAM_TOKEN, commands));
   }
 
-
   const broadcastText = makeBroadcast(connectors, "broadcastText");
   const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
