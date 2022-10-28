@@ -72,6 +72,8 @@ module.exports = async (CHIPS_TOKEN) => {
   // authenticated mode
   if (userid) {
     const user = await actions.private("me");
+    console.log('Authenticated as:', user)
+
     actions.community("publishChatMessage", {
       text: `Hello, I am ${user.username}!`,
       // roomid
