@@ -2,8 +2,9 @@ const WS = require("ws");
 const Client = require("@chipsgg/openservice-ws-client");
 const lodash = require("lodash");
 // const assert = require("assert");
+const { sleep } = require("./utils");
 
-module.exports = async (CHIPS_TOKEN) => {
+module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   let state = {};
 
   const channels = [
@@ -14,7 +15,7 @@ module.exports = async (CHIPS_TOKEN) => {
     "affiliates",
     "stats",
     "profitshare",
-    "community"
+    "community",
   ];
 
   // if current token fails, fallback to a new token assigned to us
@@ -46,6 +47,7 @@ module.exports = async (CHIPS_TOKEN) => {
             ...state,
             ...newState,
           };
+          emit("change", state);
           break;
         }
         case "open": {
@@ -72,18 +74,18 @@ module.exports = async (CHIPS_TOKEN) => {
 
   console.log("sdk:auth", {
     tokenid,
-    userid
-  })
+    userid,
+  });
 
   // authenticated mode
   if (userid) {
     const user = await actions.private("me");
-    console.log('Authenticated as:', user)
+    console.log("Authenticated as:", user);
 
-    actions.community("publishChatMessage", {
-      text: `Hello, I am ${user.username}!`,
-      // roomid
-    });
+    // actions.community("publishChatMessage", {
+    //   text: `Hello, I am ${user.username}!`,
+    //   // roomid
+    // });
   }
 
   // actions.community('replyToChatMessage', {
@@ -127,9 +129,44 @@ module.exports = async (CHIPS_TOKEN) => {
     actions.stats("on", { game: "bets", type: "recentBets" });
     actions.stats("on", { game: "bets", type: "luckiest" });
     actions.stats("on", { game: "bets", type: "bigwins" });
+    actions.community("on", { name: "chats", path: ["public"] });
   }, 1000);
 
+  // pick a random slot and send it to chat.
+  const pickRandomForChat = async () => {
+    const rngGame = await getRandomSlot();
+    console.log(rngGame);
+    const msg = await actions.community("publishChatMessage", {
+      type: "game",
+      text: `Random Slot Pick:`,
+      // image: rngGame.images.s2,
+      data: rngGame,
+      // roomid
+      id: rngGame.id,
+    });
+
+    await sleep(250);
+
+    await actions.community("addChatMessageReaction", {
+      messageid: msg.id,
+      assetid: "chart_with_downwards_trend",
+    });
+
+    await sleep(250);
+
+    await actions.community("addChatMessageReaction", {
+      messageid: msg.id,
+      assetid: "chart_with_upwards_trend",
+    });
+  };
+
+  // pickRandomForChat();
+  setInterval(() => {
+    pickRandomForChat();
+  }, 1000 * 60 * 15);
+
   return {
+    _actions: actions,
     state: () => state,
     get: (...path) => lodash.get(state, path),
     getRandomSlot,
