@@ -14,6 +14,7 @@ module.exports = async (CHIPS_TOKEN) => {
     "affiliates",
     "stats",
     "profitshare",
+    "community"
   ];
 
   // if current token fails, fallback to a new token assigned to us
