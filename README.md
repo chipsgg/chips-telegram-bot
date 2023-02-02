@@ -8,6 +8,7 @@ Add the bot to your discord: [ADD BOT](https://discord.com/oauth2/authorize?clie
 
 ```env
 HTTP_PORT=
+CHIPS_TOKEN=
 DISCORD_TOKEN=
 TELEGRAM_TOKEN=
 alertInterval=
