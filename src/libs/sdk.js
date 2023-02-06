@@ -150,7 +150,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     //   // roomid
     // });
 
-    pickRandomForChat();
+    // pickRandomForChat();
     setInterval(() => {
       pickRandomForChat();
     }, 1000 * 60 * 45);
