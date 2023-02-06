@@ -70,24 +70,6 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     }
   );
 
-  const { userid, tokenid } = await Authenticate(actions, CHIPS_TOKEN);
-
-  console.log("sdk:auth", {
-    tokenid,
-    userid,
-  });
-
-  // authenticated mode
-  if (userid) {
-    const user = await actions.private("me");
-    console.log("Authenticated as:", user);
-
-    // actions.community("publishChatMessage", {
-    //   text: `Hello, I am ${user.username}!`,
-    //   // roomid
-    // });
-  }
-
   // actions.community('replyToChatMessage', {
   //   text: 'Hello World!',
   //   messageid
@@ -122,16 +104,6 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     return lodash.sample(slots);
   }
 
-  // subscriptions
-  setInterval(() => {
-    actions.profitshare("on", { name: "profitshareInfo" });
-    actions.profitshare("on", { name: "profitshareBalance" });
-    actions.stats("on", { game: "bets", type: "recentBets" });
-    actions.stats("on", { game: "bets", type: "luckiest" });
-    actions.stats("on", { game: "bets", type: "bigwins" });
-    actions.community("on", { name: "chats", path: ["public"] });
-  }, 1000);
-
   // pick a random slot and send it to chat.
   const pickRandomForChat = async () => {
     const rngGame = await getRandomSlot();
@@ -160,11 +132,39 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     });
   };
 
-  // pickRandomForChat();
-  setInterval(() => {
-    pickRandomForChat();
-  }, 1000 * 60 * 45);
+  const { userid, tokenid } = await Authenticate(actions, CHIPS_TOKEN);
 
+  console.log("sdk:auth", {
+    tokenid,
+    userid,
+  });
+
+  // authenticated mode
+  if (userid) {
+    const user = await actions.private("me");
+    console.log("Authenticated as:", user);
+
+    // actions.community("publishChatMessage", {
+    //   text: `Hello, I am ${user.username}!`,
+    //   // roomid
+    // });
+
+    pickRandomForChat();
+    setInterval(() => {
+      pickRandomForChat();
+    }, 1000 * 60 * 45);
+  }
+
+  // subscriptions
+  setInterval(() => {
+    actions.profitshare("on", { name: "profitshareInfo" });
+    actions.profitshare("on", { name: "profitshareBalance" });
+    actions.stats("on", { game: "bets", type: "recentBets" });
+    actions.stats("on", { game: "bets", type: "luckiest" });
+    actions.stats("on", { game: "bets", type: "bigwins" });
+    actions.community("on", { name: "chats", path: ["public"] });
+  }, 1000);
+  
   return {
     _actions: actions,
     state: () => state,
