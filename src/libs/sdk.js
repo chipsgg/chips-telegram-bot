@@ -132,6 +132,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     });
   };
 
+  // NOTE: Login Client SDK
   const { userid, tokenid } = await Authenticate(actions, CHIPS_TOKEN);
 
   console.log("sdk:auth", {
@@ -164,7 +165,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     actions.stats("on", { game: "bets", type: "bigwins" });
     actions.community("on", { name: "chats", path: ["public"] });
   }, 1000);
-  
+
   return {
     _actions: actions,
     state: () => state,
