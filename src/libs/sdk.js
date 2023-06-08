@@ -151,9 +151,9 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     // });
 
     pickRandomForChat();
-    // setInterval(() => {
-    //   pickRandomForChat();
-    // }, 1000 * 60 * 45);
+    setInterval(() => {
+      pickRandomForChat();
+    }, 1000 * 60 * 45);
   }
 
   // subscriptions
