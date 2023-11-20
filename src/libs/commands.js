@@ -71,7 +71,7 @@ module.exports = (api) => {
           .filter(({ value }) => value > 0.0)
           .sumBy(({ value, price }) => value * price)
           .value();
-        const perThousand = (totalValue / 4 / totalStaked) * 100;
+        const perThousand = (totalValue / 4 / totalStaked) * 1000;
 
         return ctx.sendForm(
           models.vault({

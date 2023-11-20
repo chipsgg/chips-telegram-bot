@@ -1,8 +1,11 @@
 # Chips.gg Chat Bot
 
-Checkout the demo on Telegram: <http://t.me/chipsgg_dev_bot>
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/chipsgg/chips-telegram-bot)
 
-Add the bot to your discord: [ADD BOT](https://discord.com/oauth2/authorize?client_id=901908108136308757&permissions=0&scope=bot%20applications.commands)
+# Demos
+Telegram: [ADD BOT](http://t.me/chipsgg_dev_bot) 
+
+Discord: [ADD BOT](https://discord.com/oauth2/authorize?client_id=901908108136308757&permissions=0&scope=bot%20applications.commands)
 
 ## ENV
 
