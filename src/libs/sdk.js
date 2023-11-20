@@ -105,9 +105,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   }
 
   // pick a random slot and send it to chat.
-  const pickRandomForChat = async () => {
-    const rngGame = await getRandomSlot();
-    console.log(rngGame);
+  const sendRngSlotChat = async (rngGame) => {
     const msg = await actions.community("publishChatMessage", {
       type: "game",
       text: `Random Slot Pick:`,
@@ -151,9 +149,35 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     // });
 
     // pickRandomForChat();
-    setInterval(() => {
-      pickRandomForChat();
-    }, 1000 * 60 * 45);
+
+    const tick = async () => {
+      const rngGame = await getRandomSlot();
+      console.log(rngGame);
+
+      try {
+        // notify chat
+        await sendRngSlotChat(rngGame);
+
+        // make koth
+        await actions.private("createChallenge", {
+          catalogid: rngGame.id,
+          multiplier: 10,
+          // currency: "usdt",
+          // amount: "100000000",
+          currency: "trx",
+          amount: "1000000000",
+          duration: 1000 * 60 * 15, // 15min.
+        });
+      } catch (e) {
+        // wait...
+        console.error(e)
+      }
+
+      await sleep(1000 * 60 * 45);
+      tick();
+    };
+
+    tick();
   }
 
   // subscriptions
