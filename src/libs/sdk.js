@@ -156,7 +156,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
 
       try {
         // make koth
-        await actions.private("createChallenge", {
+        await actions.private("createKothChallenge", {
           catalogid: rngGame.id,
           multiplier: 10,
           // currency: "usdt",
@@ -168,12 +168,15 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
 
         // notify chat
         await sendRngSlotChat(rngGame);
+
+        // wait to post again
+        await sleep(1000 * 60 * 45);
       } catch (e) {
         // wait...
         console.error("ERROR:", e);
       }
 
-      await sleep(1000 * 60 * 45);
+      await sleep(1000 * 60);
       tick();
     };
 
