@@ -105,17 +105,9 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   }
 
   // pick a random slot and send it to chat.
-<<<<<<< HEAD
   const sendRngSlotChat = async (rngGame) => {
     const msg = await actions.community("publishChatMessage", {
       type: "game",
-=======
-  const pickRandomForChat = async () => {
-    const rngGame = await getRandomSlot();
-    console.log(rngGame);
-    const msg = await actions.community('publishChatMessage', {
-      type: 'game',
->>>>>>> 945d2ba05adabfb1353a8882aa3b91efa001f5ff
       text: `Random Slot Pick:`,
       // image: rngGame.images.s2,
       data: rngGame,
