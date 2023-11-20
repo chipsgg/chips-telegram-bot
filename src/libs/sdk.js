@@ -162,7 +162,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
           // currency: "usdt",
           // amount: "100000000",
           currency: "trx",
-          amount: "1000000000",
+          amount: "100000000",
           duration: 1000 * 60 * 15, // 15min.
         });
 
