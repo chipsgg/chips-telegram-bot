@@ -1,30 +1,30 @@
-const WS = require('ws');
-const Client = require('@chipsgg/openservice-ws-client');
-const lodash = require('lodash');
+const WS = require("ws");
+const Client = require("@chipsgg/openservice-ws-client");
+const lodash = require("lodash");
 // const assert = require("assert");
-const { sleep } = require('./utils');
+const { sleep } = require("./utils");
 
 module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   let state = {};
 
   const channels = [
-    'games',
-    'public',
-    'private',
-    'auth',
-    'affiliates',
-    'stats',
-    'profitshare',
-    'community',
+    "games",
+    "public",
+    "private",
+    "auth",
+    "affiliates",
+    "stats",
+    "profitshare",
+    "community",
   ];
 
   // if current token fails, fallback to a new token assigned to us
   async function Authenticate(actions, tokenid) {
     if (!tokenid) {
-      return Authenticate(actions, await actions.auth('token'));
+      return Authenticate(actions, await actions.auth("token"));
     }
     return actions
-      .auth('authenticate', tokenid)
+      .auth("authenticate", tokenid)
       .then((userid) => {
         return { userid, tokenid };
       })
@@ -36,33 +36,33 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   const { actions } = await Client(
     WS,
     {
-      host: 'wss://api.chips.gg/prod/socket',
+      host: "wss://api.chips.gg/prod/socket",
       channels,
       keepAlive: 1000,
     },
     async (type, newState) => {
       switch (type) {
-        case 'change': {
+        case "change": {
           state = {
             ...state,
             ...newState,
           };
-          emit('change', state);
+          emit("change", state);
           break;
         }
-        case 'open': {
-          console.log('Server Connected!');
+        case "open": {
+          console.log("Server Connected!");
           break;
         }
-        case 'close': {
-          console.log('Server Disconnected!');
+        case "close": {
+          console.log("Server Disconnected!");
           break;
         }
-        case 'reconnect': {
-          console.log('Server Reconnected!');
+        case "reconnect": {
+          console.log("Server Reconnected!");
           // updateState("setConnected", true);
           await Authenticate(actions, CHIPS_TOKEN).then((result) => {
-            console.log('authenticated', result);
+            console.log("authenticated", result);
           });
           break;
         }
@@ -85,19 +85,19 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   // })
 
   // shorthand
-  const listRaceRanks = (raceid) => actions.public('listRaceRanks', { raceid });
+  const listRaceRanks = (raceid) => actions.public("listRaceRanks", { raceid });
   const listRacePrizes = (raceid) =>
-    actions.public('listRacePrizes', { raceid });
+    actions.public("listRacePrizes", { raceid });
   const listActiveRaces = (skip = 0, limit = 100) =>
-    actions.public('listActiveRaces', { skip, limit });
+    actions.public("listActiveRaces", { skip, limit });
   const listDoneRaces = (skip = 0, limit = 100) =>
-    actions.public('listDoneRaces', { skip, limit });
-  const listSlotCategories = () => actions.public('listSlotCategories');
+    actions.public("listDoneRaces", { skip, limit });
+  const listSlotCategories = () => actions.public("listSlotCategories");
   const listSlotsByCategory = (args) =>
-    actions.public('listSlotsByCategory', args);
+    actions.public("listSlotsByCategory", args);
 
   async function getRandomSlot() {
-    const slots = await actions.public('listGamesMostPlayed', {
+    const slots = await actions.public("listGamesMostPlayed", {
       skip: 0,
       limit: 100,
     });
@@ -117,31 +117,31 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
 
     await sleep(250);
 
-    await actions.community('addChatMessageReaction', {
+    await actions.community("addChatMessageReaction", {
       messageid: msg.id,
-      assetid: 'chart_with_downwards_trend',
+      assetid: "chart_with_downwards_trend",
     });
 
     await sleep(250);
 
-    await actions.community('addChatMessageReaction', {
+    await actions.community("addChatMessageReaction", {
       messageid: msg.id,
-      assetid: 'chart_with_upwards_trend',
+      assetid: "chart_with_upwards_trend",
     });
   };
 
   // NOTE: Login Client SDK
   const { userid, tokenid } = await Authenticate(actions, CHIPS_TOKEN);
 
-  console.log('sdk:auth', {
+  console.log("sdk:auth", {
     tokenid,
     userid,
   });
 
   // authenticated mode
   if (userid) {
-    const user = await actions.private('me');
-    console.log('Authenticated as:', user);
+    const user = await actions.private("me");
+    console.log("Authenticated as:", user);
 
     // actions.community("publishChatMessage", {
     //   text: `Hello, I am ${user.username}!`,
@@ -152,12 +152,9 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
 
     const tick = async () => {
       const rngGame = await getRandomSlot();
-      console.log(rngGame);
+      console.log("rng.game", rngGame.id);
 
       try {
-        // notify chat
-        await sendRngSlotChat(rngGame);
-
         // make koth
         await actions.private("createChallenge", {
           catalogid: rngGame.id,
@@ -168,9 +165,12 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
           amount: "1000000000",
           duration: 1000 * 60 * 15, // 15min.
         });
+
+        // notify chat
+        await sendRngSlotChat(rngGame);
       } catch (e) {
         // wait...
-        console.error(e)
+        console.error("ERROR:", e);
       }
 
       await sleep(1000 * 60 * 45);
@@ -182,12 +182,12 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
 
   // subscriptions
   setInterval(() => {
-    actions.profitshare('on', { name: 'profitshareInfo' });
-    actions.profitshare('on', { name: 'profitshareBalance' });
-    actions.stats('on', { game: 'bets', type: 'recentBets' });
-    actions.stats('on', { game: 'bets', type: 'luckiest' });
-    actions.stats('on', { game: 'bets', type: 'bigwins' });
-    actions.community('on', { name: 'chats', path: ['public'] });
+    actions.profitshare("on", { name: "profitshareInfo" });
+    actions.profitshare("on", { name: "profitshareBalance" });
+    actions.stats("on", { game: "bets", type: "recentBets" });
+    actions.stats("on", { game: "bets", type: "luckiest" });
+    actions.stats("on", { game: "bets", type: "bigwins" });
+    actions.community("on", { name: "chats", path: ["public"] });
   }, 1000);
 
   return {
