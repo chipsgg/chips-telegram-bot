@@ -176,7 +176,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
         console.error("ERROR:", e);
       }
 
-      await sleep(1000 * 60 * 5);
+      await sleep(1000 * 60 * 10);
       tick();
     };
 
