@@ -170,13 +170,13 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
         await sendRngSlotChat(rngGame);
 
         // wait to post again
-        await sleep(1000 * 60 * 45);
+        await sleep(1000 * 60 * 60 * 1);
       } catch (e) {
         // wait...
         console.error("ERROR:", e);
       }
 
-      await sleep(1000 * 60 * 10);
+      await sleep(1000 * 60 * 30);
       tick();
     };
 
