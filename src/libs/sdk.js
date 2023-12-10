@@ -101,7 +101,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
       skip: 0,
       limit: 100,
     });
-    return lodash.sample(slots.filter((x) => x.tags.inclues("slots")));
+    return lodash.sample(slots.filter((x) => x.tags.includes("slots")));
   }
 
   // pick a random slot and send it to chat.
