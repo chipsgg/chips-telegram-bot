@@ -180,7 +180,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
       tick();
     };
 
-    tick();
+	  #    tick();
   }
 
   // subscriptions
