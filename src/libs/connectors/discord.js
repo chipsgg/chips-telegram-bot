@@ -81,13 +81,17 @@ module.exports = (token, commands) =>
         wrapper.sendForm = async (...args) => {
           const retryWithBackoff = async (attempt = 1) => {
             try {
+              const form = discordMakeForm(...args);
               if (!replied) {
                 replied = true;
-                return await ctx.reply(discordMakeForm(...args));
+                return await ctx.reply(form);
               }
-              return await ctx.followUp(discordMakeForm(...args));
+              if (ctx.webhook?.send) {
+                return await ctx.webhook.send(form);
+              }
+              return await ctx.channel.send(form);
             } catch (error) {
-              if (attempt < 3 && (error.code === 10062 || error.message === 'Unknown interaction')) {
+              if (attempt < 3 && (error.code === 10062 || error.code === 10015 || error.message === 'Unknown interaction')) {
                 const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return retryWithBackoff(attempt + 1);
