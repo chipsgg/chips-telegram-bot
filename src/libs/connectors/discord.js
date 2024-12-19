@@ -76,6 +76,15 @@ module.exports = (token, commands) =>
       if (!_.has(commands, ctx.commandName))
         return ctx.reply("the command does not exist");
       const wrapper = WrapperDiscord(ctx);
+      
+      // Handle username parameter for /user command
+      if (ctx.commandName === 'user') {
+        const username = ctx.options?.getString('username');
+        wrapper.options = {
+          getString: (param) => param === 'username' ? username : null
+        };
+      }
+      
       await Promise.resolve(commands[ctx.commandName].handler(wrapper));
     });
     const broadcast = (form) => {
