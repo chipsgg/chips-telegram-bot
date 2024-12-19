@@ -69,13 +69,23 @@ module.exports = (token, commands) =>
     _.forEach(_.keys(commands), (commandName) => {
       bot.command(commandName, async (ctx) => {
         const { message } = ctx.update;
-        const { chat } = message;
+        const { chat, text } = message;
         assert(message, "requires message");
         assert(chat, "requires chat");
         if (chat.type == "group" || chat.type == "supergroup") {
           addGroup(chat.id);
         }
+        
         const wrapper = WrapperTelegram(ctx);
+        
+        // Handle /user command parameters
+        if (commandName === 'user') {
+          const username = text.split(' ')[1];
+          wrapper.options = {
+            getString: (param) => param === 'username' ? username : null
+          };
+        }
+        
         await Promise.resolve(commands[commandName].handler(wrapper));
       });
     });
