@@ -79,29 +79,45 @@ module.exports = (token, commands) =>
         
         const wrapper = WrapperDiscord(ctx);
         wrapper.sendForm = async (...args) => {
-          try {
-            if (!replied) {
-              replied = true;
-              return await ctx.reply(discordMakeForm(...args));
+          const retryWithBackoff = async (attempt = 1) => {
+            try {
+              if (!replied) {
+                replied = true;
+                return await ctx.reply(discordMakeForm(...args));
+              }
+              return await ctx.followUp(discordMakeForm(...args));
+            } catch (error) {
+              if (attempt < 3 && (error.code === 10062 || error.message === 'Unknown interaction')) {
+                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return retryWithBackoff(attempt + 1);
+              }
+              console.error(`Failed to send form (attempt ${attempt}):`, error);
+              return null;
             }
-            return await ctx.followUp(discordMakeForm(...args));
-          } catch (error) {
-            console.error('Failed to send form:', error);
-            return null;
-          }
+          };
+          return retryWithBackoff();
         };
 
         wrapper.sendText = async (content) => {
-          try {
-            if (!replied) {
-              replied = true;
-              return await ctx.reply({ content });
+          const retryWithBackoff = async (attempt = 1) => {
+            try {
+              if (!replied) {
+                replied = true;
+                return await ctx.reply({ content });
+              }
+              return await ctx.followUp({ content });
+            } catch (error) {
+              if (attempt < 3 && (error.code === 10062 || error.message === 'Unknown interaction')) {
+                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return retryWithBackoff(attempt + 1);
+              }
+              console.error(`Failed to send text (attempt ${attempt}):`, error);
+              return null;
             }
-            return await ctx.followUp({ content });
-          } catch (error) {
-            console.error('Failed to send text:', error);
-            return null;
-          }
+          };
+          return retryWithBackoff();
         };
 
         if (!_.has(commands, ctx.commandName)) {
