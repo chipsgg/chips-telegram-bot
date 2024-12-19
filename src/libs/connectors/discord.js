@@ -73,78 +73,19 @@ module.exports = (token, commands) =>
 
     client.on("interactionCreate", async (ctx) => {
       if (!ctx.isCommand()) return;
+      if (!_.has(commands, ctx.commandName))
+        return ctx.reply("the command does not exist");
+      const wrapper = WrapperDiscord(ctx);
       
-      try {
-        let replied = false;
-        
-        const wrapper = WrapperDiscord(ctx);
-        wrapper.sendForm = async (...args) => {
-          const retryWithBackoff = async (attempt = 1) => {
-            try {
-              const form = discordMakeForm(...args);
-              if (!replied) {
-                replied = true;
-                return await ctx.reply(form);
-              }
-              if (ctx.webhook?.send) {
-                return await ctx.webhook.send(form);
-              }
-              return await ctx.channel.send(form);
-            } catch (error) {
-              if (attempt < 3 && (error.code === 10062 || error.code === 10015 || error.message === 'Unknown interaction')) {
-                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return retryWithBackoff(attempt + 1);
-              }
-              console.error(`Failed to send form (attempt ${attempt}):`, error);
-              return null;
-            }
-          };
-          return retryWithBackoff();
+      // Handle username parameter for /user command
+      if (ctx.commandName === 'user') {
+        const username = ctx.options?.getString('username');
+        wrapper.options = {
+          getString: (param) => param === 'username' ? username : null
         };
-
-        wrapper.sendText = async (content) => {
-          const retryWithBackoff = async (attempt = 1) => {
-            try {
-              if (!replied) {
-                replied = true;
-                return await ctx.reply({ content });
-              }
-              return await ctx.followUp({ content });
-            } catch (error) {
-              if (attempt < 3 && (error.code === 10062 || error.message === 'Unknown interaction')) {
-                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return retryWithBackoff(attempt + 1);
-              }
-              console.error(`Failed to send text (attempt ${attempt}):`, error);
-              return null;
-            }
-          };
-          return retryWithBackoff();
-        };
-
-        if (!_.has(commands, ctx.commandName)) {
-          await wrapper.sendText("The command does not exist");
-          return;
-        }
-        
-        if (ctx.commandName === 'user') {
-          const username = ctx.options?.getString('username');
-          wrapper.options = {
-            getString: (param) => param === 'username' ? username : null
-          };
-        }
-        
-        await Promise.resolve(commands[ctx.commandName].handler(wrapper));
-      } catch (error) {
-        console.error('Command error:', error);
-        try {
-          await ctx.editReply("An error occurred while processing the command").catch(console.error);
-        } catch (replyError) {
-          console.error('Reply error:', replyError);
-        }
       }
+      
+      await Promise.resolve(commands[ctx.commandName].handler(wrapper));
     });
     const broadcast = (form) => {
       try {
