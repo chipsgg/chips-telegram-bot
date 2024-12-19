@@ -75,18 +75,16 @@ module.exports = (token, commands) =>
       if (!ctx.isCommand()) return;
       
       try {
-        // Defer the reply immediately to prevent interaction timeout
-        await ctx.deferReply().catch(console.error);
+        let replied = false;
         
-        if (!_.has(commands, ctx.commandName)) {
-          await ctx.editReply("The command does not exist").catch(console.error);
-          return;
-        }
-
         const wrapper = WrapperDiscord(ctx);
         wrapper.sendForm = async (...args) => {
           try {
-            return await ctx.editReply(discordMakeForm(...args));
+            if (!replied) {
+              replied = true;
+              return await ctx.reply(discordMakeForm(...args));
+            }
+            return await ctx.followUp(discordMakeForm(...args));
           } catch (error) {
             console.error('Failed to send form:', error);
             return null;
@@ -95,12 +93,21 @@ module.exports = (token, commands) =>
 
         wrapper.sendText = async (content) => {
           try {
-            return await ctx.editReply({ content });
+            if (!replied) {
+              replied = true;
+              return await ctx.reply({ content });
+            }
+            return await ctx.followUp({ content });
           } catch (error) {
             console.error('Failed to send text:', error);
             return null;
           }
         };
+
+        if (!_.has(commands, ctx.commandName)) {
+          await wrapper.sendText("The command does not exist");
+          return;
+        }
         
         if (ctx.commandName === 'user') {
           const username = ctx.options?.getString('username');
