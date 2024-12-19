@@ -14,7 +14,7 @@ module.exports = (api) => {
         return ctx.sendForm(
           models.slotcall({
             ...slot,
-          })
+          }),
         );
       },
     },
@@ -28,7 +28,7 @@ module.exports = (api) => {
               x.name !== "chips" &&
               x.name !== "chips_staking" &&
               !_.startsWith(x.name, "usd") &&
-              !_.endsWith(x.name, "usd")
+              !_.endsWith(x.name, "usd"),
           )
           .value();
 
@@ -48,7 +48,7 @@ module.exports = (api) => {
         const distributeAt = api.get(
           "profitshare",
           "profitshareInfo",
-          "distributeAt"
+          "distributeAt",
         );
         const totalMinted =
           api.get("profitshare", "profitshareInfo", "totalMinted") / 1000000;
@@ -57,7 +57,7 @@ module.exports = (api) => {
         const currencies = _.chain(api.get("public", "currencies"))
           .filter(
             ({ name, hidden }) =>
-              !hidden && !_.includes(name, ["chips", "chips_staking"])
+              !hidden && !_.includes(name, ["chips", "chips_staking"]),
           )
           .map(({ name, price, decimals }) => ({
             name: _.upperCase(name),
@@ -81,7 +81,7 @@ module.exports = (api) => {
             totalStaked,
             totalValue,
             perThousand,
-          })
+          }),
         );
       },
     },
@@ -149,30 +149,57 @@ module.exports = (api) => {
   commands.user = {
     description: "Get user information by username",
     handler: async (ctx) => {
-      const username = ctx.options?.getString('username');
+      const username = ctx.options?.getString("username");
       if (!username) {
         return ctx.sendText("Please provide a username");
       }
-      
+
       try {
-        const user = await api._actions.public('getUser', { username });
+        const user = await api._actions.public("getUser", { userid: username });
         if (!user) {
           return ctx.sendText("User not found");
         }
-        
+
+        const vip = await api._actions.public("getUserVipRank", {
+          userid: user.id,
+        });
+        const stats = await api._actions.public("getUserStats", {
+          userid: user.id,
+          duration: "1m",
+        });
+
+        console.log("/user", {
+          user,
+          vip,
+          stats,
+        });
+
         return ctx.sendForm({
           emoji: "👤",
           title: `User Info: ${user.username}`,
           content: [
             `Username: ${user.username}`,
-            `Level: ${user.level || 'N/A'}`,
-            `Total Bets: ${user.totalBets || 0}`,
-            `Total Wagered: $${(user.totalWagered || 0).toFixed(2)}`,
-            `Total Won: $${(user.totalWon || 0).toFixed(2)}`,
-            `Join Date: ${new Date(user.createdAt).toLocaleDateString()}`
-          ].join('\n'),
+            `Level: ${vip.rank} (${vip.level || "0"})`,
+            `Total Bets: ${stats.count.toLocaleString() || 0}`,
+            `Total Wins: $${stats.wins.toLocaleString() || 0}`,
+            `Total Wagered: $${(stats.wageredUsd || 0).toLocaleString(
+              undefined,
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              },
+            )}`,
+            `Total Bonuses: $${(stats.bonusesUsd || 0).toLocaleString(
+              undefined,
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              },
+            )}`,
+            `Join Date: ${new Date(user.created).toLocaleDateString()}`,
+          ].join("\n"),
           url: `https://chips.gg/user/${user.username}`,
-          buttonLabel: "View Profile"
+          buttonLabel: "View Profile",
         });
       } catch (error) {
         return ctx.sendText("Error fetching user information");
