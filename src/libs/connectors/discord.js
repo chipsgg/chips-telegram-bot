@@ -75,15 +75,29 @@ module.exports = (token, commands) =>
       if (!ctx.isCommand()) return;
       
       try {
-        await ctx.deferReply();
-        
         if (!_.has(commands, ctx.commandName)) {
-          return ctx.editReply("The command does not exist");
+          await ctx.reply("The command does not exist");
+          return;
         }
-        
+
         const wrapper = WrapperDiscord(ctx);
-        wrapper.sendForm = async (...args) => ctx.editReply(discordMakeForm(...args));
-        wrapper.sendText = async (content) => ctx.editReply({ content });
+        let replied = false;
+
+        wrapper.sendForm = async (...args) => {
+          if (!replied) {
+            replied = true;
+            return ctx.reply(discordMakeForm(...args));
+          }
+          return ctx.followUp(discordMakeForm(...args));
+        };
+
+        wrapper.sendText = async (content) => {
+          if (!replied) {
+            replied = true;
+            return ctx.reply({ content });
+          }
+          return ctx.followUp({ content });
+        };
         
         if (ctx.commandName === 'user') {
           const username = ctx.options?.getString('username');
@@ -95,7 +109,11 @@ module.exports = (token, commands) =>
         await Promise.resolve(commands[ctx.commandName].handler(wrapper));
       } catch (error) {
         console.error('Command error:', error);
-        ctx.editReply("An error occurred while processing the command").catch(console.error);
+        try {
+          await ctx.reply("An error occurred while processing the command");
+        } catch (replyError) {
+          console.error('Reply error:', replyError);
+        }
       }
     });
     const broadcast = (form) => {
