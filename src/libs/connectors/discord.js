@@ -53,6 +53,14 @@ module.exports = (token, commands) =>
             data: {
               name,
               description: command.description,
+              options: name === 'user' ? [
+                {
+                  name: 'username',
+                  description: 'Username to look up',
+                  type: 3,
+                  required: true
+                }
+              ] : undefined
             },
           })
           .catch(console.error);

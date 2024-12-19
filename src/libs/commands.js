@@ -146,6 +146,40 @@ module.exports = (api) => {
   };
 
   // help menu
+  commands.user = {
+    description: "Get user information by username",
+    handler: async (ctx) => {
+      const username = ctx.options?.getString('username');
+      if (!username) {
+        return ctx.sendText("Please provide a username");
+      }
+      
+      try {
+        const user = await api._actions.public('getUser', { username });
+        if (!user) {
+          return ctx.sendText("User not found");
+        }
+        
+        return ctx.sendForm({
+          emoji: "👤",
+          title: `User Info: ${user.username}`,
+          content: [
+            `Username: ${user.username}`,
+            `Level: ${user.level || 'N/A'}`,
+            `Total Bets: ${user.totalBets || 0}`,
+            `Total Wagered: $${(user.totalWagered || 0).toFixed(2)}`,
+            `Total Won: $${(user.totalWon || 0).toFixed(2)}`,
+            `Join Date: ${new Date(user.createdAt).toLocaleDateString()}`
+          ].join('\n'),
+          url: `https://chips.gg/user/${user.username}`,
+          buttonLabel: "View Profile"
+        });
+      } catch (error) {
+        return ctx.sendText("Error fetching user information");
+      }
+    },
+  };
+
   commands.help = {
     description: "Description of all commands",
     handler: (ctx) => ctx.sendForm(models.help(commands)),
