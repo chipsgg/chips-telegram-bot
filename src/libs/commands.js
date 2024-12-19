@@ -35,13 +35,13 @@ module.exports = (api) => {
         return ctx.sendForm(models.prices(content));
       },
     },
-    // events: {
-    //   description: "Ongoing events",
-    //   handler: async (ctx) => {
-    //     const activeRaces = await api.listActiveRaces(0, 10);
-    //     return ctx.sendForm(models.events(activeRaces));
-    //   },
-    // },
+    promotions: {
+      description: "Ongoing promotions and events",
+      handler: async (ctx) => {
+        const activeRaces = await api._actions.public("listRunningPromotions");
+        return ctx.sendForm(models.events(activeRaces));
+      },
+    },
     vault: {
       description: "The vault and rewards related",
       handler: (ctx) => {
@@ -181,7 +181,7 @@ module.exports = (api) => {
             `Username: ${user.username}`,
             `Level: ${vip.rank} (${vip.level || "0"})`,
             `Total Bets: ${stats.count.toLocaleString() || 0}`,
-            `Total Wins: $${stats.wins.toLocaleString() || 0}`,
+            `Total Wins: ${stats.wins.toLocaleString() || 0}`,
             `Total Wagered: $${(stats.wageredUsd || 0).toLocaleString(
               undefined,
               {
