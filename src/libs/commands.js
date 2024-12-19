@@ -94,18 +94,17 @@ module.exports = (api) => {
           .map((id) => bigwins[id])
           .filter(({ bet }) => _.keys(bet).length > 0)
           .orderBy(({ bet }) => {
-            const { decimals } = api.get("public", "currencies", bet.currency);
-            return bet.winnings / Math.pow(10, decimals);
+            const currency = api.get("public", "currencies", bet.currency);
+            if (!currency) return 0; // Skip invalid currencies
+            return bet.winnings / Math.pow(10, currency.decimals);
           })
           .reverse()
           .uniqBy("userid")
           .take(10)
           .map((obj) => {
-            const { price, decimals } = api.get(
-              "public",
-              "currencies",
-              obj.bet.currency
-            );
+            const currency = api.get("public", "currencies", obj.bet.currency);
+            if (!currency) return obj; // Skip currency conversion if data missing
+            const { price, decimals } = currency;
             obj.bet.amountInDollar =
               (obj.bet.amount / Math.pow(10, decimals)) * price;
             obj.bet.winningsInDollar =
