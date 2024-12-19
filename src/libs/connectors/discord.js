@@ -45,27 +45,37 @@ module.exports = (token, commands) =>
     const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
     client.on("ready", async () => {
       console.log(`Logged in as ${client.user.tag}!`);
-      const commandData = _.map(_.keys(commands), (name) => {
-        const command = commands[name];
-        return {
-          name,
-          description: command.description,
-          options: name === 'user' ? [
-            {
+      try {
+        const commandData = _.map(_.keys(commands), (name) => {
+          const command = commands[name];
+          const options = [];
+          
+          if (name === 'user') {
+            options.push({
               name: 'username',
               description: 'Username to look up',
               type: 3,
               required: true
-            }
-          ] : undefined
-        };
-      });
-      
-      await client.application.commands.set(commandData);
-      resolve({
-        broadcastText,
-        broadcastForm,
-      });
+            });
+          }
+          
+          return {
+            name,
+            description: command.description,
+            options: options.length > 0 ? options : undefined
+          };
+        });
+        
+        await client.application.commands.set(commandData);
+        console.log('Successfully registered application commands');
+        resolve({
+          broadcastText,
+          broadcastForm,
+        });
+      } catch (error) {
+        console.error('Error registering application commands:', error);
+        reject(error);
+      }
     });
 
     client.on("interactionCreate", async (ctx) => {
