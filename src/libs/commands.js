@@ -215,12 +215,32 @@ module.exports = (api) => {
       content: [
         "Join our communities to chat with other players!",
         "",
-        "Discord: https://discord.gg/chips",
+        "Discord: https://discord.gg/chips", 
         "Telegram: https://t.me/chipsgg"
       ].join("\n"),
       buttonLabel: "Join Discord",
       url: "https://discord.gg/chips"
     })
+  };
+
+  commands.mostplayed = {
+    description: "List most played games",
+    handler: async (ctx) => {
+      const games = await api._actions.public("listGamesMostPlayed", {
+        skip: 0,
+        limit: 10
+      });
+      
+      return ctx.sendForm({
+        emoji: "🎮",
+        title: "Most Played Games",
+        content: games.map((game, index) => 
+          `${index + 1}. ${game.name} (${game.provider})`
+        ).join("\n"),
+        url: "https://chips.gg/casino",
+        buttonLabel: "Play Now"
+      });
+    }
   };
 
   commands.help = {
