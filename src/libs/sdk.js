@@ -36,9 +36,14 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   const { actions } = await Client(
     WS,
     {
-      host: "wss://api.chips.gg/prod/socket",
+      host: "wss://api.chips.gg/prod/socket", 
       channels,
       keepAlive: 1000,
+      wsOptions: {
+        handshakeTimeout: 10000,
+        maxRetries: 5,
+        onError: (err) => console.error('WebSocket Error:', err)
+      }
     },
     async (type, newState) => {
       switch (type) {

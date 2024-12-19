@@ -84,6 +84,13 @@ const actions = {};
   console.log("The bot Chips is successfully loaded");
   broadcastText("**The bot Chips is successfully loaded. /help**");
 
+  // Handle graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('Received SIGTERM signal, shutting down gracefully...');
+    await broadcastText("**Bot is shutting down for maintenance...**");
+    process.exit(0);
+  });
+
   return HttpServer(
     {
       port: process.env.PORT || process.env.HTTP_PORT || 3000,

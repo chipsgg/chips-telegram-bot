@@ -77,3 +77,19 @@ exports.Stack = class {
 };
 
 exports.sleep = (t) => new Promise((resolve, reject) => setTimeout(resolve, t));
+const rateLimit = new Map();
+
+function checkRateLimit(userId, limitMs = 1000) {
+  const now = Date.now();
+  const lastRequest = rateLimit.get(userId) || 0;
+  if (now - lastRequest < limitMs) {
+    return false;
+  }
+  rateLimit.set(userId, now);
+  return true;
+}
+
+module.exports = {
+  ...module.exports,
+  checkRateLimit
+};
