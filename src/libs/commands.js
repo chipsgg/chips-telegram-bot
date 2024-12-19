@@ -209,18 +209,19 @@ module.exports = (api) => {
 
   commands.chat = {
     description: "Get invite links to official Telegram/Discord communities",
-    handler: (ctx) => ctx.sendForm({
-      emoji: "💬",
-      title: "Official Communities",
-      content: [
-        "Join our communities to chat with other players!",
-        "",
-        "Discord: https://discord.gg/chips", 
-        "Telegram: https://t.me/chipsgg"
-      ].join("\n"),
-      buttonLabel: "Join Discord",
-      url: "https://discord.gg/chips"
-    })
+    handler: (ctx) =>
+      ctx.sendForm({
+        emoji: "💬",
+        title: "Official Communities",
+        content: [
+          "Join our communities to chat with other players!",
+          "",
+          "Discord: https://discord.gg/chips",
+          "Telegram: https://t.me/chipsgg",
+        ].join("\n"),
+        buttonLabel: "Join Discord",
+        url: "https://discord.gg/chips",
+      }),
   };
 
   commands.mostplayed = {
@@ -228,19 +229,22 @@ module.exports = (api) => {
     handler: async (ctx) => {
       const games = await api._actions.public("listGamesMostPlayed", {
         skip: 0,
-        limit: 10
+        limit: 10,
+        duration: "1m",
       });
-      
+
       return ctx.sendForm({
         emoji: "🎮",
         title: "Most Played Games",
-        content: games.map((game, index) => 
-          `${index + 1}. ${game.name} (${game.provider})`
-        ).join("\n"),
+        content: games
+          .map(
+            (game, index) => `${index + 1}. ${game.title} (${game.provider})`,
+          )
+          .join("\n"),
         url: "https://chips.gg/casino",
-        buttonLabel: "Play Now"
+        buttonLabel: "Play Now",
       });
-    }
+    },
   };
 
   commands.help = {
