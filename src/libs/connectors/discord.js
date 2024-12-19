@@ -73,19 +73,30 @@ module.exports = (token, commands) =>
 
     client.on("interactionCreate", async (ctx) => {
       if (!ctx.isCommand()) return;
-      if (!_.has(commands, ctx.commandName))
-        return ctx.reply("the command does not exist");
-      const wrapper = WrapperDiscord(ctx);
       
-      // Handle username parameter for /user command
-      if (ctx.commandName === 'user') {
-        const username = ctx.options?.getString('username');
-        wrapper.options = {
-          getString: (param) => param === 'username' ? username : null
-        };
+      try {
+        await ctx.deferReply();
+        
+        if (!_.has(commands, ctx.commandName)) {
+          return ctx.editReply("The command does not exist");
+        }
+        
+        const wrapper = WrapperDiscord(ctx);
+        wrapper.sendForm = async (...args) => ctx.editReply(discordMakeForm(...args));
+        wrapper.sendText = async (content) => ctx.editReply({ content });
+        
+        if (ctx.commandName === 'user') {
+          const username = ctx.options?.getString('username');
+          wrapper.options = {
+            getString: (param) => param === 'username' ? username : null
+          };
+        }
+        
+        await Promise.resolve(commands[ctx.commandName].handler(wrapper));
+      } catch (error) {
+        console.error('Command error:', error);
+        ctx.editReply("An error occurred while processing the command").catch(console.error);
       }
-      
-      await Promise.resolve(commands[ctx.commandName].handler(wrapper));
     });
     const broadcast = (form) => {
       try {
