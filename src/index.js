@@ -82,11 +82,11 @@ const actions = {};
   // setImmediate(timer);
 
   console.log("The bot Chips is successfully loaded");
-  broadcastText("**The bot Chips is successfully loaded. /help**");
+  // broadcastText("**The bot Chips is successfully loaded. /help**");
 
   // Handle graceful shutdown
-  process.on('SIGTERM', async () => {
-    console.log('Received SIGTERM signal, shutting down gracefully...');
+  process.on("SIGTERM", async () => {
+    console.log("Received SIGTERM signal, shutting down gracefully...");
     await broadcastText("**Bot is shutting down for maintenance...**");
     process.exit(0);
   });
@@ -102,6 +102,6 @@ const actions = {};
       async echo(params) {
         return params;
       },
-    }
+    },
   );
 })();
