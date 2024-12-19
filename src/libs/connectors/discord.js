@@ -45,26 +45,23 @@ module.exports = (token, commands) =>
     const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
     client.on("ready", async () => {
       console.log(`Logged in as ${client.user.tag}!`);
-      _.forEach(_.keys(commands), (name) => {
+      const commandData = _.map(_.keys(commands), (name) => {
         const command = commands[name];
-        client.api
-          .applications(client.user.id)
-          .commands.post({
-            data: {
-              name,
-              description: command.description,
-              options: name === 'user' ? [
-                {
-                  name: 'username',
-                  description: 'Username to look up',
-                  type: 3,
-                  required: true
-                }
-              ] : undefined
-            },
-          })
-          .catch(console.error);
+        return {
+          name,
+          description: command.description,
+          options: name === 'user' ? [
+            {
+              name: 'username',
+              description: 'Username to look up',
+              type: 3,
+              required: true
+            }
+          ] : undefined
+        };
       });
+      
+      await client.application.commands.set(commandData);
       resolve({
         broadcastText,
         broadcastForm,
