@@ -42,43 +42,20 @@ app.get("/commands", (req, res) => {
   const api = await SDK(process.env.CHIPS_TOKEN);
   const commands = Commands(api);
   const connectors = [];
+  let telegramConnector;
 
-  // API endpoint for executing commands
-  app.get("/api/command/:name", async (req, res) => {
-    const { name } = req.params;
-    const { username } = req.query;
-
-    if (!api) {
-      return res.status(500).json({ error: "Bot not initialized" });
-    }
-
-    const command = commands[name];
-    if (!command) {
-      return res.status(404).json({ error: "Command not found" });
-    }
-
-    try {
-      const ctx = {
-        options: {
-          getString: (param) => (param === "username" ? username : null),
-        },
-        sendForm: (form) => form,
-        sendText: (text) => ({ text }),
-      };
-
-      const result = await command.handler(ctx);
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+  // Cleanup any existing connections before starting
+  if (telegramConnector?.cleanup) {
+    await telegramConnector.cleanup();
+  }
 
   if (process.env.DISCORD_TOKEN) {
     connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
   }
 
   if (process.env.TELEGRAM_TOKEN) {
-    connectors.push(await Telegram(process.env.TELEGRAM_TOKEN, commands));
+    telegramConnector = await Telegram(process.env.TELEGRAM_TOKEN, commands);
+    connectors.push(telegramConnector);
   }
 
   const broadcastText = makeBroadcast(connectors, "broadcastText");
