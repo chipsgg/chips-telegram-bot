@@ -57,6 +57,17 @@ npm start
 - `/chat` - Get community links
 - `/mostplayed` - List most played games
 - `/help` - View all commands
+- `/auth` - Link your Telegram/Discord ID to your Chips.gg account
+
+## Authentication
+
+To link your Telegram or Discord account with your Chips.gg account:
+
+1. Enable 2FA/TOTP on your Chips.gg account if you haven't already
+2. Use the command: `/auth username:YOUR_USERNAME totp:YOUR_CODE`
+   - Replace YOUR_USERNAME with your Chips.gg username
+   - Replace YOUR_CODE with your current TOTP code
+3. Upon successful authentication, your platform ID will be linked to your account
 
 ## Try the Bot
 
