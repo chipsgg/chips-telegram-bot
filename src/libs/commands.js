@@ -22,7 +22,13 @@ module.exports = (api) => {
       description:
         "The different cryptocurrencies and their values in dollars. Usage: /prices [currency]",
       handler: (ctx) => {
-        const currency = ctx.options?.getString("currency")?.toLowerCase();
+        let currency = null;
+        if (ctx.platform === "discord") {
+          const currency = ctx?.getString("currency")?.toLowerCase();
+        } else {
+          currency = ctx?.getArg(1);
+        }
+
         let currencies = _.chain(api.get("public", "currencies")).filter(
           (x) =>
             !x.hidden &&
@@ -160,7 +166,13 @@ module.exports = (api) => {
   commands.user = {
     description: "Get user information by username",
     handler: async (ctx) => {
-      const username = ctx.options?.getString("username");
+      let username = null;
+      if (ctx.platform === "discord") {
+        username = ctx?.getString("username");
+      } else {
+        username = ctx?.getArg(1);
+      }
+
       if (!username) {
         return ctx.sendText("Please provide a username");
       }
@@ -262,21 +274,13 @@ module.exports = (api) => {
     description: "Authenticate and link your account",
     handler: async (ctx) => {
       let username, totpCode;
-
-      // Parse from message text for Telegram
-      if (ctx.update?.message?.text) {
-        const text = ctx.update.message.text;
-        const usernameMatch = text.match(/username:([^\s]+)/);
-        const totpMatch = text.match(/totp:([0-9]+)/);
-        username = usernameMatch ? usernameMatch[1] : null;
-        totpCode = totpMatch ? totpMatch[1] : null;
-      } else if (ctx.interaction) {
-        // For Discord slash commands
-        username = ctx.options?.getString("username");
-        totpCode = ctx.options?.getString("totp");
+      if (ctx.platform === "discord") {
+        username = ctx?.getString("username");
+        totpCode = ctx?.getString("totp");
+      } else {
+        username = ctx?.getArg(1);
+        totpCode = ctx?.getArg(2);
       }
-
-      console.log("auth command params:", { username, totpCode });
 
       console.info("auth", { username, totpCode });
 
@@ -286,25 +290,18 @@ module.exports = (api) => {
         );
       }
 
-      // Get platform-specific ID
-      let platformid = null;
-      let platform = null;
-
-      if (ctx.update?.message?.from?.id) {
-        // Telegram
-        platformid = ctx.update.message.from.id;
-        platform = "telegram";
-      } else if (ctx.interaction?.user?.id) {
-        // Discord
-        platformid = ctx.interaction.user.id;
-        platform = "discord";
-      }
+      console.log("/auth", {
+        platformid: ctx.userid,
+        platform: ctx.platform,
+        userid: username,
+        code: totpCode,
+      });
 
       try {
         // Store the ID mapping
         const account = await api._actions.auth("linkPlatformID", {
-          platformid,
-          platform,
+          platformid: ctx.userid,
+          platform: ctx.platform,
           userid: username,
           code: totpCode,
         });

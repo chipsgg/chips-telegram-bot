@@ -32,17 +32,18 @@ const discordMakeForm = (options) => {
 };
 
 const WrapperDiscord = (context) => {
-  console.log("WrapperDiscord", context.options?.getString());
+  console.log("WrapperDiscord", context);
 
   const sendForm = (...args) => context.reply(discordMakeForm(...args));
   const sendText = (content) => context.reply({ content });
 
-  const getArg = (index) => context.message?.content?.split(" ")[index];
   const getContent = () => context.message?.content || "";
-
+  const getArg = (index) => getContent().split(" ")[index];
   const getString = (param) => context.options?.getString(param);
 
   return {
+    platform: "discord",
+    userid: context.user.id,
     sendForm,
     sendText,
     getString,
