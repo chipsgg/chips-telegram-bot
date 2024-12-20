@@ -14,8 +14,17 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
+const fs = require('fs');
+const MarkdownIt = require('markdown-it');
+const md = new MarkdownIt();
+
 app.get('/', (req, res) => {
-  res.render('index', { title: 'Chips.gg Bot' });
+  const readmeContent = fs.readFileSync('README.md', 'utf-8');
+  const renderedContent = md.render(readmeContent);
+  res.render('index', { 
+    title: 'Chips.gg Bot',
+    content: renderedContent 
+  });
 });
 
 app.get('/commands', (req, res) => {
