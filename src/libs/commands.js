@@ -317,6 +317,14 @@ module.exports = (api) => {
     },
   };
 
+  commands.koth = {
+    description: "Display current King of the Hill information",
+    handler: async (ctx) => {
+      const koth = await api._actions.public("getRunningKoth");
+      return ctx.sendForm(models.koth(koth));
+    },
+  };
+
   commands.help = {
     description: "Description of all commands",
     handler: (ctx) => ctx.sendForm(models.help(commands)),
