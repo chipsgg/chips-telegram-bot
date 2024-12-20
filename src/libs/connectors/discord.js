@@ -12,7 +12,7 @@ const discordMakeForm = (options) => {
     new MessageButton()
       .setStyle("LINK")
       .setLabel(buttonLabel || "Click on link")
-      .setURL(url || "https://chips.gg/")
+      .setURL(url || "https://chips.gg/"),
   );
   const embed = new MessageEmbed()
     .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`)
@@ -20,7 +20,7 @@ const discordMakeForm = (options) => {
   if (footer)
     embed.setFooter(
       _.trim(footer),
-      "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png"
+      "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png",
     );
   if (banner) embed.setImage(banner);
   if (url) embed.setURL(url);
@@ -32,11 +32,22 @@ const discordMakeForm = (options) => {
 };
 
 const WrapperDiscord = (context) => {
+  console.log("WrapperDiscord", context.options?.getString());
+
   const sendForm = (...args) => context.reply(discordMakeForm(...args));
   const sendText = (content) => context.reply({ content });
+
+  const getArg = (index) => context.message?.content?.split(" ")[index];
+  const getContent = () => context.message?.content || "";
+
+  const getString = (param) => context.options?.getString(param);
+
   return {
     sendForm,
     sendText,
+    getString,
+    getArg,
+    getContent,
   };
 };
 
@@ -49,46 +60,46 @@ module.exports = (token, commands) =>
         const commandData = _.map(_.keys(commands), (name) => {
           const command = commands[name];
           const options = [];
-          
-          if (name === 'user') {
+
+          if (name === "user") {
             options.push({
-              name: 'username',
-              description: 'Username to look up',
+              name: "username",
+              description: "Username to look up",
               type: 3,
-              required: true
+              required: true,
             });
-          } else if (name === 'auth') {
+          } else if (name === "auth") {
             options.push(
               {
-                name: 'username',
-                description: 'Your Chips.gg username',
+                name: "username",
+                description: "Your Chips.gg username",
                 type: 3,
-                required: true
+                required: true,
               },
               {
-                name: 'totp',
-                description: 'Your TOTP authentication code',
+                name: "totp",
+                description: "Your TOTP authentication code",
                 type: 3,
-                required: true
-              }
+                required: true,
+              },
             );
           }
-          
+
           return {
             name,
             description: command.description,
-            options: options.length > 0 ? options : undefined
+            options: options.length > 0 ? options : undefined,
           };
         });
-        
+
         await client.application.commands.set(commandData);
-        console.log('Successfully registered application commands');
+        console.log("Successfully registered application commands");
         resolve({
           broadcastText,
           broadcastForm,
         });
       } catch (error) {
-        console.error('Error registering application commands:', error);
+        console.error("Error registering application commands:", error);
         reject(error);
       }
     });
@@ -98,15 +109,7 @@ module.exports = (token, commands) =>
       if (!_.has(commands, ctx.commandName))
         return ctx.reply("the command does not exist");
       const wrapper = WrapperDiscord(ctx);
-      
-      // Handle username parameter for /user command
-      if (ctx.commandName === 'user') {
-        const username = ctx.options?.getString('username');
-        wrapper.options = {
-          getString: (param) => param === 'username' ? username : null
-        };
-      }
-      
+
       await Promise.resolve(commands[ctx.commandName].handler(wrapper));
     });
     const broadcast = (form) => {
@@ -116,7 +119,7 @@ module.exports = (token, commands) =>
             .filter(
               (channel) =>
                 channel.permissionsFor(client.user).has("SEND_MESSAGES") &&
-                channel.isText()
+                channel.isText(),
             )
             .first();
           if (chan) {
