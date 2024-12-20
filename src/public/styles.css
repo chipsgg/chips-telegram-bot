@@ -52,6 +52,16 @@ body {
   margin-bottom: 20px;
 }
 
+.hero-badge-link {
+  text-decoration: none;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.hero-badge-link:hover {
+  transform: translateY(-2px);
+}
+
 .hero-badge {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
