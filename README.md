@@ -63,8 +63,17 @@ npm start
 - Discord: [Add to Discord Server](https://discord.com/oauth2/authorize?client_id=901908108136308757&permissions=0&scope=bot%20applications.commands)
 - Telegram: [@chipsgg_dev_bot](http://t.me/chipsgg_dev_bot)
 
+## HTTP API Endpoints
+
+The bot provides a web interface with the following endpoints:
+
+- `GET /` - Home page with README content
+- `GET /commands` - List of all available bot commands and their descriptions
+
+The server runs on port 3000 by default (configurable via HTTP_PORT environment variable).
+
 ## Support
 
 For support, join our communities:
 - Discord: https://discord.gg/chips
-- Telegram: https://t.me/chipsgg
+- Telegram: https://t.me/chipsggam: https://t.me/chipsgg
