@@ -37,57 +37,57 @@ app.get("/commands", (req, res) => {
   });
 });
 
-// API endpoint for executing commands
-app.get("/api/command/:name", async (req, res) => {
-  const { name } = req.params;
-  const { username } = req.query;
-  
-  if (!api) {
-    return res.status(500).json({ error: "Bot not initialized" });
-  }
-
-  const command = commands[name];
-  if (!command) {
-    return res.status(404).json({ error: "Command not found" });
-  }
-
-  try {
-    const ctx = {
-      options: {
-        getString: (param) => param === 'username' ? username : null
-      },
-      sendForm: (form) => form,
-      sendText: (text) => ({ text })
-    };
-
-    const result = await command.handler(ctx);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Bot setup
 (async () => {
   const api = await SDK(process.env.CHIPS_TOKEN);
   const commands = Commands(api);
   const connectors = [];
 
-  if (process.env.DISCORD_TOKEN) {
-    connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
-  }
+  // API endpoint for executing commands
+  app.get("/api/command/:name", async (req, res) => {
+    const { name } = req.params;
+    const { username } = req.query;
 
-  if (process.env.TELEGRAM_TOKEN) {
-    try {
-      const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
-      connectors.push(telegram);
-    } catch (error) {
-      console.error('Error starting Telegram bot:', error);
+    if (!api) {
+      return res.status(500).json({ error: "Bot not initialized" });
     }
-  }
 
-  const broadcastText = makeBroadcast(connectors, "broadcastText");
-  const broadcastForm = makeBroadcast(connectors, "broadcastForm");
+    const command = commands[name];
+    if (!command) {
+      return res.status(404).json({ error: "Command not found" });
+    }
+
+    try {
+      const ctx = {
+        options: {
+          getString: (param) => (param === "username" ? username : null),
+        },
+        sendForm: (form) => form,
+        sendText: (text) => ({ text }),
+      };
+
+      const result = await command.handler(ctx);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // if (process.env.DISCORD_TOKEN) {
+  //   connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
+  // }
+
+  // if (process.env.TELEGRAM_TOKEN) {
+  //   try {
+  //     const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
+  //     connectors.push(telegram);
+  //   } catch (error) {
+  //     console.error('Error starting Telegram bot:', error);
+  //   }
+  // }
+
+  // const broadcastText = makeBroadcast(connectors, "broadcastText");
+  // const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
   app.listen(process.env.PORT || 3000, "0.0.0.0", () => {
     console.log("Web server and bot running");
