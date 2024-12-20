@@ -177,3 +177,13 @@ h3 {
   font-size: 1.5rem;
   margin: 1.5rem 0 1rem;
 }
+.github-stars {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 5px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+}
