@@ -181,9 +181,17 @@ h3 {
   position: absolute;
   top: 20px;
   right: 20px;
-  z-index: 1;
+  z-index: 2;
   background: rgba(255, 255, 255, 0.1);
   padding: 5px 10px;
   border-radius: 20px;
   backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+}
+
+.github-stars iframe {
+  margin: 0;
 }
