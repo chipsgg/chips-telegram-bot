@@ -83,7 +83,7 @@ module.exports = (koth) => {
       ...(winningBet
         ? [
             `🏆 **KING**:`,
-            `• Username: ${king.username}x`,
+            `• Username: ${king.username}`,
             `• Multiplier: ${winningBet.multiplier}x`,
           ]
         : []),
