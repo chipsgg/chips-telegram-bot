@@ -250,6 +250,13 @@ module.exports = (api) => {
   commands.auth = {
     description: "Authenticate and link your account",
     handler: async (ctx) => {
+      const username = ctx.options?.getString("username");
+      const totpCode = ctx.options?.getString("totp");
+      
+      if (!username || !totpCode) {
+        return ctx.sendText("Please provide both username and TOTP code. Usage: /auth username:YOUR_USERNAME totp:YOUR_CODE");
+      }
+
       // Get platform-specific ID
       let platformId = null;
       let platform = null;
@@ -267,18 +274,29 @@ module.exports = (api) => {
       }
 
       try {
-        // Store the ID mapping in API if available
+        // Verify username and TOTP
+        const isValid = await api._actions.public("verifyTotp", {
+          userid: username,
+          code: totpCode
+        });
+
+        if (!isValid) {
+          return ctx.sendText("Invalid username or TOTP code");
+        }
+
+        // Store the ID mapping
         if (api._actions?.private) {
           await api._actions.private("linkPlatformId", {
             platformId,
-            platform
+            platform,
+            userid: username
           });
         }
 
         return ctx.sendForm({
           emoji: "🔐",
           title: "Authentication Success",
-          content: `Your ${platform} ID (${platformId}) has been linked to your account.`,
+          content: `Your ${platform} ID (${platformId}) has been linked to account: ${username}`,
           buttonLabel: "Visit Profile",
           url: "https://chips.gg/profile"
         });
