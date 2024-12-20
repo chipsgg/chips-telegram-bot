@@ -1,0 +1,32 @@
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #4CAF50;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.commands-list {
+  margin: 20px 0;
+}
+
+.command {
+  background: #f5f5f5;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+}
+
+.command h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}

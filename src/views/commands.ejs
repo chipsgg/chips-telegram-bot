@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1><%= title %></h1>
+    <div class="commands-list">
+      <% commands.forEach(cmd => { %>
+        <div class="command">
+          <h3>/<%= cmd.name %></h3>
+          <p><%= cmd.description %></p>
+        </div>
+      <% }); %>
+    </div>
+    <a href="/" class="button">Back Home</a>
+  </div>
+</body>
+</html>

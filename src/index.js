@@ -1,28 +1,44 @@
+
 require("dotenv").config();
-// const _ = require("lodash");
+const express = require('express');
+const path = require('path');
 const HttpServer = require("actions-http");
-// const Autoevents = require("./libs/autoevents")(API);
 const SDK = require("./libs/sdk");
 const { makeBroadcast } = require("./libs/utils");
 const { Discord, Telegram } = require("./libs/connectors");
 const Commands = require("./libs/commands");
 
-// your desired application interface.
-const actions = {};
+const app = express();
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// start the bot
+// Routes
+app.get('/', (req, res) => {
+  res.render('index', { title: 'Chips.gg Bot' });
+});
+
+app.get('/commands', (req, res) => {
+  const commands = Commands({});
+  res.render('commands', { 
+    title: 'Available Commands',
+    commands: Object.entries(commands).map(([name, cmd]) => ({
+      name,
+      description: cmd.description
+    }))
+  });
+});
+
+// Bot setup
 (async () => {
   const api = await SDK(process.env.CHIPS_TOKEN);
   const commands = Commands(api);
-
   const connectors = [];
 
-  // init discord
   if (process.env.DISCORD_TOKEN) {
     connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
   }
 
-  // init telegram
   if (process.env.TELEGRAM_TOKEN) {
     connectors.push(await Telegram(process.env.TELEGRAM_TOKEN, commands));
   }
@@ -30,78 +46,7 @@ const actions = {};
   const broadcastText = makeBroadcast(connectors, "broadcastText");
   const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
-  // const timer = async () => {
-  //   const trigger = _.eq(
-  //     _.ceil(_.divide(Date.now(), 1000)) %
-  //       _.multiply(60, process.env.alertInterval || 15),
-  //     0
-  //   );
-  //   if (!trigger) {
-  //     setTimeout(timer, 100);
-  //     return;
-  //   }
-  //   setTimeout(timer, 1100);
-  //   const { bigwins, luckiest } = Autoevents.poll();
-  //   if (bigwins) {
-  //     const currency = _.get(bigwins, "bet.currency");
-  //     const gamecode = _.get(bigwins, "bet.gamecode");
-  //     const currencyInfo = API.get("public", "currencies", currency);
-  //     const slot = _.find(API.getSlots(), (s) =>
-  //       _.eq(_.get(s, "game_code"), gamecode)
-  //     );
-  //     if (!slot) return;
-  //     if (!slot.url_thumb) return;
-  //     broadcastForm(
-  //       models.autoevents.bigwin({
-  //         ...bigwins.bet,
-  //         currencyInfo,
-  //         banner: slot.url_thumb,
-  //         url: `https://chips.gg/casino/${gamecode}`,
-  //       })
-  //     );
-  //   } else if (luckiest) {
-  //     const currency = _.get(luckiest, "bet.currency");
-  //     const gamecode = _.get(luckiest, "bet.gamecode");
-  //     const currencyInfo = API.get("public", "currencies", currency);
-  //     const slot = _.find(API.getSlots(), (s) =>
-  //       _.eq(_.get(s, "game_code"), gamecode)
-  //     );
-  //     if (!slot) return;
-  //     if (!slot.url_thumb) return;
-  //     broadcastForm(
-  //       models.autoevents.luckiest({
-  //         ...luckiest.bet,
-  //         currencyInfo,
-  //         banner: slot.url_thumb,
-  //         url: `https://chips.gg/casino/${gamecode}`,
-  //       })
-  //     );
-  //   }
-  // };
-
-  // setImmediate(timer);
-
-  console.log("The bot Chips is successfully loaded");
-  // broadcastText("**The bot Chips is successfully loaded. /help**");
-
-  // Handle graceful shutdown
-  process.on("SIGTERM", async () => {
-    console.log("Received SIGTERM signal, shutting down gracefully...");
-    await broadcastText("**Bot is shutting down for maintenance...**");
-    process.exit(0);
+  app.listen(process.env.PORT || 3000, '0.0.0.0', () => {
+    console.log("Web server and bot running");
   });
-
-  return HttpServer(
-    {
-      port: process.env.PORT || process.env.HTTP_PORT || 3000,
-    },
-    {
-      async ping(params) {
-        return "pong";
-      },
-      async echo(params) {
-        return params;
-      },
-    },
-  );
 })();
