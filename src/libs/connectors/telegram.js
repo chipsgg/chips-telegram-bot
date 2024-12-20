@@ -156,28 +156,15 @@ module.exports = (token, commands) =>
       }
     }
 
-    // Enable graceful stop
-    process.once('SIGINT', () => bot.stop('SIGINT'));
-    process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
     bot
       .launch({
         dropPendingUpdates: true,
-        allowedUpdates: ['message', 'callback_query'],
       })
-      .then(() => {
-        console.log('Telegram bot started successfully');
+      .then(() =>
         resolve({
           broadcastText,
           broadcastForm,
-          cleanup: () => bot.stop()
-        });
-      })
-      .catch((error) => {
-        if (error.response?.error_code === 409) {
-          console.error('Another Telegram bot instance is running. Stopping this instance.');
-          bot.stop();
-        }
-        reject(error);
-      });
+        })
+      )
+      .catch(reject);
   });
