@@ -65,10 +65,73 @@ npm start
 
 ## HTTP API Endpoints
 
-The bot provides a web interface with the following endpoints:
+The bot provides a RESTful API interface with the following endpoints:
 
-- `GET /` - Home page with README content
-- `GET /commands` - List of all available bot commands and their descriptions
+### Endpoints
+
+#### 1. `GET /`
+Home page displaying this documentation.
+
+#### 2. `GET /commands` 
+List all available bot commands and their descriptions.
+
+#### 3. `GET /api/command/:name`
+Execute a bot command through HTTP.
+
+**Parameters:**
+- `name` (path parameter) - The command name to execute
+- `username` (query parameter) - Required for user-specific commands
+
+**Example Responses:**
+
+For `/api/command/prices`:
+```json
+{
+  "emoji": "💰",
+  "title": "Cryptocurrency Prices",
+  "content": "BTC: $50,000\nETH: $3,000\nTRX: $0.08",
+  "buttonLabel": "Trade Now",
+  "url": "https://chips.gg/exchange"
+}
+```
+
+For `/api/command/user?username=chips`:
+```json
+{
+  "emoji": "👤",
+  "title": "User Info: chips",
+  "content": "Username: chips\nLevel: Diamond (50)\nTotal Bets: 1,000\nTotal Wins: 500",
+  "buttonLabel": "View Profile",
+  "url": "https://chips.gg/user/chips"
+}
+```
+
+### Example Usage
+
+Using cURL:
+```bash
+# Get cryptocurrency prices
+curl http://0.0.0.0:3000/api/command/prices
+
+# Look up user information
+curl http://0.0.0.0:3000/api/command/user?username=chips
+
+# Get most played games
+curl http://0.0.0.0:3000/api/command/mostplayed
+```
+
+Using JavaScript Fetch:
+```javascript
+// Get random slot recommendation
+fetch('http://0.0.0.0:3000/api/command/slotcall')
+  .then(response => response.json())
+  .then(data => console.log(data));
+
+// Look up user
+fetch('http://0.0.0.0:3000/api/command/user?username=chips')
+  .then(response => response.json())
+  .then(data => console.log(data));
+```
 
 The server runs on port 3000 by default (configurable via HTTP_PORT environment variable).
 
