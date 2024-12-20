@@ -1,27 +1,39 @@
 
 # Chips.gg Chat Bot 🎮
 
-A Discord and Telegram bot for the Chips.gg gaming platform that provides real-time information about games, events, prices, and more.
+A powerful Discord and Telegram bot for the Chips.gg gaming platform that brings real-time gaming information directly to your community.
 
-## Features
+## ✨ Features
 
-- 🎲 Get random slot recommendations
-- 💰 Check cryptocurrency prices
-- 🎉 View ongoing promotions and events
-- 🏆 See top player rankings
-- 📊 Track vault statistics
-- 👥 Look up user information
-- 🎮 View most played games
+### Real-time Gaming Information
+- 🎲 Random slot recommendations with `/slotcall`
+- 🎮 Most played games tracking with `/mostplayed`
+- 👑 King of the Hill status with `/koth`
 
-## Getting Started
+### Player Stats & Rankings
+- 🏆 Top player rankings with `/bigwins`
+- 🍀 Luckiest players list with `/luckiest`
+- 👤 Detailed user information via `/user`
+
+### Platform Updates
+- 🎉 Live promotions and events with `/promotions`
+- 💰 Real-time cryptocurrency prices using `/prices`
+- 🏦 Vault statistics tracking with `/vault`
+
+### Community Tools
+- 💬 Access community links with `/chat`
+- 🔗 Link your account using `/auth`
+- ❓ View all commands with `/help`
+
+## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js
-- A Discord bot token and/or Telegram bot token
+- Discord bot token and/or Telegram bot token
 - Chips.gg API token
 
-### Environment Variables
-Create a `.env` file in your project root with the following:
+### Environment Setup
+Create a `.env` file with:
 
 ```ini
 HTTP_PORT=3000          # Web interface port
@@ -33,8 +45,7 @@ alertMinimumDollar=1000       # Minimum dollar amount for alerts
 alertMinimumMultiplier=100    # Minimum multiplier for alerts
 ```
 
-### Installation
-
+### Quick Start
 1. Install dependencies:
 ```bash
 npm install
@@ -45,58 +56,34 @@ npm install
 npm start
 ```
 
-## Available Commands
+## 🔐 Authentication
 
-- `/slotcall` - Get a random slot recommendation
-- `/prices` - Check cryptocurrency prices
-- `/promotions` - View ongoing promotions
-- `/vault` - Check vault statistics
-- `/bigwins` - See biggest winners
-- `/luckiest` - View luckiest players
-- `/user [username]` - Look up user information
-- `/chat` - Get community links
-- `/mostplayed` - List most played games
-- `/koth` - Display current King of the Hill information
-- `/help` - View all commands
-- `/auth` - Link your Telegram/Discord ID to your Chips.gg account
+Link your platform account:
 
-## Authentication
+1. Enable 2FA/TOTP on your Chips.gg account
+2. Use: `/auth username:YOUR_USERNAME totp:YOUR_CODE`
+3. Wait for confirmation of successful linking
 
-To link your Telegram or Discord account with your Chips.gg account:
+## 🌐 HTTP API
 
-1. Enable 2FA/TOTP on your Chips.gg account if you haven't already
-2. Use the command: `/auth username:YOUR_USERNAME totp:YOUR_CODE`
-   - Replace YOUR_USERNAME with your Chips.gg username
-   - Replace YOUR_CODE with your current TOTP code
-3. Upon successful authentication, your platform ID will be linked to your account
+Access bot features via HTTP endpoints:
 
-## Try the Bot
+### Main Endpoints
 
-- Discord: [Add to Discord Server](https://discord.com/oauth2/authorize?client_id=901908108136308757&permissions=0&scope=bot%20applications.commands)
-- Telegram: [@chipsgg_dev_bot](http://t.me/chipsgg_dev_bot)
+#### `GET /`
+Home page with documentation
 
-## HTTP API Endpoints
+#### `GET /commands`
+List all bot commands
 
-The bot provides a RESTful API interface with the following endpoints:
-
-### Endpoints
-
-#### 1. `GET /`
-Home page displaying this documentation.
-
-#### 2. `GET /commands` 
-List all available bot commands and their descriptions.
-
-#### 3. `GET /api/command/:name`
-Execute a bot command through HTTP.
+#### `GET /api/command/:name`
+Execute bot commands via HTTP
 
 **Parameters:**
-- `name` (path parameter) - The command name to execute
-- `username` (query parameter) - Required for user-specific commands
+- `name` (path) - Command to execute
+- `username` (query) - For user-specific commands
 
-**Example Responses:**
-
-For `/api/command/prices`:
+**Example Response:**
 ```javascript
 {
   "emoji": "💰",
@@ -107,48 +94,23 @@ For `/api/command/prices`:
 }
 ```
 
-For `/api/command/user?username=chips`:
-```javascript
-{
-  "emoji": "👤",
-  "title": "User Info: chips",
-  "content": "Username: chips\nLevel: Diamond (50)\nTotal Bets: 1,000\nTotal Wins: 500",
-  "buttonLabel": "View Profile",
-  "url": "https://chips.gg/user/chips"
-}
-```
-
-### Example Usage
+### API Usage Examples
 
 Using cURL:
 ```bash
-# Get cryptocurrency prices
 curl http://0.0.0.0:3000/api/command/prices
-
-# Look up user information
 curl http://0.0.0.0:3000/api/command/user?username=chips
-
-# Get most played games
-curl http://0.0.0.0:3000/api/command/mostplayed
 ```
 
-Using JavaScript Fetch:
+Using JavaScript:
 ```javascript
-// Get random slot recommendation
 fetch('http://0.0.0.0:3000/api/command/slotcall')
   .then(response => response.json())
   .then(data => console.log(data));
-
-// Look up user
-fetch('http://0.0.0.0:3000/api/command/user?username=chips')
-  .then(response => response.json())
-  .then(data => console.log(data));
 ```
 
-The server runs on port 3000 by default (configurable via HTTP_PORT environment variable).
+## 💬 Support
 
-## Support
-
-For support, join our communities:
+Join our communities:
 - Discord: https://discord.gg/chips
 - Telegram: https://t.me/chipsgg
