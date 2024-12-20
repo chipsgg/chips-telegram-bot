@@ -19,23 +19,27 @@ module.exports = (api) => {
       },
     },
     prices: {
-      description: "The different cryptocurrencies and their values in dollars. Usage: /prices [currency]",
+      description:
+        "The different cryptocurrencies and their values in dollars. Usage: /prices [currency]",
       handler: (ctx) => {
         const currency = ctx.options?.getString("currency")?.toLowerCase();
-        let currencies = _.chain(api.get("public", "currencies"))
-          .filter(
-            (x) =>
-              !x.hidden &&
-              x.name !== "chips" &&
-              x.name !== "chips_staking" &&
-              !_.startsWith(x.name, "usd") &&
-              !_.endsWith(x.name, "usd"),
-          );
+        let currencies = _.chain(api.get("public", "currencies")).filter(
+          (x) =>
+            !x.hidden &&
+            x.name !== "chips" &&
+            x.name !== "chips_staking" &&
+            !_.startsWith(x.name, "usd") &&
+            !_.endsWith(x.name, "usd"),
+        );
 
         if (currency) {
-          currencies = currencies.filter(x => x.name.toLowerCase() === currency);
+          currencies = currencies.filter(
+            (x) => x.name.toLowerCase() === currency,
+          );
           if (currencies.value().length === 0) {
-            return ctx.sendText("Currency not found. Use /prices to see all available currencies.");
+            return ctx.sendText(
+              "Currency not found. Use /prices to see all available currencies.",
+            );
           }
         }
 
@@ -259,58 +263,47 @@ module.exports = (api) => {
     handler: async (ctx) => {
       const username = ctx.options?.getString("username");
       const totpCode = ctx.options?.getString("totp");
-      
+
       if (!username || !totpCode) {
-        return ctx.sendText("Please provide both username and TOTP code. Usage: /auth username:YOUR_USERNAME totp:YOUR_CODE");
+        return ctx.sendText(
+          "Please provide both username and TOTP code. Usage: /auth username:YOUR_USERNAME totp:YOUR_CODE",
+        );
       }
 
       // Get platform-specific ID
       let platformId = null;
       let platform = null;
-      
-      if (ctx.update?.message?.from?.id) { // Telegram
-        platformId = ctx.update.message.from.id;
-        platform = 'telegram';
-      } else if (ctx.interaction?.user?.id) { // Discord
-        platformId = ctx.interaction.user.id;
-        platform = 'discord';
-      }
 
-      if (!platformId) {
-        return ctx.sendText("Could not identify your platform ID");
+      if (ctx.update?.message?.from?.id) {
+        // Telegram
+        platformId = ctx.update.message.from.id;
+        platform = "telegram";
+      } else if (ctx.interaction?.user?.id) {
+        // Discord
+        platformId = ctx.interaction.user.id;
+        platform = "discord";
       }
 
       try {
-        // Verify username and TOTP
-        const isValid = await api._actions.public("verifyTotp", {
-          userid: username,
-          code: totpCode
-        });
-
-        if (!isValid) {
-          return ctx.sendText("Invalid username or TOTP code");
-        }
-
         // Store the ID mapping
-        if (api._actions?.private) {
-          await api._actions.private("linkPlatformId", {
-            platformId,
-            platform,
-            userid: username
-          });
-        }
+        const account = await api._actions.auth("linkPlatformId", {
+          platformId,
+          platform,
+          userid: username,
+          code: totpCode,
+        });
 
         return ctx.sendForm({
           emoji: "🔐",
           title: "Authentication Success",
           content: `Your ${platform} ID (${platformId}) has been linked to account: ${username}`,
           buttonLabel: "Visit Profile",
-          url: "https://chips.gg/profile"
+          url: `https://chips.gg/user/${username}`,
         });
       } catch (error) {
         return ctx.sendText("Failed to authenticate: " + error.message);
       }
-    }
+    },
   };
 
   commands.help = {
