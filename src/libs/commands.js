@@ -320,7 +320,7 @@ module.exports = (api) => {
   commands.koth = {
     description: "Display current King of the Hill information",
     handler: async (ctx) => {
-      const koth = await api._actions.public("getRunningKoth");
+      const koth = api.get("public", "koth");
       return ctx.sendForm(models.koth(koth));
     },
   };

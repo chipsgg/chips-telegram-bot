@@ -3,6 +3,7 @@
     "@chipsgg/openservice-ws-client": "^1.0.34",
     "@coingecko/cryptoformat": "^0.4.4",
     "actions-http": "^2.1.0",
+    "big.js": "^6.2.2",
     "dayjs": "^1.10.7",
     "discord.js": "^13.2.0",
     "dotenv": "^10.0.0",
