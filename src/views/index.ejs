@@ -8,7 +8,6 @@
   <meta name="keywords" content="chips.gg, gaming, cryptocurrency, bot, stats, prices">
   <meta name="robots" content="index, follow">
   
-  <!-- Open Graph -->
   <meta property="og:title" content="<%= title %>">
   <meta property="og:description" content="Chips.gg Bot - Your gaming companion for cryptocurrency prices, user stats, and game recommendations">
   <meta property="og:type" content="website">
@@ -20,8 +19,12 @@
 <body>
   <div class="container">
     <h1><%= title %></h1>
-    <%- content %>
-    <a href="/commands" class="button">View Commands</a>
+    <div class="markdown-content">
+      <%- content %>
+    </div>
+    <div style="text-align: center;">
+      <a href="/commands" class="button">View Available Commands</a>
+    </div>
   </div>
 </body>
 </html>
