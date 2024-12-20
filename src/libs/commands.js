@@ -19,9 +19,10 @@ module.exports = (api) => {
       },
     },
     prices: {
-      description: "The different cryptocurrencies and their values in dollars",
+      description: "The different cryptocurrencies and their values in dollars. Usage: /prices [currency]",
       handler: (ctx) => {
-        const content = _.chain(api.get("public", "currencies"))
+        const currency = ctx.options?.getString("currency")?.toLowerCase();
+        let currencies = _.chain(api.get("public", "currencies"))
           .filter(
             (x) =>
               !x.hidden &&
@@ -29,10 +30,16 @@ module.exports = (api) => {
               x.name !== "chips_staking" &&
               !_.startsWith(x.name, "usd") &&
               !_.endsWith(x.name, "usd"),
-          )
-          .value();
+          );
 
-        return ctx.sendForm(models.prices(content));
+        if (currency) {
+          currencies = currencies.filter(x => x.name.toLowerCase() === currency);
+          if (currencies.value().length === 0) {
+            return ctx.sendText("Currency not found. Use /prices to see all available currencies.");
+          }
+        }
+
+        return ctx.sendForm(models.prices(currencies.value()));
       },
     },
     promotions: {
