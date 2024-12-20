@@ -56,6 +56,7 @@ npm start
 - `/user [username]` - Look up user information
 - `/chat` - Get community links
 - `/mostplayed` - List most played games
+- `/koth` - Display current King of the Hill information
 - `/help` - View all commands
 - `/auth` - Link your Telegram/Discord ID to your Chips.gg account
 
