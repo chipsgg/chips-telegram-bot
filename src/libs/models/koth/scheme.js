@@ -80,16 +80,19 @@ module.exports = (koth) => {
     emoji: "👑",
     title: "KING OF THE HILL",
     content: [
-      `👑 **Current King**: ${king?.username || "No King Yet"}`,
+      ...(winningBet
+        ? [
+            `🏆 **KING**:`,
+            `• Username: ${king}x`,
+            `• Multiplier: ${winningBet.multiplier}x`,
+          ]
+        : []),
       `💰 **Prize**: $${convertDecimals(winnings, 6, 0).toLocaleString()} ${currency.toUpperCase()}`,
       `🎮 **Game**: ${game?.title || "Unknown"}`,
-      `🎯 **Multiplier**: ${multiplier}x`,
-      `💵 **Minimum Bet**: $${convertDecimals(minBet, 6, 0).toLocaleString()} ${currency.toUpperCase()}`,
-      `📊 **Stats**:`,
-      `• Total Bets: ${totalBets.toLocaleString()}`,
-      winningBet ? `• Winning Multiplier: ${winningBet.multiplier}x` : "",
-      `⏰ **Time Left**: ${formatDate(endTime)}`,
-      `🏆 **Status**: ${gameState.toUpperCase()}`,
+      `⏳  **Time Left**: ${formatDate(endTime)}`,
+      `📈  **Multiplier**: ${multiplier}x`,
+      `🚷  **Minimum Bet**: $${convertDecimals(minBet, 6, 0).toLocaleString()} ${currency.toUpperCase()}`,
+      `🧮 Total Bets: ${totalBets.toLocaleString()}`,
     ]
       .filter(Boolean)
       .join("\n"),
