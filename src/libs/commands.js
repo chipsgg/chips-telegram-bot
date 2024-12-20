@@ -296,7 +296,7 @@ module.exports = (api) => {
         return ctx.sendForm({
           emoji: "🔐",
           title: "Authentication Success",
-          content: `Your ${platform} ID (${platformId}) has been linked to account: ${username}`,
+          content: `Your ${platform} ID (${platformid}) has been linked to account: ${username}`,
           buttonLabel: "Visit Profile",
           url: `https://chips.gg/user/${username}`,
         });
