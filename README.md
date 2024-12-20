@@ -23,7 +23,7 @@ A Discord and Telegram bot for the Chips.gg gaming platform that provides real-t
 ### Environment Variables
 Create a `.env` file in your project root with the following:
 
-```env
+```ini
 HTTP_PORT=3000          # Web interface port
 CHIPS_TOKEN=your_token  # Chips.gg API token
 DISCORD_TOKEN=your_token       # Discord bot token
@@ -96,7 +96,7 @@ Execute a bot command through HTTP.
 **Example Responses:**
 
 For `/api/command/prices`:
-```json
+```javascript
 {
   "emoji": "💰",
   "title": "Cryptocurrency Prices",
@@ -107,7 +107,7 @@ For `/api/command/prices`:
 ```
 
 For `/api/command/user?username=chips`:
-```json
+```javascript
 {
   "emoji": "👤",
   "title": "User Info: chips",
@@ -150,4 +150,4 @@ The server runs on port 3000 by default (configurable via HTTP_PORT environment 
 
 For support, join our communities:
 - Discord: https://discord.gg/chips
-- Telegram: https://t.me/chipsggam: https://t.me/chipsgg
+- Telegram: https://t.me/chipsgg
