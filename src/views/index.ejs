@@ -15,15 +15,24 @@
   
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
 </head>
 <body>
-  <div class="container">
+  <header class="hero">
+    <div class="hero-content">
+      <h1><%= title %></h1>
+      <p class="tagline">Your Gaming Companion</p>
+    </div>
+  </header>
+  <main class="container">
     <div class="markdown-content">
       <%- content %>
     </div>
-    <div style="text-align: center;">
-      <a href="/commands" class="button">View Available Commands</a>
+    <div class="cta-section">
+      <a href="/commands" class="button">Explore Commands</a>
     </div>
-  </div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-javascript.min.js"></script>
 </body>
 </html>
