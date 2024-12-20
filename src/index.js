@@ -40,6 +40,11 @@ app.get("/commands", (req, res) => {
 // Bot setup
 (async () => {
   const api = await SDK(process.env.CHIPS_TOKEN);
+
+  if (!api) {
+    return res.status(500).json({ error: "Bot not initialized" });
+  }
+
   const commands = Commands(api);
   const connectors = [];
 
@@ -47,10 +52,6 @@ app.get("/commands", (req, res) => {
   app.get("/api/command/:name", async (req, res) => {
     const { name } = req.params;
     const { username } = req.query;
-
-    if (!api) {
-      return res.status(500).json({ error: "Bot not initialized" });
-    }
 
     const command = commands[name];
     if (!command) {
