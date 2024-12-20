@@ -261,8 +261,20 @@ module.exports = (api) => {
   commands.auth = {
     description: "Authenticate and link your account",
     handler: async (ctx) => {
-      const username = ctx.options?.getString("username");
-      const totpCode = ctx.options?.getString("totp");
+      let username, totpCode;
+      
+      // Parse from message text for Telegram
+      if (ctx.update?.message?.text) {
+        const text = ctx.update.message.text;
+        const usernameMatch = text.match(/username:(\S+)/);
+        const totpMatch = text.match(/totp:(\d+)/);
+        username = usernameMatch ? usernameMatch[1] : null;
+        totpCode = totpMatch ? totpMatch[1] : null;
+      } else {
+        // For Discord slash commands
+        username = ctx.options?.getString("username");
+        totpCode = ctx.options?.getString("totp");
+      }
 
       if (!username || !totpCode) {
         return ctx.sendText(
