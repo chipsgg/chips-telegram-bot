@@ -45,6 +45,13 @@ body {
   gap: 1.5rem;
 }
 
+.hero-badges {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 20px;
+}
+
 .hero-badge {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -53,7 +60,6 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   display: inline-block;
-  margin-bottom: 20px;
   backdrop-filter: blur(5px);
 }
 
