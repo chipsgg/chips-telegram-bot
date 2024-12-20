@@ -72,3 +72,22 @@ h1 {
   height: auto;
   border-radius: 8px;
 }
+
+.code-block {
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 16px 0;
+}
+
+.code-block code {
+  background: none;
+  padding: 0;
+  margin: 0;
+  white-space: pre;
+}
