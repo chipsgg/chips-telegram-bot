@@ -57,6 +57,21 @@ module.exports = (token, commands) =>
               type: 3,
               required: true
             });
+          } else if (name === 'auth') {
+            options.push(
+              {
+                name: 'username',
+                description: 'Your Chips.gg username',
+                type: 3,
+                required: true
+              },
+              {
+                name: 'totp',
+                description: 'Your TOTP authentication code',
+                type: 3,
+                required: true
+              }
+            );
           }
           
           return {
