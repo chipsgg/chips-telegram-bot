@@ -37,6 +37,36 @@ app.get("/commands", (req, res) => {
   });
 });
 
+// API endpoint for executing commands
+app.get("/api/command/:name", async (req, res) => {
+  const { name } = req.params;
+  const { username } = req.query;
+  
+  if (!api) {
+    return res.status(500).json({ error: "Bot not initialized" });
+  }
+
+  const command = commands[name];
+  if (!command) {
+    return res.status(404).json({ error: "Command not found" });
+  }
+
+  try {
+    const ctx = {
+      options: {
+        getString: (param) => param === 'username' ? username : null
+      },
+      sendForm: (form) => form,
+      sendText: (text) => ({ text })
+    };
+
+    const result = await command.handler(ctx);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Bot setup
 (async () => {
   const api = await SDK(process.env.CHIPS_TOKEN);
