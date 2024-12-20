@@ -247,6 +247,47 @@ module.exports = (api) => {
     },
   };
 
+  commands.auth = {
+    description: "Authenticate and link your account",
+    handler: async (ctx) => {
+      // Get platform-specific ID
+      let platformId = null;
+      let platform = null;
+      
+      if (ctx.update?.message?.from?.id) { // Telegram
+        platformId = ctx.update.message.from.id;
+        platform = 'telegram';
+      } else if (ctx.interaction?.user?.id) { // Discord
+        platformId = ctx.interaction.user.id;
+        platform = 'discord';
+      }
+
+      if (!platformId) {
+        return ctx.sendText("Could not identify your platform ID");
+      }
+
+      try {
+        // Store the ID mapping in API if available
+        if (api._actions?.private) {
+          await api._actions.private("linkPlatformId", {
+            platformId,
+            platform
+          });
+        }
+
+        return ctx.sendForm({
+          emoji: "🔐",
+          title: "Authentication Success",
+          content: `Your ${platform} ID (${platformId}) has been linked to your account.`,
+          buttonLabel: "Visit Profile",
+          url: "https://chips.gg/profile"
+        });
+      } catch (error) {
+        return ctx.sendText("Failed to authenticate: " + error.message);
+      }
+    }
+  };
+
   commands.help = {
     description: "Description of all commands",
     handler: (ctx) => ctx.sendForm(models.help(commands)),
