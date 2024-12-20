@@ -87,9 +87,7 @@ module.exports = (koth) => {
       `💵 **Minimum Bet**: $${convertDecimals(minBet, 6, 0).toLocaleString()} ${currency.toUpperCase()}`,
       `📊 **Stats**:`,
       `• Total Bets: ${totalBets.toLocaleString()}`,
-      winningBet
-        ? `• Winning Bet: $${parseFloat(winningBet.amount).toLocaleString()}`
-        : "",
+      winningBet ? `• Winning Multiplier: ${winningBet.multiplier}x` : "",
       `⏰ **Time Left**: ${formatDate(endTime)}`,
       `🏆 **Status**: ${gameState.toUpperCase()}`,
     ]
