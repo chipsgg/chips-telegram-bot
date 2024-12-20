@@ -12,6 +12,8 @@ const telegramMakeForm = ({ emoji, title, content, footer }) => `${_.trim(
 ${parseAndClean(content)}${footer ? `\n\n${parseAndClean(footer)}` : ""}`;
 
 const WrapperTelegram = (context) => {
+  console.log("WrapperTelegram", context);
+
   function sendForm(options) {
     const { banner, url, buttonLabel } = options;
     const caption = telegramMakeForm(options);

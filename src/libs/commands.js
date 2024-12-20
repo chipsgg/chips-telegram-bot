@@ -290,30 +290,28 @@ module.exports = (api) => {
         );
       }
 
-      console.log("/auth", {
-        platformid: ctx.userid,
+      const payload = {
+        platformid: ctx.userid.toString(),
         platform: ctx.platform,
         userid: username,
         code: totpCode,
-      });
+      };
+
+      console.log("/auth", payload);
 
       try {
         // Store the ID mapping
-        const account = await api._actions.auth("linkPlatformID", {
-          platformid: ctx.userid,
-          platform: ctx.platform,
-          userid: username,
-          code: totpCode,
-        });
+        const account = await api._actions.auth("linkPlatformID", payload);
 
         return ctx.sendForm({
           emoji: "🔐",
           title: "Authentication Success",
-          content: `Your ${platform} ID (${platformid}) has been linked to account: ${username}`,
+          content: `Your ${account.platform} ID (${account.platformid}) has been linked to account: ${account.id}`,
           buttonLabel: "Visit Profile",
           url: `https://chips.gg/user/${username}`,
         });
       } catch (error) {
+        console.error("/auth", error);
         return ctx.sendText("Failed to authenticate: " + error.message);
       }
     },
