@@ -271,23 +271,23 @@ module.exports = (api) => {
       }
 
       // Get platform-specific ID
-      let platformId = null;
+      let platformid = null;
       let platform = null;
 
       if (ctx.update?.message?.from?.id) {
         // Telegram
-        platformId = ctx.update.message.from.id;
+        platformid = ctx.update.message.from.id;
         platform = "telegram";
       } else if (ctx.interaction?.user?.id) {
         // Discord
-        platformId = ctx.interaction.user.id;
+        platformid = ctx.interaction.user.id;
         platform = "discord";
       }
 
       try {
         // Store the ID mapping
-        const account = await api._actions.auth("linkPlatformId", {
-          platformId,
+        const account = await api._actions.auth("linkPlatformID", {
+          platformid,
           platform,
           userid: username,
           code: totpCode,
