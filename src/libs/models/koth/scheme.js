@@ -74,17 +74,18 @@ module.exports = (koth) => {
     winnings,
     totalBets,
     minBet,
+    king,
   } = koth || {};
 
   return {
     emoji: "👑",
     title: "KING OF THE HILL",
     content: [
-      ...(winningBet
+      ...(king
         ? [
             `🏆 **KING**:`,
-            `• Username: ${king.username}`,
-            `• Multiplier: ${winningBet.multiplier}x`,
+            `• Username: ${king.user.username}`,
+            `• Multiplier: ${multiplier}x`,
           ]
         : []),
       `💰 **Prize**: $${convertDecimals(winnings, 6, 0).toLocaleString()} ${currency.toUpperCase()}`,
