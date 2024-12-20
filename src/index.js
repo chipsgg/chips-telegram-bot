@@ -73,21 +73,21 @@ app.get("/commands", (req, res) => {
     }
   });
 
-  // if (process.env.DISCORD_TOKEN) {
-  //   connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
-  // }
+  if (process.env.DISCORD_TOKEN) {
+    connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
+  }
 
-  // if (process.env.TELEGRAM_TOKEN) {
-  //   try {
-  //     const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
-  //     connectors.push(telegram);
-  //   } catch (error) {
-  //     console.error('Error starting Telegram bot:', error);
-  //   }
-  // }
+  if (process.env.TELEGRAM_TOKEN) {
+    try {
+      const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
+      connectors.push(telegram);
+    } catch (error) {
+      console.error("Error starting Telegram bot:", error);
+    }
+  }
 
-  // const broadcastText = makeBroadcast(connectors, "broadcastText");
-  // const broadcastForm = makeBroadcast(connectors, "broadcastForm");
+  const broadcastText = makeBroadcast(connectors, "broadcastText");
+  const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
   app.listen(process.env.PORT || 3000, "0.0.0.0", () => {
     console.log("Web server and bot running");
