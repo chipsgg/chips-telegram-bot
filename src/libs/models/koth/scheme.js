@@ -82,17 +82,16 @@ module.exports = (koth) => {
     content: [
       ...(king
         ? [
-            `🏆 **KING**:`,
-            `• Username: ${king.user.username}`,
-            `• Multiplier: ${multiplier}x`,
+            `• **Username**: ${king.user.username}`,
+            `• **Multiplier**: ${multiplier}x`,
           ]
         : []),
       `💰 **Prize**: $${convertDecimals(winnings, 6, 0).toLocaleString()} ${currency.toUpperCase()}`,
       `🎮 **Game**: ${game?.title || "Unknown"}`,
-      `⏳  **Time Left**: ${formatDate(endTime)}`,
-      `📈  **Multiplier**: ${multiplier}x`,
-      `🚷  **Minimum Bet**: $${convertDecimals(minBet, 6, 0).toLocaleString()} ${currency.toUpperCase()}`,
-      `🧮 Total Bets: ${totalBets.toLocaleString()}`,
+      `⏳ **Time Left**: ${formatDate(endTime)}`,
+      `📈 **Multiplier**: ${multiplier}x`,
+      `🚷 **Minimum Bet**: $${convertDecimals(minBet, 6, 0).toLocaleString()} ${currency.toUpperCase()}`,
+      `🧮 **Total Bets**: ${totalBets.toLocaleString()}`,
     ]
       .filter(Boolean)
       .join("\n"),
