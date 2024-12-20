@@ -61,7 +61,6 @@ module.exports = (koth) => {
     id,
     state: gameState,
     winningBet,
-    king,
     created,
     updated,
     countdown,
