@@ -54,13 +54,21 @@ body {
 }
 
 .hero-title {
-  font-size: 4rem;
+  font-size: 4.5rem;
   margin: 0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-  background: linear-gradient(to right, #ffffff, #f0f0f0);
+  text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+  background: linear-gradient(120deg, #ffffff 0%, #e0e0e0 50%, #ffffff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  animation: shimmer 3s infinite linear;
+  letter-spacing: -1px;
+  font-weight: 800;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
 .tagline {
