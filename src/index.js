@@ -78,7 +78,12 @@ app.get("/api/command/:name", async (req, res) => {
   }
 
   if (process.env.TELEGRAM_TOKEN) {
-    connectors.push(await Telegram(process.env.TELEGRAM_TOKEN, commands));
+    try {
+      const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
+      connectors.push(telegram);
+    } catch (error) {
+      console.error('Error starting Telegram bot:', error);
+    }
   }
 
   const broadcastText = makeBroadcast(connectors, "broadcastText");

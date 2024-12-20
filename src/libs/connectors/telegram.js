@@ -1,13 +1,17 @@
+
 const assert = require("assert");
 const _ = require("lodash");
 const marked = require("marked");
 const { Telegraf } = require("telegraf");
+
 const parseAndClean = (content) =>
   _.replace(marked.parseInline(_.trim(content)), "<br>", "\n");
+
 const telegramMakeForm = ({ emoji, title, content, footer }) => `${_.trim(
   emoji
 )} <strong>${_.trim(title)}</strong> ${_.trim(emoji)}
 ${parseAndClean(content)}${footer ? `\n\n${parseAndClean(footer)}` : ""}`;
+
 const WrapperTelegram = (context) => {
   function sendForm(options) {
     const { banner, url, buttonLabel } = options;
@@ -21,12 +25,7 @@ const WrapperTelegram = (context) => {
           reply_markup: {
             inline_keyboard: [
               url && buttonLabel
-                ? [
-                    {
-                      text: buttonLabel,
-                      url,
-                    },
-                  ]
+                ? [{ text: buttonLabel, url }]
                 : [],
             ],
           },
@@ -36,49 +35,52 @@ const WrapperTelegram = (context) => {
       return context.replyWithHTML(caption, {
         reply_markup: {
           inline_keyboard: [
-            url && buttonLabel
-              ? [
-                  {
-                    text: buttonLabel,
-                    url,
-                  },
-                ]
-              : [],
+            url && buttonLabel ? [{ text: buttonLabel, url }] : [],
           ],
         },
       });
     }
   }
+  
   function sendText(content) {
     return context.replyWithHTML(parseAndClean(content));
   }
-  return {
-    sendForm,
-    sendText,
-  };
+  
+  return { sendForm, sendText };
 };
-module.exports = (token, commands) =>
-  new Promise((resolve, reject) => {
+
+let botInstance = null;
+
+module.exports = async (token, commands) => {
+  // If there's an existing instance, stop it first
+  if (botInstance) {
+    await botInstance.stop();
+  }
+
+  return new Promise((resolve, reject) => {
     const allGroups = [147051786];
     const addGroup = (id) => {
       if (!_.includes(allGroups, id)) {
         allGroups.push(id);
       }
     };
+
     const bot = new Telegraf(token);
+    botInstance = bot;
+
     _.forEach(_.keys(commands), (commandName) => {
       bot.command(commandName, async (ctx) => {
         const { message } = ctx.update;
         const { chat, text } = message;
         assert(message, "requires message");
         assert(chat, "requires chat");
+        
         if (chat.type == "group" || chat.type == "supergroup") {
           addGroup(chat.id);
         }
         
         const wrapper = WrapperTelegram(ctx);
         
-        // Handle /user command parameters
         if (commandName === 'user') {
           const username = text.split(' ')[1];
           wrapper.options = {
@@ -114,26 +116,15 @@ module.exports = (token, commands) =>
       const caption = telegramMakeForm(options);
       if (banner) {
         _.forEach(allGroups, (id) =>
-          bot.telegram.sendPhoto(
-            id,
-            { url: banner },
-            {
-              caption,
-              parse_mode: "HTML",
-              reply_markup: {
-                inline_keyboard: [
-                  url && buttonLabel
-                    ? [
-                        {
-                          text: buttonLabel,
-                          url,
-                        },
-                      ]
-                    : [],
-                ],
-              },
-            }
-          )
+          bot.telegram.sendPhoto(id, { url: banner }, {
+            caption,
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [
+                url && buttonLabel ? [{ text: buttonLabel, url }] : [],
+              ],
+            },
+          })
         );
       } else {
         _.forEach(allGroups, (id) =>
@@ -141,14 +132,7 @@ module.exports = (token, commands) =>
             parse_mode: "HTML",
             reply_markup: {
               inline_keyboard: [
-                url && buttonLabel
-                  ? [
-                      {
-                        text: buttonLabel,
-                        url,
-                      },
-                    ]
-                  : [],
+                url && buttonLabel ? [{ text: buttonLabel, url }] : [],
               ],
             },
           })
@@ -156,15 +140,25 @@ module.exports = (token, commands) =>
       }
     }
 
-    bot
-      .launch({
-        dropPendingUpdates: true,
-      })
-      .then(() =>
-        resolve({
-          broadcastText,
-          broadcastForm,
-        })
-      )
-      .catch(reject);
+    // Enable graceful stop
+    process.once('SIGINT', () => bot.stop('SIGINT'));
+    process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+    bot.launch({
+      dropPendingUpdates: true,
+      allowedUpdates: ['message', 'callback_query']
+    })
+    .then(() => {
+      console.log('Telegram bot started successfully');
+      resolve({
+        broadcastText,
+        broadcastForm,
+        cleanup: () => bot.stop()
+      });
+    })
+    .catch((error) => {
+      console.error('Failed to start Telegram bot:', error);
+      reject(error);
+    });
   });
+};
