@@ -19,6 +19,7 @@ A powerful Discord and Telegram bot for the Chips.gg gaming platform that brings
 - 🎉 Live promotions and events with `/promotions`
 - 💰 Real-time cryptocurrency prices using `/prices`
 - 🏦 Vault statistics tracking with `/vault`
+- 🔎 Search game catalog with `/search game_name`
 
 ### Community Tools
 - 💬 Access community links with `/chat`
