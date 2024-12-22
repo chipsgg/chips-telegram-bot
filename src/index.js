@@ -64,11 +64,11 @@ app.get("/commands", (req, res) => {
 
     try {
       const ctx = {
-        options: {
-          getString: (param) => (param === "username" ? username : null),
-        },
+        platform: "api",
         sendForm: (form) => form,
         sendText: (text) => ({ text }),
+        // getArg: req.query
+        getString: (key) => req.query[key],
       };
 
       const result = await command.handler(ctx);
