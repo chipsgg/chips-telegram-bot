@@ -1,7 +1,7 @@
 const _ = require("lodash");
 const {
   Client,
-  Intents,
+  GatewayIntentBits,
   MessageActionRow,
   MessageButton,
   MessageEmbed,
@@ -67,12 +67,12 @@ module.exports = (token, commands) =>
   new Promise((resolve, reject) => {
     const client = new Client({
       intents: [
-        "Guilds",
-        "GuildMessages", 
-        "GuildIntegrations",
-        "GuildMessageReactions",
-        "MessageContent",
-        "DirectMessages"
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildIntegrations,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages
       ],
     });
     client.on("ready", async () => {
