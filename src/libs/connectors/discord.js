@@ -115,30 +115,36 @@ module.exports = (token, commands) =>
           };
         });
 
-        console.log("Registering commands...", commandData);
+        console.log("Registering commands...");
 
         try {
-          // Register commands across all guilds in parallel
-          const guilds = Array.from(client.guilds.cache.values());
-          await Promise.all([
-            // Global commands
-            client.application.commands.set(commandData),
-            // Guild-specific commands
-            ...guilds.map((guild) =>
-              guild.commands
-                .set(commandData)
-                .catch((e) =>
-                  console.error(
-                    `Failed to set commands for guild ${guild.id}:`,
-                    e,
-                  ),
-                ),
-            ),
-          ]);
+          // Register global commands first
+          console.log("Registering global commands...");
+          await client.application.commands.set(commandData)
+            .catch(error => {
+              console.warn("Global command registration failed:", error);
+              return []; // Continue with guild commands even if global fails
+            });
 
-          console.log(
-            `Commands registered successfully across ${guilds.length + 1} locations`,
-          );
+          // Register guild commands in chunks
+          const guilds = Array.from(client.guilds.cache.values());
+          const CHUNK_SIZE = 5;
+
+          for (let i = 0; i < guilds.length; i += CHUNK_SIZE) {
+            const chunk = guilds.slice(i, i + CHUNK_SIZE);
+            await Promise.all(
+              chunk.map(guild => 
+                guild.commands.set(commandData)
+                  .catch(error => {
+                    console.warn(`Guild ${guild.id} command registration failed:`, error);
+                    return null;
+                  })
+              )
+            );
+            console.log(`Processed guilds ${i + 1} to ${Math.min(i + CHUNK_SIZE, guilds.length)}`);
+          }
+
+          console.log("Command registration completed");
 
           resolve({
             broadcastText,
