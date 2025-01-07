@@ -453,7 +453,7 @@ module.exports = (api) => {
     },
   };
 
-  commands.banner = {
+  commands.stats = {
     description: "Show user stats banner. Usage: /stats username",
     handler: async (ctx) => {
       let username = null;
