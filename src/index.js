@@ -85,24 +85,24 @@ app.get("/commands", (req, res) => {
 
   // START THE BOTS
 
-  // if (process.env.TELEGRAM_TOKEN) {
-  //   try {
-  //     console.log(
-  //       "Initializing Telegram bot with token length:",
-  //       process.env.TELEGRAM_TOKEN?.length,
-  //     );
-  //     const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
-  //     connectors.push(telegram);
-  //   } catch (error) {
-  //     console.error("Error starting Telegram bot:", {
-  //       name: error.name,
-  //       message: error.message,
-  //       stack: error.stack,
-  //     });
-  //   }
-  // } else {
-  //   console.log("No Telegram token provided");
-  // }
+  if (process.env.TELEGRAM_TOKEN) {
+    try {
+      console.log(
+        "Initializing Telegram bot with token length:",
+        process.env.TELEGRAM_TOKEN?.length,
+      );
+      const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
+      connectors.push(telegram);
+    } catch (error) {
+      console.error("Error starting Telegram bot:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+    }
+  } else {
+    console.log("No Telegram token provided");
+  }
 
   if (process.env.DISCORD_TOKEN) {
     connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));

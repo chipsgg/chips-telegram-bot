@@ -116,23 +116,7 @@ module.exports = (token, commands) =>
         });
 
         console.log("Registering commands...");
-
-        try {
-          console.log("Registering commands via Promise.all...");
-          await Promise.all(
-            commandData.map((cmd) =>
-              client.application.commands.create(cmd).catch((error) => {
-                console.warn(`Failed to register command ${cmd.name}:`, error);
-                return null;
-              }),
-            ),
-          );
-
-          console.log("Command registration completed");
-        } catch (err) {
-          console.warn("Command registration partial failure:", err);
-          // Continue bot operation even if some registrations fail
-        }
+        await client.application.commands.set(commandData);
 
         resolve({
           broadcastText,
@@ -155,14 +139,17 @@ module.exports = (token, commands) =>
         await Promise.resolve(commands[ctx.commandName].handler(wrapper));
       } catch (error) {
         if (error.code === 10062) {
-          console.warn('Interaction expired:', error.message);
+          console.warn("Interaction expired:", error.message);
           return;
         }
-        console.error('Discord interaction error:', error);
+        console.error("Discord interaction error:", error);
         try {
-          await ctx.followUp({ content: 'An error occurred while processing your command.', ephemeral: true });
+          await ctx.followUp({
+            content: "An error occurred while processing your command.",
+            ephemeral: true,
+          });
         } catch (e) {
-          console.error('Failed to send error message:', e);
+          console.error("Failed to send error message:", e);
         }
       }
     });
