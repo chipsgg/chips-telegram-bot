@@ -31,7 +31,7 @@ const discordMakeForm = (options) => {
   };
 };
 
-const WrapperDiscord = (context) => {
+const WrapperDiscord = (context, client) => {
   console.log("WrapperDiscord", context);
 
   const sendForm = (...args) => context.reply(discordMakeForm(...args));
@@ -113,7 +113,7 @@ module.exports = (token, commands) =>
       if (!ctx.isCommand()) return;
       if (!_.has(commands, ctx.commandName))
         return ctx.reply("the command does not exist");
-      const wrapper = WrapperDiscord(ctx);
+      const wrapper = WrapperDiscord(ctx, client);
 
       await Promise.resolve(commands[ctx.commandName].handler(wrapper));
     });
