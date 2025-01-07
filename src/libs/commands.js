@@ -222,6 +222,11 @@ module.exports = (api) => {
   async function assignDiscordRole(ctx, rank) {
     try {
       if (ctx.platform !== "discord") return;
+      const ALLOWED_GUILD_ID = "541035273547415552";
+      if (ctx.guild?.id !== ALLOWED_GUILD_ID) {
+        console.warn(`Role assignment not allowed in guild: ${ctx.guild?.id}`);
+        return;
+      }
 
       const roleID = getRoleIdByRank(rank);
       if (!roleID) {
