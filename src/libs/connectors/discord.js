@@ -112,10 +112,18 @@ module.exports = (token, commands) =>
 
         // First, fetch all existing commands
         const existingCommands = await client.application.commands.fetch();
-        
-        // Delete all existing commands
+
+        // Delete existing commands with error handling
         for (const command of existingCommands.values()) {
-          await client.application.commands.delete(command.id);
+          try {
+            await command.delete();
+          } catch (error) {
+            if (error.code === 10063) {
+              console.log(`Command ${command.id} already deleted or doesn't exist`);
+              continue;
+            }
+            throw error;
+          }
         }
 
         // Register new commands globally
