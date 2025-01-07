@@ -1,0 +1,122 @@
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+/home/runner/workspace/node_modules/telegraf/lib/core/network/client.js:265
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+throw new error_1.default(data, { method, payload });
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+^
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+TelegramError: 409: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+at Telegram.callApi (/home/runner/workspace/node_modules/telegraf/lib/core/network/client.js:265:19)
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+at async [Symbol.asyncIterator] (/home/runner/workspace/node_modules/telegraf/lib/core/network/polling.js:27:33)
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+at async Polling.loop (/home/runner/workspace/node_modules/telegraf/lib/core/network/polling.js:69:30) {
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+response: {
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+ok: false,
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+error_code: 409,
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+description: 'Conflict: terminated by other getUpdates request; make sure that only one bot instance is running'
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+},
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+on: {
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+method: 'getUpdates',
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+payload: {
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+timeout: 50,
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+offset: 0,
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+allowed_updates: [ 'message', 'callback_query' ]
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+}
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+}
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+}
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+2025-01-07 10:41:47.63
+8c50bc5b
+User
+Node.js v20.18.1
+2025-01-07 10:41:47.66
+8c50bc5b
+User
+npm notice
+2025-01-07 10:41:47.66
+8c50bc5b
+User
+npm notice New major version of npm available! 10.8.2 -> 11.0.0
+2025-01-07 10:41:47.66
+8c50bc5b
+User
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.0.0
+2025-01-07 10:41:47.66
+8c50bc5b
+User
+npm notice To update run: npm install -g npm@11.0.0
+2025-01-07 10:41:47.66
+8c50bc5b
+User
+npm notice
+2025-01-07 10:41:47.67
+8c50bc5b
+System
+command finished with error [sh -c npm run start]: exit status 1
