@@ -495,6 +495,47 @@ module.exports = (api) => {
     },
   };
 
+  commands.promotion = {
+    description: "Show promotion banner. Usage: /promotion promotionid",
+    handler: async (ctx) => {
+      let promotionId = null;
+      if (ctx.platform === "discord") {
+        promotionId = ctx?.getString("promotionid");
+        if (!promotionId) {
+          return ctx.sendText("Please provide a promotion ID");
+        }
+      } else {
+        promotionId = ctx?.getArg(1);
+        if (!promotionId) {
+          return ctx.sendText("Please provide a promotion ID");
+        }
+      }
+
+      if (ctx.platform === "telegram") {
+        return ctx.sendForm({
+          emoji: "🎉",
+          title: `Promotion: ${promotionId}`,
+          banner: `https://stats.chips.gg/promotions/promotion:${promotionId}`,
+          buttonLabel: "View Promotion",
+          url: `https://chips.gg/promotions`,
+        });
+      } else {
+        return ctx.sendForm({
+          emoji: "🎉",
+          title: `Promotion: ${promotionId}`,
+          content: "Here is your promotion banner:",
+          image: {
+            url: `https://stats.chips.gg/promotions/promotion:${promotionId}`,
+          },
+          button: {
+            label: "View Promotion",
+            url: `https://chips.gg/promotions`,
+          },
+        });
+      }
+    },
+  };
+
   commands.help = {
     description: "Description of all commands",
     handler: (ctx) => ctx.sendForm(models.help(commands)),

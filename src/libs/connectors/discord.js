@@ -91,6 +91,13 @@ module.exports = (token, commands) =>
               type: 3,
               required: true,
             });
+          } else if (name === "promotion") {
+            options.push({
+              name: "promotionid",
+              description: "Promotion ID to look up",
+              type: 3,
+              required: true,
+            });
           } else if (name === "auth" || name === "linkaccount") {
             options.push(
               {
