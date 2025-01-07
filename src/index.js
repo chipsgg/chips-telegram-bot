@@ -48,11 +48,7 @@ app.get("/commands", (req, res) => {
 
   if (!api) {
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
-    return res.status(500).json({ error: "Bot not initialized" });
+return res.status(500).json({ error: "Bot not initialized" });
   }
 
   const commands = Commands(api);
@@ -100,8 +96,7 @@ app.listen(PORT, '0.0.0.0', () => {
   const broadcastText = makeBroadcast(connectors, "broadcastText");
   const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
-  const port = process.env.PORT || 80;
-  app.listen(port, "0.0.0.0", () => {
-    console.log(`Web server and bot running on port ${port}`);
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Web server and bot running on port ${PORT}`);
   });
 })();
