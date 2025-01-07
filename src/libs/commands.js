@@ -160,7 +160,78 @@ module.exports = (api) => {
         return ctx.sendForm(models.luckiest(top));
       },
     },
+    linkaccount: {
+      description: "Link your account to the site.",
+      handler: async (ctx) => {
+        let username, totpCode;
+        if (ctx.platform === "discord") {
+          username = ctx.getString("username");
+          totpCode = ctx.getString("totp");
+        } else {
+          username = ctx.getArg(1);
+          totpCode = ctx.getArg(2);
+        }
+
+        console.info("linkaccount", { username, totpCode });
+
+        if (!username || !totpCode) {
+          return ctx.sendText(
+            "Please provide both username and TOTP code. Usage: /linkaccount username:YOUR_USERNAME totp:YOUR_CODE",
+          );
+        }
+
+        const payload = {
+          platformid: ctx.userid.toString(),
+          platform: ctx.platform,
+          userid: username,
+          code: totpCode,
+        };
+
+        try {
+          const account = await api._actions.auth("linkPlatformID", payload);
+
+          // Automatically assign the role in Discord after linking
+          await assignDiscordRole(ctx, account.rank);
+
+          return ctx.sendForm({
+            emoji: "🔐",
+            title: "Linking Successful",
+            content: `Your account has been linked successfully: ${username}`,
+            buttonLabel: "View Profile",
+            url: `https://chips.gg/user/${username}`,
+          });
+        } catch (error) {
+          console.error("/linkaccount", error);
+          return ctx.sendText("Failed to link account: " + error.message);
+        }
+      },
+    },
   };
+
+  async function assignDiscordRole(ctx, rank) {
+    const roleID = getRoleIdByRank(rank);
+
+    const guild = ctx.guild; // Get the guild from the context
+    const member = await guild.members.fetch(ctx.userid);
+    if (member) {
+      await member.roles.add(roleID);
+      console.log(`Assigned role ${rank} to user ${ctx.userid}`);
+    }
+  }
+
+  function getRoleIdByRank(rank) {
+    const roles = {
+      // Replace with actual role ID
+      flipper: "1106398232382291978",
+      collector: "1106398500020834405",
+      stacker: "1106520974289010769",
+      degen: "1084469527737278484",
+      booster: "581236016443031677",
+      affiliate: "770390850739109900",
+      // ... other ranks ...
+    };
+    return roles[rank] || null;
+  }
 
   // help menu
   commands.user = {
