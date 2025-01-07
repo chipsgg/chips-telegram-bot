@@ -115,14 +115,37 @@ module.exports = (token, commands) =>
         });
 
         console.log("Registering commands...", commandData);
-        await client.application.commands.set(commandData);
-        console.log("commands registered!");
-
-        resolve({
-          broadcastText,
-          broadcastForm,
-          cleanup: () => bot.stop(),
-        });
+        
+        try {
+          // Register commands across all guilds in parallel
+          const guilds = Array.from(client.guilds.cache.values());
+          await Promise.all([
+            // Global commands
+            client.application.commands.set(commandData),
+            // Guild-specific commands
+            ...guilds.map(guild => 
+              guild.commands.set(commandData).catch(e => 
+                console.error(`Failed to set commands for guild ${guild.id}:`, e)
+              )
+            )
+          ]);
+          
+          console.log(`Commands registered successfully across ${guilds.length + 1} locations`);
+          
+          resolve({
+            broadcastText,
+            broadcastForm,
+            cleanup: () => client.destroy(),
+          });
+        } catch (err) {
+          console.warn('Command registration partial failure:', err);
+          // Continue bot operation even if some registrations fail
+          resolve({
+            broadcastText,
+            broadcastForm,
+            cleanup: () => client.destroy(),
+          });
+        }
       } catch (error) {
         console.error("Error registering application commands:", error);
         reject(error);
