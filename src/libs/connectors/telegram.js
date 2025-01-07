@@ -66,12 +66,18 @@ const WrapperTelegram = (context) => {
 };
 
 let botInstance = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 3;
+const RECONNECT_DELAY = 5000;
 
 module.exports = async (token, commands) => {
-  // If there's an existing instance, stop it first
-  if (botInstance) {
-    await botInstance.stop();
-  }
+  const startBot = async () => {
+    try {
+      // If there's an existing instance, stop it first
+      if (botInstance) {
+        await botInstance.stop();
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for cleanup
+      }
 
   return new Promise((resolve, reject) => {
     const allGroups = [147051786];
@@ -177,9 +183,20 @@ module.exports = async (token, commands) => {
           cleanup: () => bot.stop(),
         });
       })
-      .catch((error) => {
+      .catch(async (error) => {
         console.error("Failed to start Telegram bot:", error);
+        
+        if (error.response?.error_code === 409 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts++;
+          console.log(`Retrying bot connection in ${RECONNECT_DELAY/1000} seconds... (Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+          await new Promise(resolve => setTimeout(resolve, RECONNECT_DELAY));
+          return startBot();
+        }
+        
         reject(error);
       });
-  });
+  };
+
+  return startBot();
+});
 };
