@@ -119,6 +119,7 @@ module.exports = (token, commands) =>
         resolve({
           broadcastText,
           broadcastForm,
+          cleanup: () => bot.stop(),
         });
       } catch (error) {
         console.error("Error registering application commands:", error);
