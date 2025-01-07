@@ -209,28 +209,44 @@ module.exports = (api) => {
   };
 
   async function assignDiscordRole(ctx, rank) {
-    const roleID = getRoleIdByRank(rank);
+    try {
+      if (ctx.platform !== 'discord') return;
+      
+      const roleID = getRoleIdByRank(rank);
+      if (!roleID) {
+        console.warn(`No role ID found for rank: ${rank}`);
+        return;
+      }
 
-    const guild = ctx.guild; // Get the guild from the context
-    const member = await guild.members.fetch(ctx.userid);
-    if (member) {
+      const guild = await ctx.guild?.fetch();
+      if (!guild) {
+        console.warn('No guild context available');
+        return;
+      }
+
+      const member = await guild.members.fetch(ctx.userid);
+      if (!member) {
+        console.warn(`Member ${ctx.userid} not found in guild`);
+        return;
+      }
+
       await member.roles.add(roleID);
       console.log(`Assigned role ${rank} to user ${ctx.userid}`);
+    } catch (error) {
+      console.error('Error assigning role:', error);
     }
   }
 
   function getRoleIdByRank(rank) {
     const roles = {
-      // Replace with actual role ID
       flipper: "1106398232382291978",
-      collector: "1106398500020834405",
+      collector: "1106398500020834405", 
       stacker: "1106520974289010769",
       degen: "1084469527737278484",
       booster: "581236016443031677",
-      affiliate: "770390850739109900",
-      // ... other ranks ...
+      affiliate: "770390850739109900"
     };
-    return roles[rank] || null;
+    return roles[rank?.toLowerCase()] || null;
   }
 
   // help menu

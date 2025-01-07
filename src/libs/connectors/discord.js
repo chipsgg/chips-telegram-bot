@@ -69,7 +69,7 @@ module.exports = (token, commands) =>
               type: 3,
               required: true,
             });
-          } else if (name === "auth") {
+          } else if (name === "auth" || name === "linkaccount") {
             options.push(
               {
                 name: "username",
