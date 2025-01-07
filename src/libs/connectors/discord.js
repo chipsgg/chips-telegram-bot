@@ -44,6 +44,7 @@ const WrapperDiscord = (context) => {
   return {
     platform: "discord",
     userid: context.user.id,
+    guild: context.guild,
     sendForm,
     sendText,
     getString,
