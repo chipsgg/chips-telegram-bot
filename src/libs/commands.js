@@ -469,11 +469,11 @@ module.exports = (api) => {
         }
       }
 
-      if (ctx.platform === 'telegram') {
+      if (ctx.platform === "telegram") {
         return ctx.sendForm({
           emoji: "📊",
           title: `Stats Banner: ${username}`,
-          content: "Here are your stats:",
+          // content: "Here are your stats:",
           banner: `https://stats.chips.gg/stats/${username}`,
           buttonLabel: "View Profile",
           url: `https://chips.gg/user/${username}`,
