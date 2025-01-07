@@ -120,31 +120,25 @@ module.exports = (token, commands) =>
         try {
           console.log("Registering commands via Promise.all...");
           await Promise.all(
-            commandData.map(cmd => 
-              client.application.commands.create(cmd)
-                .catch(error => {
-                  console.warn(`Failed to register command ${cmd.name}:`, error);
-                  return null;
-                })
-            )
+            commandData.map((cmd) =>
+              client.application.commands.create(cmd).catch((error) => {
+                console.warn(`Failed to register command ${cmd.name}:`, error);
+                return null;
+              }),
+            ),
           );
 
           console.log("Command registration completed");
-
-          resolve({
-            broadcastText,
-            broadcastForm,
-            cleanup: () => client.destroy(),
-          });
         } catch (err) {
           console.warn("Command registration partial failure:", err);
           // Continue bot operation even if some registrations fail
-          resolve({
-            broadcastText,
-            broadcastForm,
-            cleanup: () => client.destroy(),
-          });
         }
+
+        resolve({
+          broadcastText,
+          broadcastForm,
+          cleanup: () => client.destroy(),
+        });
       } catch (error) {
         console.error("Error registering application commands:", error);
         reject(error);
@@ -152,13 +146,25 @@ module.exports = (token, commands) =>
     });
 
     client.on("interactionCreate", async (ctx) => {
-      if (!ctx.isCommand()) return;
-      if (!_.has(commands, ctx.commandName))
-        return ctx.reply("the command does not exist");
-      await ctx.deferReply();
-      const wrapper = WrapperDiscord(ctx, client);
-
-      await Promise.resolve(commands[ctx.commandName].handler(wrapper));
+      try {
+        if (!ctx.isCommand()) return;
+        if (!_.has(commands, ctx.commandName))
+          return ctx.reply("the command does not exist");
+        await ctx.deferReply();
+        const wrapper = WrapperDiscord(ctx, client);
+        await Promise.resolve(commands[ctx.commandName].handler(wrapper));
+      } catch (error) {
+        if (error.code === 10062) {
+          console.warn('Interaction expired:', error.message);
+          return;
+        }
+        console.error('Discord interaction error:', error);
+        try {
+          await ctx.followUp({ content: 'An error occurred while processing your command.', ephemeral: true });
+        } catch (e) {
+          console.error('Failed to send error message:', e);
+        }
+      }
     });
     const broadcast = (form) => {
       try {
