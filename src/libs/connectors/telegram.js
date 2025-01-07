@@ -167,6 +167,7 @@ module.exports = async (token, commands) => {
         process.once("SIGINT", () => bot.stop("SIGINT"));
         process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
+        console.log("Attempting to start Telegram bot...");
         bot
           .launch({
             dropPendingUpdates: true,
@@ -178,6 +179,7 @@ module.exports = async (token, commands) => {
           })
           .then(() => {
             console.log("Telegram bot started successfully");
+            console.log("Bot info:", bot.botInfo);
             resolve({
               broadcastText,
               broadcastForm,
@@ -185,7 +187,12 @@ module.exports = async (token, commands) => {
             });
           })
           .catch(async (error) => {
-            console.error("Failed to start Telegram bot:", error);
+            console.error("Failed to start Telegram bot. Details:", {
+              errorName: error.name,
+              errorMessage: error.message,
+              errorCode: error.response?.error_code,
+              description: error.response?.description
+            });
             
             if (error.response?.error_code === 409 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
               reconnectAttempts++;
