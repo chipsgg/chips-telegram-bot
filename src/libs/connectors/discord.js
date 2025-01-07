@@ -68,12 +68,12 @@ module.exports = (token, commands) =>
   new Promise((resolve, reject) => {
     const client = new Client({
       intents: [
-        1 << 0,  // GUILDS
-        1 << 9,  // GUILD_MESSAGES
-        1 << 7,  // GUILD_INTEGRATIONS
-        1 << 10, // GUILD_MESSAGE_REACTIONS
-        1 << 15, // MESSAGE_CONTENT
-        1 << 12, // DIRECT_MESSAGES
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildIntegrations, 
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages
       ]
     });
     client.on("ready", async () => {
