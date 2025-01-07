@@ -105,7 +105,17 @@ app.get("/commands", (req, res) => {
   }
 
   if (process.env.DISCORD_TOKEN) {
-    connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
+    try {
+      const discord = await Discord(process.env.DISCORD_TOKEN, commands);
+      connectors.push(discord);
+    } catch (error) {
+      console.error("Error starting Discord bot:", {
+        name: error.name,
+        message: error.message
+      });
+    }
+  } else {
+    console.log("No Discord token provided");
   }
 
   const broadcastText = makeBroadcast(connectors, "broadcastText");
