@@ -469,18 +469,29 @@ module.exports = (api) => {
         }
       }
 
-      return ctx.sendForm({
-        emoji: "📊",
-        title: `Stats Banner: ${username}`,
-        content: "Here are your stats:",
-        image: {
-          url: `https://stats.chips.gg/stats/${username}`,
-        },
-        button: {
-          label: "View Profile",
+      if (ctx.platform === 'telegram') {
+        return ctx.sendForm({
+          emoji: "📊",
+          title: `Stats Banner: ${username}`,
+          content: "Here are your stats:",
+          banner: `https://stats.chips.gg/stats/${username}`,
+          buttonLabel: "View Profile",
           url: `https://chips.gg/user/${username}`,
-        },
-      });
+        });
+      } else {
+        return ctx.sendForm({
+          emoji: "📊",
+          title: `Stats Banner: ${username}`,
+          content: "Here are your stats:",
+          image: {
+            url: `https://stats.chips.gg/stats/${username}`,
+          },
+          button: {
+            label: "View Profile",
+            url: `https://chips.gg/user/${username}`,
+          },
+        });
+      }
     },
   };
 
