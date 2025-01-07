@@ -69,11 +69,11 @@ module.exports = (token, commands) =>
       intents: [
         Intents.FLAGS.GUILDS,
         Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_INTEGRATIONS
+        Intents.FLAGS.GUILD_INTEGRATIONS,
       ],
     });
     client.on("ready", async () => {
-      console.log(`Logged in as ${client.user.tag}!`);
+      console.log(`[DISCORD]: Logged in as ${client.user.tag}!`);
       try {
         const commandData = _.map(_.keys(commands), (name) => {
           const command = commands[name];
@@ -110,21 +110,21 @@ module.exports = (token, commands) =>
           };
         });
 
-        // First, fetch all existing commands
-        const existingCommands = await client.application.commands.fetch();
+        // // First, fetch all existing commands
+        // const existingCommands = await client.application.commands.fetch();
 
-        // Delete existing commands with error handling
-        for (const command of existingCommands.values()) {
-          try {
-            await command.delete();
-          } catch (error) {
-            if (error.code === 10063) {
-              console.log(`Command ${command.id} already deleted or doesn't exist`);
-              continue;
-            }
-            throw error;
-          }
-        }
+        // // Delete existing commands with error handling
+        // for (const command of existingCommands.values()) {
+        //   try {
+        //     await command.delete();
+        //   } catch (error) {
+        //     if (error.code === 10063) {
+        //       console.log(`Command ${command.id} already deleted or doesn't exist`);
+        //       continue;
+        //     }
+        //     throw error;
+        //   }
+        // }
 
         // Register new commands globally
         for (const cmd of commandData) {

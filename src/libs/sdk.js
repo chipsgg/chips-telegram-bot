@@ -36,14 +36,14 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   const { actions } = await Client(
     WS,
     {
-      host: "wss://api.chips.gg/prod/socket", 
+      host: "wss://api.chips.gg/prod/socket",
       channels,
       keepAlive: 1000,
       wsOptions: {
         handshakeTimeout: 10000,
         maxRetries: 5,
-        onError: (err) => console.error('WebSocket Error:', err)
-      }
+        onError: (err) => console.error("WebSocket Error:", err),
+      },
     },
     async (type, newState) => {
       switch (type) {
@@ -72,7 +72,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
           break;
         }
       }
-    }
+    },
   );
 
   // actions.community('replyToChatMessage', {
@@ -138,15 +138,15 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   // NOTE: Login Client SDK
   const { userid, tokenid } = await Authenticate(actions, CHIPS_TOKEN);
 
-  console.log("sdk:auth", {
-    tokenid,
-    userid,
-  });
+  // console.log("sdk:auth", {
+  //   tokenid,
+  //   userid,
+  // });
 
   // authenticated mode
   if (userid) {
     const user = await actions.private("me");
-    console.log("Authenticated as:", user);
+    console.log("Authenticated SDK:", user.id, user.username);
 
     // actions.community("publishChatMessage", {
     //   text: `Hello, I am ${user.username}!`,
@@ -185,7 +185,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
       tick();
     };
 
-	  // tick();
+    // tick();
   }
 
   // subscriptions
