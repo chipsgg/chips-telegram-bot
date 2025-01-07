@@ -120,29 +120,28 @@ module.exports = (token, commands) =>
         try {
           // Register global commands first
           console.log("Registering global commands...");
-          await client.application.commands.set(commandData)
-            .catch(error => {
-              console.warn("Global command registration failed:", error);
-              return []; // Continue with guild commands even if global fails
-            });
+          await client.application.commands.set(commandData).catch((error) => {
+            console.warn("Global command registration failed:", error);
+            return []; // Continue with guild commands even if global fails
+          });
 
-          // Register guild commands in chunks
-          const guilds = Array.from(client.guilds.cache.values());
-          const CHUNK_SIZE = 5;
+          // // Register guild commands in chunks
+          // const guilds = Array.from(client.guilds.cache.values());
+          // const CHUNK_SIZE = 5;
 
-          for (let i = 0; i < guilds.length; i += CHUNK_SIZE) {
-            const chunk = guilds.slice(i, i + CHUNK_SIZE);
-            await Promise.all(
-              chunk.map(guild => 
-                guild.commands.set(commandData)
-                  .catch(error => {
-                    console.warn(`Guild ${guild.id} command registration failed:`, error);
-                    return null;
-                  })
-              )
-            );
-            console.log(`Processed guilds ${i + 1} to ${Math.min(i + CHUNK_SIZE, guilds.length)}`);
-          }
+          // for (let i = 0; i < guilds.length; i += CHUNK_SIZE) {
+          //   const chunk = guilds.slice(i, i + CHUNK_SIZE);
+          //   await Promise.all(
+          //     chunk.map(guild =>
+          //       guild.commands.set(commandData)
+          //         .catch(error => {
+          //           console.warn(`Guild ${guild.id} command registration failed:`, error);
+          //           return null;
+          //         })
+          //     )
+          //   );
+          //   console.log(`Processed guilds ${i + 1} to ${Math.min(i + CHUNK_SIZE, guilds.length)}`);
+          // }
 
           console.log("Command registration completed");
 
