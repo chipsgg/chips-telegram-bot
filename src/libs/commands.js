@@ -303,13 +303,15 @@ module.exports = (api) => {
           return ctx.sendText("User not found");
         }
 
-        const vip = await api._actions.public("getUserVipRank", {
-          userid: user.id,
-        });
-        const stats = await api._actions.public("getUserStats", {
-          userid: user.id,
-          duration: "1m",
-        });
+        const [vip, stats] = await Promise.all([
+          api._actions.public("getUserVipRank", {
+            userid: user.id,
+          }),
+          api._actions.public("getUserStats", {
+            userid: user.id,
+            duration: "1m",
+          }),
+        ]);
 
         console.log("/user", {
           user,
@@ -457,23 +459,29 @@ module.exports = (api) => {
       let username = null;
       if (ctx.platform === "discord") {
         username = ctx?.getString("username");
+        if (!username) {
+          return ctx.sendText("Please provide a username");
+        }
       } else {
         username = ctx?.getArg(1);
-      }
-
-      if (!username) {
-        return ctx.sendText("Please provide a username");
+        if (!username) {
+          return ctx.sendText("Please provide a username");
+        }
       }
 
       return ctx.sendForm({
         emoji: "📊",
         title: `Stats Banner: ${username}`,
         content: "Here are your stats:",
-        banner: `https://stats.chips.gg/stats/${username}`,
-        buttonLabel: "View Profile",
-        url: `https://chips.gg/user/${username}`
+        image: {
+          url: `https://stats.chips.gg/stats/${username}`
+        },
+        button: {
+          label: "View Profile",
+          url: `https://chips.gg/user/${username}`
+        }
       });
-    }
+    },
   };
 
   commands.help = {
