@@ -126,17 +126,15 @@ module.exports = (token, commands) =>
         //   }
         // }
 
-        // Register new commands globally
-        for (const cmd of commandData) {
-          try {
-            await client.application.commands.create(cmd);
-            console.log(`Registered command: ${cmd.name}`);
-          } catch (err) {
-            console.error(`Failed to register command ${cmd.name}:`, err);
-          }
+        // Register all commands in one API call
+        try {
+          await client.application.commands.set(commandData);
+          console.log("Successfully registered all commands");
+        } catch (err) {
+          console.error("Failed to register commands:", err);
+          reject(err);
+          return;
         }
-
-        console.log("Successfully refreshed application commands");
         resolve({
           broadcastText,
           broadcastForm,
