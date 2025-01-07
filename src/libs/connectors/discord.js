@@ -106,8 +106,22 @@ module.exports = (token, commands) =>
           };
         });
 
-        await client.application.commands.set(commandData);
-        console.log("Successfully registered application commands");
+        // First, fetch all existing commands
+        const existingCommands = await client.application.commands.fetch();
+        
+        // Delete all existing commands
+        for (const command of existingCommands.values()) {
+          await client.application.commands.delete(command.id);
+        }
+
+        // Register new commands globally
+        await Promise.all(
+          commandData.map(cmd => 
+            client.application.commands.create(cmd)
+          )
+        );
+
+        console.log("Successfully refreshed application commands");
         resolve({
           broadcastText,
           broadcastForm,
