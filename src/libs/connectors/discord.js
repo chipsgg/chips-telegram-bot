@@ -55,7 +55,13 @@ const WrapperDiscord = (context) => {
 
 module.exports = (token, commands) =>
   new Promise((resolve, reject) => {
-    const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
+    const client = new Client({ 
+  intents: [
+    Intents.FLAGS.GUILDS,
+    Intents.FLAGS.GUILD_MEMBERS,
+    Intents.FLAGS.GUILD_MESSAGES
+  ]
+});
     client.on("ready", async () => {
       console.log(`Logged in as ${client.user.tag}!`);
       try {
