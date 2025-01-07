@@ -1,11 +1,10 @@
 const _ = require("lodash");
 const {
   Client,
-  GatewayIntentBits,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
+  Intents,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
 } = require("discord.js");
 const discordMakeForm = (options) => {
   const { emoji, title, content, footer, banner, url, buttonLabel } = options;
@@ -68,13 +67,10 @@ module.exports = (token, commands) =>
   new Promise((resolve, reject) => {
     const client = new Client({
       intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildIntegrations, 
-        GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.MessageContent,
-        GatewayIntentBits.DirectMessages
-      ]
+        Intents.FLAGS.GUILDS,
+        Intents.FLAGS.GUILD_MESSAGES,
+        Intents.FLAGS.GUILD_INTEGRATIONS,
+      ],
     });
     client.on("ready", async () => {
       console.log(`[DISCORD]: Logged in as ${client.user.tag}!`);
