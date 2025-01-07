@@ -453,7 +453,7 @@ module.exports = (api) => {
     },
   };
 
-  commands.stats = {
+  commands.banner = {
     description: "Show user stats banner. Usage: /stats username",
     handler: async (ctx) => {
       let username = null;
@@ -474,12 +474,12 @@ module.exports = (api) => {
         title: `Stats Banner: ${username}`,
         content: "Here are your stats:",
         image: {
-          url: `https://stats.chips.gg/stats/${username}`
+          url: `https://stats.chips.gg/stats/${username}`,
         },
         button: {
           label: "View Profile",
-          url: `https://chips.gg/user/${username}`
-        }
+          url: `https://chips.gg/user/${username}`,
+        },
       });
     },
   };

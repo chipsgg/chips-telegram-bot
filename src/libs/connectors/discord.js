@@ -75,6 +75,7 @@ module.exports = (token, commands) =>
         GatewayIntentBits.MessageContent,
       ],
     });
+
     client.on("ready", async () => {
       console.log(`[DISCORD]: Logged in as ${client.user.tag}!`);
 
@@ -115,7 +116,7 @@ module.exports = (token, commands) =>
         });
 
         console.log("Registering commands...", commandData);
-        
+
         try {
           // Register commands across all guilds in parallel
           const guilds = Array.from(client.guilds.cache.values());
@@ -123,22 +124,29 @@ module.exports = (token, commands) =>
             // Global commands
             client.application.commands.set(commandData),
             // Guild-specific commands
-            ...guilds.map(guild => 
-              guild.commands.set(commandData).catch(e => 
-                console.error(`Failed to set commands for guild ${guild.id}:`, e)
-              )
-            )
+            ...guilds.map((guild) =>
+              guild.commands
+                .set(commandData)
+                .catch((e) =>
+                  console.error(
+                    `Failed to set commands for guild ${guild.id}:`,
+                    e,
+                  ),
+                ),
+            ),
           ]);
-          
-          console.log(`Commands registered successfully across ${guilds.length + 1} locations`);
-          
+
+          console.log(
+            `Commands registered successfully across ${guilds.length + 1} locations`,
+          );
+
           resolve({
             broadcastText,
             broadcastForm,
             cleanup: () => client.destroy(),
           });
         } catch (err) {
-          console.warn('Command registration partial failure:', err);
+          console.warn("Command registration partial failure:", err);
           // Continue bot operation even if some registrations fail
           resolve({
             broadcastText,
