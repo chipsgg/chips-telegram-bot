@@ -65,7 +65,7 @@ module.exports = (token, commands) =>
           const command = commands[name];
           const options = [];
 
-          if (name === "user") {
+          if (name === "user" || name === "stats") {
             options.push({
               name: "username",
               description: "Username to look up",

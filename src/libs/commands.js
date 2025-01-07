@@ -451,6 +451,31 @@ module.exports = (api) => {
     },
   };
 
+  commands.stats = {
+    description: "Show user stats banner. Usage: /stats username",
+    handler: async (ctx) => {
+      let username = null;
+      if (ctx.platform === "discord") {
+        username = ctx?.getString("username");
+      } else {
+        username = ctx?.getArg(1);
+      }
+
+      if (!username) {
+        return ctx.sendText("Please provide a username");
+      }
+
+      return ctx.sendForm({
+        emoji: "📊",
+        title: `Stats Banner: ${username}`,
+        content: "Here are your stats:",
+        banner: `https://stats.chips.gg/stats/${username}`,
+        buttonLabel: "View Profile",
+        url: `https://chips.gg/user/${username}`
+      });
+    }
+  };
+
   commands.help = {
     description: "Description of all commands",
     handler: (ctx) => ctx.sendForm(models.help(commands)),
