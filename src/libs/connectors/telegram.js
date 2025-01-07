@@ -76,8 +76,12 @@ module.exports = async (token, commands) => {
     try {
       // If there's an existing instance, stop it first
       if (botInstance) {
-        await botInstance.stop();
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for cleanup
+        try {
+          await botInstance.stop();
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Increased cleanup wait time
+        } catch (err) {
+          console.log("Error stopping previous bot instance:", err);
+        }
       }
 
       return new Promise((resolve, reject) => {
@@ -167,6 +171,10 @@ module.exports = async (token, commands) => {
           .launch({
             dropPendingUpdates: true,
             allowedUpdates: ["message", "callback_query"],
+            polling: {
+              timeout: 30,
+              limit: 100
+            }
           })
           .then(() => {
             console.log("Telegram bot started successfully");
