@@ -118,30 +118,16 @@ module.exports = (token, commands) =>
         console.log("Registering commands...");
 
         try {
-          // Register global commands first
-          console.log("Registering global commands...");
-          await client.application.commands.set(commandData).catch((error) => {
-            console.warn("Global command registration failed:", error);
-            return []; // Continue with guild commands even if global fails
-          });
-
-          // // Register guild commands in chunks
-          // const guilds = Array.from(client.guilds.cache.values());
-          // const CHUNK_SIZE = 5;
-
-          // for (let i = 0; i < guilds.length; i += CHUNK_SIZE) {
-          //   const chunk = guilds.slice(i, i + CHUNK_SIZE);
-          //   await Promise.all(
-          //     chunk.map(guild =>
-          //       guild.commands.set(commandData)
-          //         .catch(error => {
-          //           console.warn(`Guild ${guild.id} command registration failed:`, error);
-          //           return null;
-          //         })
-          //     )
-          //   );
-          //   console.log(`Processed guilds ${i + 1} to ${Math.min(i + CHUNK_SIZE, guilds.length)}`);
-          // }
+          console.log("Registering commands via Promise.all...");
+          await Promise.all(
+            commandData.map(cmd => 
+              client.application.commands.create(cmd)
+                .catch(error => {
+                  console.warn(`Failed to register command ${cmd.name}:`, error);
+                  return null;
+                })
+            )
+          );
 
           console.log("Command registration completed");
 
