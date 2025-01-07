@@ -1,0 +1,70 @@
+025-01-07 11:46:30.30
+428ea288
+User
+/home/runner/workspace/node_modules/discord.js/src/client/actions/MessageCreate.js:13
+2025-01-07 11:46:30.30
+428ea288
+User
+const existing = channel.messages.cache.get(data.id);
+2025-01-07 11:46:30.30
+428ea288
+User
+^
+2025-01-07 11:46:30.30
+428ea288
+User
+2025-01-07 11:46:30.30
+428ea288
+User
+TypeError: Cannot read properties of undefined (reading 'cache')
+2025-01-07 11:46:30.30
+428ea288
+User
+at MessageCreateAction.handle (/home/runner/workspace/node_modules/discord.js/src/client/actions/MessageCreate.js:13:41)
+2025-01-07 11:46:30.30
+428ea288
+User
+at module.exports [as MESSAGE_CREATE] (/home/runner/workspace/node_modules/discord.js/src/client/websocket/handlers/MESSAGE_CREATE.js:4:32)
+2025-01-07 11:46:30.30
+428ea288
+User
+at WebSocketManager.handlePacket (/home/runner/workspace/node_modules/discord.js/src/client/websocket/WebSocketManager.js:350:31)
+2025-01-07 11:46:30.30
+428ea288
+User
+at WebSocketShard.onPacket (/home/runner/workspace/node_modules/discord.js/src/client/websocket/WebSocketShard.js:443:22)
+2025-01-07 11:46:30.30
+428ea288
+User
+at WebSocketShard.onMessage (/home/runner/workspace/node_modules/discord.js/src/client/websocket/WebSocketShard.js:300:10)
+2025-01-07 11:46:30.30
+428ea288
+User
+at WebSocket.onMessage (/home/runner/workspace/node_modules/discord.js/node_modules/ws/lib/event-target.js:199:18)
+2025-01-07 11:46:30.30
+428ea288
+User
+at WebSocket.emit (node:events:518:28)
+2025-01-07 11:46:30.30
+428ea288
+User
+at Receiver.receiverOnMessage (/home/runner/workspace/node_modules/discord.js/node_modules/ws/lib/websocket.js:1022:20)
+2025-01-07 11:46:30.30
+428ea288
+User
+at Receiver.emit (node:events:518:28)
+2025-01-07 11:46:30.30
+428ea288
+User
+at Receiver.dataMessage (/home/runner/workspace/node_modules/discord.js/node_modules/ws/lib/receiver.js:522:14)
+2025-01-07 11:46:30.30
+428ea288
+User
+2025-01-07 11:46:30.30
+428ea288
+User
+Node.js v20.18.1
+2025-01-07 11:46:30.33
+428ea288
+System
+command finished with error [sh -c npm run start]: exit status 1
