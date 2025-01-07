@@ -68,13 +68,14 @@ module.exports = (token, commands) =>
     const client = new Client({
       intents: [
         Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES, 
+        Intents.FLAGS.GUILD_MESSAGES,
         Intents.FLAGS.GUILD_INTEGRATIONS,
         Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
       ],
     });
     client.on("ready", async () => {
       console.log(`[DISCORD]: Logged in as ${client.user.tag}!`);
+
       try {
         const commandData = _.map(_.keys(commands), (name) => {
           const command = commands[name];
@@ -111,35 +112,10 @@ module.exports = (token, commands) =>
           };
         });
 
-        // // First, fetch all existing commands
-        // const existingCommands = await client.application.commands.fetch();
+        console.log("Registering commands...", commandData);
+        await client.application.commands.set(commandData);
+        console.log("commands registered!");
 
-        // // Delete existing commands with error handling
-        // for (const command of existingCommands.values()) {
-        //   try {
-        //     await command.delete();
-        //   } catch (error) {
-        //     if (error.code === 10063) {
-        //       console.log(`Command ${command.id} already deleted or doesn't exist`);
-        //       continue;
-        //     }
-        //     throw error;
-        //   }
-        // }
-
-        // Register all commands in one API call
-        try {
-          const global = await client.application?.commands.set(commandData);
-          console.log(`Successfully registered ${global?.size} global commands`);
-          
-          // Verify commands were registered
-          const registeredCommands = await client.application?.commands.fetch();
-          console.log("Registered commands:", registeredCommands?.map(cmd => cmd.name).join(", "));
-        } catch (err) {
-          console.error("Failed to register commands:", err.message);
-          reject(err);
-          return;
-        }
         resolve({
           broadcastText,
           broadcastForm,
