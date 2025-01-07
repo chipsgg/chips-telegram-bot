@@ -1,0 +1,139 @@
+2025-01-07 10:38:58.44
+2c49a78d
+User
+Error registering application commands: DiscordAPIError: Unknown application command
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at RequestHandler.execute (/home/runner/workspace/node_modules/discord.js/src/rest/RequestHandler.js:298:13)
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at async RequestHandler.push (/home/runner/workspace/node_modules/discord.js/src/rest/RequestHandler.js:50:14)
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at async ApplicationCommandManager.delete (/home/runner/workspace/node_modules/discord.js/src/managers/ApplicationCommandManager.js:196:5)
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at async Client. (/home/runner/workspace/src/libs/connectors/discord.js:118:11) {
+2025-01-07 10:38:58.44
+2c49a78d
+User
+method: 'delete',
+2025-01-07 10:38:58.44
+2c49a78d
+User
+path: '/applications/901908108136308757/commands/1326227273904422995',
+2025-01-07 10:38:58.44
+2c49a78d
+User
+code: 10063,
+2025-01-07 10:38:58.44
+2c49a78d
+User
+httpStatus: 404,
+2025-01-07 10:38:58.44
+2c49a78d
+User
+requestData: { json: undefined, files: [] }
+2025-01-07 10:38:58.44
+2c49a78d
+User
+}
+2025-01-07 10:38:58.44
+2c49a78d
+User
+node:internal/process/promises:391
+2025-01-07 10:38:58.44
+2c49a78d
+User
+triggerUncaughtException(err, true /* fromPromise */);
+2025-01-07 10:38:58.44
+2c49a78d
+User
+^
+2025-01-07 10:38:58.44
+2c49a78d
+User
+2025-01-07 10:38:58.44
+2c49a78d
+User
+DiscordAPIError: Unknown application command
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at RequestHandler.execute (/home/runner/workspace/node_modules/discord.js/src/rest/RequestHandler.js:298:13)
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at async RequestHandler.push (/home/runner/workspace/node_modules/discord.js/src/rest/RequestHandler.js:50:14)
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at async ApplicationCommandManager.delete (/home/runner/workspace/node_modules/discord.js/src/managers/ApplicationCommandManager.js:196:5)
+2025-01-07 10:38:58.44
+2c49a78d
+User
+at async Client. (/home/runner/workspace/src/libs/connectors/discord.js:118:11) {
+2025-01-07 10:38:58.44
+2c49a78d
+User
+method: 'delete',
+2025-01-07 10:38:58.44
+2c49a78d
+User
+path: '/applications/901908108136308757/commands/1326227273904422995',
+2025-01-07 10:38:58.44
+2c49a78d
+User
+code: 10063,
+2025-01-07 10:38:58.44
+2c49a78d
+User
+httpStatus: 404,
+2025-01-07 10:38:58.44
+2c49a78d
+User
+requestData: { json: undefined, files: [] }
+2025-01-07 10:38:58.44
+2c49a78d
+User
+}
+2025-01-07 10:38:58.44
+2c49a78d
+User
+Node.js v20.18.1
+2025-01-07 10:38:58.48
+2c49a78d
+User
+npm notice
+2025-01-07 10:38:58.48
+2c49a78d
+User
+npm notice New major version of npm available! 10.8.2 -> 11.0.0
+2025-01-07 10:38:58.48
+2c49a78d
+User
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.0.0
+2025-01-07 10:38:58.48
+2c49a78d
+User
+npm notice To update run: npm install -g npm@11.0.0
+2025-01-07 10:38:58.48
+2c49a78d
+User
+npm notice
+2025-01-07 10:38:58.49
+2c49a78d
+System
+command finished with error [sh -c npm run start]: exit status 1
