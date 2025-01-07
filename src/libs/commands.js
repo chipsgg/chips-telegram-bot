@@ -511,27 +511,36 @@ module.exports = (api) => {
         }
       }
 
-      if (ctx.platform === "telegram") {
-        return ctx.sendForm({
-          emoji: "🎉",
-          title: `Promotion: ${promotionId}`,
-          banner: `https://stats.chips.gg/promotions/promotion:${promotionId}`,
-          buttonLabel: "View Promotion",
-          url: `https://chips.gg/promotions`,
+      try {
+        const promotion = await api._actions.public("getPromotion", {
+          // game: "promotion",
+          gameid: promotionId, // roomid replaced with gameid when old game
         });
-      } else {
-        return ctx.sendForm({
-          emoji: "🎉",
-          title: `Promotion: ${promotionId}`,
-          content: "Here is your promotion banner:",
-          image: {
-            url: `https://stats.chips.gg/promotions/promotion:${promotionId}`,
-          },
-          button: {
-            label: "View Promotion",
-            url: `https://chips.gg/promotions`,
-          },
-        });
+
+        if (ctx.platform === "telegram") {
+          return ctx.sendForm({
+            emoji: "🎉",
+            title: promotion.title,
+            banner: `https://stats.chips.gg/promotions/${promotionId}`,
+            buttonLabel: "View Promotion",
+            url: `https://chips.gg/promotions/${promotionId}`,
+          });
+        } else {
+          return ctx.sendForm({
+            emoji: "🎉",
+            title: promotion.title,
+            content: "Here is your promotion banner:",
+            image: {
+              url: `https://stats.chips.gg/promotions/promotion:${promotionId}`,
+            },
+            button: {
+              label: "View Promotion",
+              url: `https://chips.gg/promotions/${promotionId}`,
+            },
+          });
+        }
+      } catch (e) {
+        return ctx.sendText("Error searching promotions: " + error.message);
       }
     },
   };
