@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
-const PORT = 80;
 const HttpServer = require("actions-http");
 const SDK = require("./libs/sdk");
 const { makeBroadcast } = require("./libs/utils");
@@ -47,8 +46,7 @@ app.get("/commands", (req, res) => {
   const api = await SDK(process.env.CHIPS_TOKEN);
 
   if (!api) {
-
-return res.status(500).json({ error: "Bot not initialized" });
+    return res.status(500).json({ error: "Bot not initialized" });
   }
 
   const commands = Commands(api);
@@ -80,6 +78,13 @@ return res.status(500).json({ error: "Bot not initialized" });
     }
   });
 
+  const port = process.env.PORT || 3000;
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`Web server and bot running on port ${port}`);
+  });
+
+  // START THE BOTS
+
   if (process.env.DISCORD_TOKEN) {
     connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
   }
@@ -95,12 +100,4 @@ return res.status(500).json({ error: "Bot not initialized" });
 
   const broadcastText = makeBroadcast(connectors, "broadcastText");
   const broadcastForm = makeBroadcast(connectors, "broadcastForm");
-
-  const server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Web server and bot running on port ${PORT}`);
-  });
-
-  server.on('error', (error) => {
-    console.error('Server error:', error);
-  });
 })();
