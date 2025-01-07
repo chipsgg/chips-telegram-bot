@@ -34,8 +34,18 @@ const discordMakeForm = (options) => {
 const WrapperDiscord = (context, client) => {
   console.log("WrapperDiscord", context);
 
-  const sendForm = (...args) => context.reply(discordMakeForm(...args));
-  const sendText = (content) => context.reply({ content });
+  const sendForm = (...args) => {
+    if (context.deferred || context.replied) {
+      return context.editReply(discordMakeForm(...args));
+    }
+    return context.reply(discordMakeForm(...args));
+  };
+  const sendText = (content) => {
+    if (context.deferred || context.replied) {
+      return context.editReply({ content });
+    }
+    return context.reply({ content });
+  };
 
   const getContent = () => context.message?.content || "";
   const getArg = (index) => getContent().split(" ")[index];
@@ -112,6 +122,7 @@ module.exports = (token, commands) =>
       if (!ctx.isCommand()) return;
       if (!_.has(commands, ctx.commandName))
         return ctx.reply("the command does not exist");
+      await ctx.deferReply();
       const wrapper = WrapperDiscord(ctx, client);
 
       await Promise.resolve(commands[ctx.commandName].handler(wrapper));
