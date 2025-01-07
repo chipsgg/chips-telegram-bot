@@ -68,8 +68,10 @@ module.exports = (token, commands) =>
     const client = new Client({
       intents: [
         Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
+        Intents.FLAGS.GUILD_MESSAGES, 
         Intents.FLAGS.GUILD_INTEGRATIONS,
+        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+        Intents.FLAGS.MESSAGE_CONTENT,
       ],
     });
     client.on("ready", async () => {
@@ -128,10 +130,14 @@ module.exports = (token, commands) =>
 
         // Register all commands in one API call
         try {
-          await client.application.commands.set(commandData);
-          console.log("Successfully registered all commands");
+          const global = await client.application?.commands.set(commandData);
+          console.log(`Successfully registered ${global?.size} global commands`);
+          
+          // Verify commands were registered
+          const registeredCommands = await client.application?.commands.fetch();
+          console.log("Registered commands:", registeredCommands?.map(cmd => cmd.name).join(", "));
         } catch (err) {
-          console.error("Failed to register commands:", err);
+          console.error("Failed to register commands:", err.message);
           reject(err);
           return;
         }
