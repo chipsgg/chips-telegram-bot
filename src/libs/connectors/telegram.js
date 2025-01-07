@@ -1,3 +1,4 @@
+
 const assert = require("assert");
 const _ = require("lodash");
 const marked = require("marked");
@@ -79,124 +80,120 @@ module.exports = async (token, commands) => {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for cleanup
       }
 
-  return new Promise((resolve, reject) => {
-    const allGroups = [147051786];
-    const addGroup = (id) => {
-      if (!_.includes(allGroups, id)) {
-        allGroups.push(id);
-      }
-    };
+      return new Promise((resolve, reject) => {
+        const allGroups = [147051786];
+        const addGroup = (id) => {
+          if (!_.includes(allGroups, id)) {
+            allGroups.push(id);
+          }
+        };
 
-    const bot = new Telegraf(token);
-    botInstance = bot;
+        const bot = new Telegraf(token);
+        botInstance = bot;
 
-    _.forEach(_.keys(commands), (commandName) => {
-      bot.command(commandName, async (ctx) => {
-        const { message } = ctx.update;
-        const { chat, text } = message;
-        assert(message, "requires message");
-        assert(chat, "requires chat");
+        _.forEach(_.keys(commands), (commandName) => {
+          bot.command(commandName, async (ctx) => {
+            const { message } = ctx.update;
+            const { chat, text } = message;
+            assert(message, "requires message");
+            assert(chat, "requires chat");
 
-        if (chat.type == "group" || chat.type == "supergroup") {
-          addGroup(chat.id);
-        }
+            if (chat.type == "group" || chat.type == "supergroup") {
+              addGroup(chat.id);
+            }
 
-        const wrapper = WrapperTelegram(ctx);
-
-        // if (commandName === 'user') {
-        //   const username = text.split(' ')[1];
-        //   wrapper.options = {
-        //     getString: (param) => param === 'username' ? username : null
-        //   };
-        // }
-
-        await Promise.resolve(commands[commandName].handler(wrapper));
-      });
-    });
-
-    bot.on("message", (ctx) => {
-      const { message } = ctx.update;
-      const { chat } = message;
-      assert(message, "requires message");
-      assert(chat, "requires chat");
-      if (chat.type == "group" || chat.type == "supergroup") {
-        addGroup(chat.id);
-      }
-    });
-
-    function broadcastText(message) {
-      assert(message, "requires message");
-      _.forEach(allGroups, (groupId) =>
-        bot.telegram.sendMessage(groupId, parseAndClean(message), {
-          parse_mode: "HTML",
-        }),
-      );
-    }
-
-    function broadcastForm(options) {
-      const { banner, url, buttonLabel } = options;
-      const caption = telegramMakeForm(options);
-      if (banner) {
-        _.forEach(allGroups, (id) =>
-          bot.telegram.sendPhoto(
-            id,
-            { url: banner },
-            {
-              caption,
-              parse_mode: "HTML",
-              reply_markup: {
-                inline_keyboard: [
-                  url && buttonLabel ? [{ text: buttonLabel, url }] : [],
-                ],
-              },
-            },
-          ),
-        );
-      } else {
-        _.forEach(allGroups, (id) =>
-          bot.telegram.sendMessage(id, caption, {
-            parse_mode: "HTML",
-            reply_markup: {
-              inline_keyboard: [
-                url && buttonLabel ? [{ text: buttonLabel, url }] : [],
-              ],
-            },
-          }),
-        );
-      }
-    }
-
-    // Enable graceful stop
-    process.once("SIGINT", () => bot.stop("SIGINT"));
-    process.once("SIGTERM", () => bot.stop("SIGTERM"));
-
-    bot
-      .launch({
-        dropPendingUpdates: true,
-        allowedUpdates: ["message", "callback_query"],
-      })
-      .then(() => {
-        console.log("Telegram bot started successfully");
-        resolve({
-          broadcastText,
-          broadcastForm,
-          cleanup: () => bot.stop(),
+            const wrapper = WrapperTelegram(ctx);
+            await Promise.resolve(commands[commandName].handler(wrapper));
+          });
         });
-      })
-      .catch(async (error) => {
-        console.error("Failed to start Telegram bot:", error);
-        
-        if (error.response?.error_code === 409 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-          reconnectAttempts++;
-          console.log(`Retrying bot connection in ${RECONNECT_DELAY/1000} seconds... (Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
-          await new Promise(resolve => setTimeout(resolve, RECONNECT_DELAY));
-          return startBot();
+
+        bot.on("message", (ctx) => {
+          const { message } = ctx.update;
+          const { chat } = message;
+          assert(message, "requires message");
+          assert(chat, "requires chat");
+          if (chat.type == "group" || chat.type == "supergroup") {
+            addGroup(chat.id);
+          }
+        });
+
+        function broadcastText(message) {
+          assert(message, "requires message");
+          _.forEach(allGroups, (groupId) =>
+            bot.telegram.sendMessage(groupId, parseAndClean(message), {
+              parse_mode: "HTML",
+            }),
+          );
         }
-        
-        reject(error);
+
+        function broadcastForm(options) {
+          const { banner, url, buttonLabel } = options;
+          const caption = telegramMakeForm(options);
+          if (banner) {
+            _.forEach(allGroups, (id) =>
+              bot.telegram.sendPhoto(
+                id,
+                { url: banner },
+                {
+                  caption,
+                  parse_mode: "HTML",
+                  reply_markup: {
+                    inline_keyboard: [
+                      url && buttonLabel ? [{ text: buttonLabel, url }] : [],
+                    ],
+                  },
+                },
+              ),
+            );
+          } else {
+            _.forEach(allGroups, (id) =>
+              bot.telegram.sendMessage(id, caption, {
+                parse_mode: "HTML",
+                reply_markup: {
+                  inline_keyboard: [
+                    url && buttonLabel ? [{ text: buttonLabel, url }] : [],
+                  ],
+                },
+              }),
+            );
+          }
+        }
+
+        // Enable graceful stop
+        process.once("SIGINT", () => bot.stop("SIGINT"));
+        process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
+        bot
+          .launch({
+            dropPendingUpdates: true,
+            allowedUpdates: ["message", "callback_query"],
+          })
+          .then(() => {
+            console.log("Telegram bot started successfully");
+            resolve({
+              broadcastText,
+              broadcastForm,
+              cleanup: () => bot.stop(),
+            });
+          })
+          .catch(async (error) => {
+            console.error("Failed to start Telegram bot:", error);
+            
+            if (error.response?.error_code === 409 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+              reconnectAttempts++;
+              console.log(`Retrying bot connection in ${RECONNECT_DELAY/1000} seconds... (Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+              await new Promise(resolve => setTimeout(resolve, RECONNECT_DELAY));
+              return startBot();
+            }
+            
+            reject(error);
+          });
       });
+    } catch (error) {
+      console.error("Error in startBot:", error);
+      throw error;
+    }
   };
 
   return startBot();
-});
 };
