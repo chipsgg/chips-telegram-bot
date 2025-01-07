@@ -94,7 +94,7 @@ app.get("/commands", (req, res) => {
   const broadcastText = makeBroadcast(connectors, "broadcastText");
   const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 80;
   app.listen(port, "0.0.0.0", () => {
     console.log(`Web server and bot running on port ${port}`);
   });

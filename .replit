@@ -8,5 +8,5 @@ channel = "stable-24_05"
 run = ["sh", "-c", "npm run start"]
 
 [[ports]]
-localPort = 3000
+localPort = 80
 externalPort = 80
