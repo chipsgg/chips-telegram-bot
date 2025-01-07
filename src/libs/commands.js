@@ -220,7 +220,6 @@ module.exports = (api) => {
   };
 
   async function assignDiscordRole(ctx, rank) {
-  const client = ctx.client;
     try {
       if (ctx.platform !== "discord") return;
 
@@ -250,15 +249,15 @@ module.exports = (api) => {
         return;
       }
 
-      const botMember = await guild.members.fetch(client.user.id);
+      const botMember = await guild.members.fetch(ctx.userid);
       if (!botMember.permissions.has("MANAGE_ROLES")) {
         console.warn("Bot missing MANAGE_ROLES permission");
         return;
       }
-      if (member.roles.highest.position >= botMember.roles.highest.position) {
-        console.warn("Bot role position too low to modify member");
-        return;
-      }
+      // if (member.roles.highest.position >= botMember.roles.highest.position) {
+      //   console.warn("Bot role position too low to modify member");
+      //   return;
+      // }
       await member.roles.add(roleID);
       console.log(`Assigned role ${rank} to user ${ctx.userid}`);
     } catch (error) {
