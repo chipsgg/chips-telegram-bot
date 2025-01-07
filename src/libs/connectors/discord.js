@@ -66,7 +66,11 @@ const WrapperDiscord = (context, client) => {
 module.exports = (token, commands) =>
   new Promise((resolve, reject) => {
     const client = new Client({
-      intents: [Intents.FLAGS.GUILDS],
+      intents: [
+        Intents.FLAGS.GUILDS,
+        Intents.FLAGS.GUILD_MESSAGES,
+        Intents.FLAGS.GUILD_INTEGRATIONS
+      ],
     });
     client.on("ready", async () => {
       console.log(`Logged in as ${client.user.tag}!`);
@@ -115,11 +119,14 @@ module.exports = (token, commands) =>
         }
 
         // Register new commands globally
-        await Promise.all(
-          commandData.map(cmd => 
-            client.application.commands.create(cmd)
-          )
-        );
+        for (const cmd of commandData) {
+          try {
+            await client.application.commands.create(cmd);
+            console.log(`Registered command: ${cmd.name}`);
+          } catch (err) {
+            console.error(`Failed to register command ${cmd.name}:`, err);
+          }
+        }
 
         console.log("Successfully refreshed application commands");
         resolve({
