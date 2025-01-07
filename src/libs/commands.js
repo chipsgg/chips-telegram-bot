@@ -220,13 +220,9 @@ module.exports = (api) => {
   };
 
   async function assignDiscordRole(ctx, rank) {
+  const client = ctx.client;
     try {
       if (ctx.platform !== "discord") return;
-      const ALLOWED_GUILD_ID = "541035273547415552";
-      if (ctx.guild?.id !== ALLOWED_GUILD_ID) {
-        console.warn(`Role assignment not allowed in guild: ${ctx.guild?.id}`);
-        return;
-      }
 
       const roleID = getRoleIdByRank(rank);
       if (!roleID) {
@@ -238,6 +234,14 @@ module.exports = (api) => {
       if (!guild) {
         console.warn("No guild context available");
         return;
+      } else {
+        // const ALLOWED_GUILD_ID = "541035273547415552";
+        // if (guild.id !== ALLOWED_GUILD_ID) {
+        //   console.warn(
+        //     `Role assignment not allowed in guild: ${ctx.guild?.id}`,
+        //   );
+        //   return;
+        // }
       }
 
       const member = await guild.members.fetch(ctx.userid);
@@ -246,12 +250,13 @@ module.exports = (api) => {
         return;
       }
 
-      if (!guild.members.me.permissions.has('MANAGE_ROLES')) {
-        console.warn('Bot missing MANAGE_ROLES permission');
+      const botMember = await guild.members.fetch(client.user.id);
+      if (!botMember.permissions.has("MANAGE_ROLES")) {
+        console.warn("Bot missing MANAGE_ROLES permission");
         return;
       }
-      if (member.roles.highest.position >= guild.members.me.roles.highest.position) {
-        console.warn('Bot role position too low to modify member');
+      if (member.roles.highest.position >= botMember.roles.highest.position) {
+        console.warn("Bot role position too low to modify member");
         return;
       }
       await member.roles.add(roleID);
