@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
-const PORT = process.env.PORT || 80;
+const PORT = 80;
 const HttpServer = require("actions-http");
 const SDK = require("./libs/sdk");
 const { makeBroadcast } = require("./libs/utils");
@@ -96,7 +96,11 @@ return res.status(500).json({ error: "Bot not initialized" });
   const broadcastText = makeBroadcast(connectors, "broadcastText");
   const broadcastForm = makeBroadcast(connectors, "broadcastForm");
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Web server and bot running on port ${PORT}`);
+  });
+
+  server.on('error', (error) => {
+    console.error('Server error:', error);
   });
 })();
