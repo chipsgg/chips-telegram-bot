@@ -106,16 +106,19 @@ app.get("/commands", (req, res) => {
 
   if (process.env.DISCORD_TOKEN) {
     try {
+      console.log("Attempting to connect Discord bot...");
       const discord = await Discord(process.env.DISCORD_TOKEN, commands);
       connectors.push(discord);
+      console.log("Discord bot connected successfully");
     } catch (error) {
-      console.error("Error starting Discord bot:", {
+      console.error("Error starting Discord bot - invalid token. Please check your DISCORD_TOKEN environment variable.", {
         name: error.name,
-        message: error.message
+        message: error.message,
+        code: error[Symbol.for('code')]
       });
     }
   } else {
-    console.log("No Discord token provided");
+    console.log("No Discord token provided - skipping Discord integration");
   }
 
   const broadcastText = makeBroadcast(connectors, "broadcastText");
