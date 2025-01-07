@@ -1,20 +1,21 @@
 const _ = require("lodash");
 const {
   Client,
-  Intents,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  GatewayIntentBits,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
+  ButtonStyle,
 } = require("discord.js");
 const discordMakeForm = (options) => {
   const { emoji, title, content, footer, banner, url, buttonLabel } = options;
-  const row = new MessageActionRow().addComponents(
-    new MessageButton()
-      .setStyle("LINK")
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
       .setLabel(buttonLabel || "Click on link")
       .setURL(url || "https://chips.gg/"),
   );
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`)
     .setDescription(_.trim(content));
   if (footer)
@@ -67,10 +68,11 @@ module.exports = (token, commands) =>
   new Promise((resolve, reject) => {
     const client = new Client({
       intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_INTEGRATIONS,
-        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildIntegrations,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.MessageContent,
       ],
     });
     client.on("ready", async () => {
