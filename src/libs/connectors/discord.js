@@ -6,6 +6,7 @@ const {
   ButtonBuilder,
   EmbedBuilder,
   ButtonStyle,
+  AttachmentBuilder,
 } = require("discord.js");
 const discordMakeForm = (options) => {
   const { emoji, title, content, footer, banner, url, buttonLabel } = options;
@@ -25,7 +26,13 @@ const discordMakeForm = (options) => {
     embed.setDescription(_.trim(content));
   }
   if (banner) {
-    embed.setImage(banner);
+    if (banner.startsWith('http')) {
+      const attachment = new AttachmentBuilder(banner);
+      embed.setImage(`attachment://${banner.split('/').pop()}`);
+      response.files = [attachment];
+    } else {
+      embed.setImage(banner);
+    }
   }
   if (footer) {
     embed.setFooter({
