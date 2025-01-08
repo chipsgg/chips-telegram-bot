@@ -545,6 +545,49 @@ module.exports = (api) => {
     },
   };
 
+  commands.compare = {
+    description: "Compare two users' stats. Usage: /compare username1 username2",
+    handler: async (ctx) => {
+      let username1, username2;
+      if (ctx.platform === "discord") {
+        username1 = ctx?.getString("username1");
+        username2 = ctx?.getString("username2");
+        if (!username1 || !username2) {
+          return ctx.sendText("Please provide both usernames to compare");
+        }
+      } else {
+        username1 = ctx?.getArg(1);
+        username2 = ctx?.getArg(2);
+        if (!username1 || !username2) {
+          return ctx.sendText("Please provide both usernames to compare");
+        }
+      }
+
+      if (ctx.platform === "telegram") {
+        return ctx.sendForm({
+          emoji: "🔄",
+          title: `Comparing ${username1} vs ${username2}`,
+          banner: `https://stats.chips.gg/compare/${username1}/${username2}`,
+          buttonLabel: "View Profiles",
+          url: `https://chips.gg/user/${username1}`,
+        });
+      } else {
+        return ctx.sendForm({
+          emoji: "🔄",
+          title: `Comparing ${username1} vs ${username2}`,
+          content: "Here is your comparison:",
+          image: {
+            url: `https://stats.chips.gg/compare/${username1}/${username2}`,
+          },
+          button: {
+            label: "View Profiles",
+            url: `https://chips.gg/user/${username1}`,
+          },
+        });
+      }
+    },
+  };
+
   commands.help = {
     description: "Description of all commands",
     handler: (ctx) => ctx.sendForm(models.help(commands)),
