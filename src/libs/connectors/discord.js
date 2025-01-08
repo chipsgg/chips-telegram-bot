@@ -16,23 +16,22 @@ const discordMakeForm = (options) => {
       .setURL(url || "https://chips.gg/"),
   );
   const embed = new EmbedBuilder()
+    .setColor(0x0099FF)
     .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`)
-    .setColor(0x0099FF);
+    .setURL(url || 'https://chips.gg')
+    .setTimestamp();
   
   if (content) {
     embed.setDescription(_.trim(content));
   }
-  if (footer) {
-    embed.setFooter({
-      text: _.trim(footer),
-      iconURL: "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png"
-    });
-  }
   if (banner) {
     embed.setImage(banner);
   }
-  if (url) {
-    embed.setURL(url);
+  if (footer) {
+    embed.setFooter({
+      text: _.trim(footer),
+      iconURL: 'https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png'
+    });
   }
 
   const response = {
