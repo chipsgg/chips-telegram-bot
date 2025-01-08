@@ -546,7 +546,8 @@ module.exports = (api) => {
   };
 
   commands.compare = {
-    description: "Compare two users' stats. Usage: /compare username1 username2",
+    description:
+      "Compare two users' stats. Usage: /compare username1 username2",
     handler: async (ctx) => {
       let username1, username2;
       if (ctx.platform === "discord") {
@@ -614,7 +615,7 @@ module.exports = (api) => {
         });
       } else {
         return ctx.sendForm({
-          emoji: "🎲", 
+          emoji: "🎲",
           title: `Bet: ${betId}`,
           content: "Here is your bet card:",
           image: {
