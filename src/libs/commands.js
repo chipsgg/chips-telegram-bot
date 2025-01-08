@@ -576,22 +576,13 @@ module.exports = (api) => {
         }
       }
 
-      if (ctx.platform === "telegram") {
-        return ctx.sendForm({
-          emoji: "🎲",
-          title: `Bet: ${betId}`,
-          banner: `https://stats.chips.gg/bets/${betId}`,
-        });
-      } else {
-        return ctx.sendForm({
-          emoji: "🎲",
-          title: `Bet: ${betId}`,
-          content: "Here is your bet card:",
-          image: {
-            url: `https://stats.chips.gg/bets/${betId}`,
-          },
-        });
-      }
+      return ctx.sendForm({
+        emoji: "🎲",
+        title: `Bet: ${betId}`,
+        banner: `https://stats.chips.gg/bets/${betId}`,
+        buttonLabel: "View Bet",
+        url: `https://chips.gg/bets/${betId}`,
+      });
     },
   };
 
