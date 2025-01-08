@@ -610,8 +610,8 @@ module.exports = (api) => {
           emoji: "🎲",
           title: `Bet: ${betId}`,
           banner: `https://stats.chips.gg/bets/${betId}`,
-          buttonLabel: "View Bet",
-          url: `https://chips.gg/bets/${betId}`,
+          // buttonLabel: "View Bet",
+          // url: `https://chips.gg/bets/${betId}`,
         });
       } else {
         return ctx.sendForm({
@@ -621,10 +621,10 @@ module.exports = (api) => {
           image: {
             url: `https://stats.chips.gg/bets/${betId}`,
           },
-          button: {
-            label: "View Bet",
-            url: `https://chips.gg/bets/${betId}`,
-          },
+          // button: {
+          //   label: "View Bet",
+          //   url: `https://chips.gg/bets/${betId}`,
+          // },
         });
       }
     },
