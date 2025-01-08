@@ -397,28 +397,13 @@ module.exports = (api) => {
     handler: async (ctx) => {
       const koth = api.get("public", "koth");
 
-      if (ctx.platform === "telegram") {
-        return ctx.sendForm({
-          emoji: "👑",
-          title: "KING OF THE HILL",
-          banner: `https://stats.chips.gg/koth`,
-          buttonLabel: "BE KING.",
-          url: "https://chips.gg/koth",
-        });
-      } else {
-        return ctx.sendForm({
-          emoji: "👑",
-          title: "KING OF THE HILL",
-          content: "Current KOTH Challenge:",
-          image: {
-            url: `https://stats.chips.gg/koth`,
-          },
-          button: {
-            label: "BE KING.",
-            url: "https://chips.gg/koth",
-          },
-        });
-      }
+      return ctx.sendForm({
+        emoji: "👑",
+        title: "KING OF THE HILL",
+        banner: `https://stats.chips.gg/koth`,
+        buttonLabel: "BE KING.",
+        url: "https://chips.gg/koth",
+      });
     },
   };
 
@@ -491,29 +476,13 @@ module.exports = (api) => {
         }
       }
 
-      if (ctx.platform === "telegram") {
-        return ctx.sendForm({
-          emoji: "📊",
-          title: `Stats Banner: ${username}`,
-          // content: "Here are your stats:",
-          banner: `https://stats.chips.gg/stats/${username}`,
-          buttonLabel: "View Profile",
-          url: `https://chips.gg/user/${username}`,
-        });
-      } else {
-        return ctx.sendForm({
-          emoji: "📊",
-          title: `Stats Banner: ${username}`,
-          content: "Here are your stats:",
-          image: {
-            url: `https://stats.chips.gg/stats/${username}`,
-          },
-          button: {
-            label: "View Profile",
-            url: `https://chips.gg/user/${username}`,
-          },
-        });
-      }
+      return ctx.sendForm({
+        emoji: "📊",
+        title: `Stats Banner: ${username}`,
+        banner: `https://stats.chips.gg/stats/${username}`,
+        buttonLabel: "View Profile",
+        url: `https://chips.gg/user/${username}`,
+      });
     },
   };
 
@@ -535,34 +504,18 @@ module.exports = (api) => {
 
       try {
         const promotion = await api._actions.public("getPromotion", {
-          // game: "promotion",
-          gameid: promotionId, // roomid replaced with gameid when old game
+          gameid: promotionId,
         });
 
-        if (ctx.platform === "telegram") {
-          return ctx.sendForm({
-            emoji: "🎉",
-            title: promotion.title,
-            banner: `https://stats.chips.gg/promotions/${promotionId}`,
-            buttonLabel: "View Promotion",
-            url: `https://chips.gg/promotions/${promotionId}`,
-          });
-        } else {
-          return ctx.sendForm({
-            emoji: "🎉",
-            title: promotion.title,
-            content: "Here is your promotion banner:",
-            image: {
-              url: `https://stats.chips.gg/promotions/promotion:${promotionId}`,
-            },
-            button: {
-              label: "View Promotion",
-              url: `https://chips.gg/promotions/${promotionId}`,
-            },
-          });
-        }
+        return ctx.sendForm({
+          emoji: "🎉",
+          title: promotion.title,
+          banner: `https://stats.chips.gg/promotions/promotion:${promotionId}`,
+          buttonLabel: "View Promotion",
+          url: `https://chips.gg/promotions/${promotionId}`,
+        });
       } catch (e) {
-        return ctx.sendText("Error searching promotions: " + error.message);
+        return ctx.sendText("Error searching promotions: " + e.message);
       }
     },
   };
@@ -628,8 +581,6 @@ module.exports = (api) => {
           emoji: "🎲",
           title: `Bet: ${betId}`,
           banner: `https://stats.chips.gg/bets/${betId}`,
-          // buttonLabel: "View Bet",
-          // url: `https://chips.gg/bets/${betId}`,
         });
       } else {
         return ctx.sendForm({
@@ -639,10 +590,6 @@ module.exports = (api) => {
           image: {
             url: `https://stats.chips.gg/bets/${betId}`,
           },
-          // button: {
-          //   label: "View Bet",
-          //   url: `https://chips.gg/bets/${betId}`,
-          // },
         });
       }
     },
