@@ -133,10 +133,9 @@ module.exports = (token, commands) =>
                 description: "Second username to compare",
                 type: 3,
                 required: true,
-              }
+              },
             );
           }
-
 
           return {
             name,
@@ -146,7 +145,12 @@ module.exports = (token, commands) =>
         });
 
         console.log("Registering commands...");
-        await client.application.commands.set(commandData);
+        for (const command of commandData) {
+          await client.application.commands.create(command);
+        }
+        console.log("Registering commands... SUCCESS!");
+
+        // await client.application.commands.set(commandData);
 
         resolve({
           broadcastText,
