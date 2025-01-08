@@ -23,7 +23,13 @@ const discordMakeForm = (options) => {
       _.trim(footer),
       "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png",
     );
-  if (banner) embed.setImage(banner);
+  if (banner) {
+    try {
+      embed.setImage(banner);
+    } catch (error) {
+      console.error('Failed to set image:', error);
+    }
+  }
   if (url) embed.setURL(url);
   return {
     content: " ",

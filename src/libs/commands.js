@@ -599,13 +599,9 @@ module.exports = (api) => {
           emoji: "🔄",
           title: `Comparing ${username1} vs ${username2}`,
           content: "Here is your comparison:",
-          image: {
-            url: `https://stats.chips.gg/compare/${username1}/${username2}`,
-          },
-          button: {
-            label: "View Profiles",
-            url: `https://chips.gg/user/${username1}`,
-          },
+          banner: `https://stats.chips.gg/compare/${username1}/${username2}`,
+          buttonLabel: "View Profiles",
+          url: `https://chips.gg/user/${username1}`,
         });
       }
     },
