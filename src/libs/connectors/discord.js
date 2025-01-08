@@ -24,10 +24,10 @@ const discordMakeForm = (options) => {
     embed.setDescription(trimmedContent);
   }
   if (footer)
-    embed.setFooter(
-      _.trim(footer),
-      "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png",
-    );
+    embed.setFooter({
+      text: _.trim(footer),
+      iconURL: "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png"
+    });
   if (banner) embed.setImage(banner);
   if (url) embed.setURL(url);
   return {
