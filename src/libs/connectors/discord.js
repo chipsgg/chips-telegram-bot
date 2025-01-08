@@ -16,28 +16,34 @@ const discordMakeForm = (options) => {
       .setURL(url || "https://chips.gg/"),
   );
   const embed = new EmbedBuilder()
-    .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`);
+    .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`)
+    .setColor(0x0099FF);
   
   if (content) {
     embed.setDescription(_.trim(content));
   }
-  if (footer)
-    embed.setFooter(
-      _.trim(footer),
-      "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png",
-    );
-  if (banner) {
-    try {
-      embed.setImage(banner);
-    } catch (error) {
-      console.error('Failed to set image:', error);
-    }
+  if (footer) {
+    embed.setFooter({
+      text: _.trim(footer),
+      iconURL: "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png"
+    });
   }
-  if (url) embed.setURL(url);
-  return {
-    embeds: [embed],
-    components: url && buttonLabel ? [row] : [],
+  if (banner) {
+    embed.setImage(banner);
+  }
+  if (url) {
+    embed.setURL(url);
+  }
+
+  const response = {
+    embeds: [embed]
   };
+
+  if (url && buttonLabel) {
+    response.components = [row];
+  }
+
+  return response;
 };
 
 const WrapperDiscord = (context, client) => {
