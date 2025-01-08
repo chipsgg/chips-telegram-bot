@@ -404,7 +404,7 @@ module.exports = (api) => {
         buttonLabel: "BE KING.",
         url: "https://chips.gg/koth",
       });
-    }
+    },
   };
 
   commands.search = {
@@ -475,7 +475,7 @@ module.exports = (api) => {
           return ctx.sendText("Please provide a username");
         }
       }
-      
+
       return ctx.sendForm({
         emoji: "📊",
         title: `Stats Banner: ${username}`,
@@ -509,28 +509,13 @@ module.exports = (api) => {
           gameid: promotionId, // roomid replaced with gameid when old game
         });
 
-        if (ctx.platform === "telegram") {
-          return ctx.sendForm({
-            emoji: "🎉",
-            title: promotion.title,
-            banner: `https://stats.chips.gg/promotions/${promotionId}`,
-            buttonLabel: "View Promotion",
-            url: `https://chips.gg/promotions/${promotionId}`,
-          });
-        } else {
-          return ctx.sendForm({
-            emoji: "🎉",
-            title: promotion.title,
-            content: "Here is your promotion banner:",
-            image: {
-              url: `https://stats.chips.gg/promotions/promotion:${promotionId}`,
-            },
-            button: {
-              label: "View Promotion",
-              url: `https://chips.gg/promotions/${promotionId}`,
-            },
-          });
-        }
+        return ctx.sendForm({
+          emoji: "🎉",
+          title: promotion.title,
+          banner: `https://stats.chips.gg/promotions/${promotionId}`,
+          buttonLabel: "View Promotion",
+          url: `https://chips.gg/promotions/${promotionId}`,
+        });
       } catch (e) {
         return ctx.sendText("Error searching promotions: " + error.message);
       }
@@ -555,6 +540,7 @@ module.exports = (api) => {
           return ctx.sendText("Please provide both usernames to compare");
         }
       }
+
       return ctx.sendForm({
         emoji: "🔄",
         title: `Comparing ${username1} vs ${username2}`,
