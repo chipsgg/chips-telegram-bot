@@ -396,14 +396,14 @@ module.exports = (api) => {
     description: "Display current King of the Hill information",
     handler: async (ctx) => {
       const koth = api.get("public", "koth");
-      
+
       if (ctx.platform === "telegram") {
         return ctx.sendForm({
           emoji: "👑",
           title: "KING OF THE HILL",
-          banner: `https://stats.chips.gg/koth/${koth?.id || 'current'}`,
-          buttonLabel: "Join KOTH",
-          url: koth ? `https://chips.gg/play/${koth.catalogid}` : "https://chips.gg/koth",
+          banner: `https://stats.chips.gg/koth`,
+          buttonLabel: "BE KING.",
+          url: "https://chips.gg/koth",
         });
       } else {
         return ctx.sendForm({
@@ -411,11 +411,11 @@ module.exports = (api) => {
           title: "KING OF THE HILL",
           content: "Current KOTH Challenge:",
           image: {
-            url: `https://stats.chips.gg/koth/${koth?.id || 'current'}`,
+            url: `https://stats.chips.gg/koth`,
           },
           button: {
-            label: "Join KOTH",
-            url: koth ? `https://chips.gg/play/${koth.catalogid}` : "https://chips.gg/koth",
+            label: "BE KING.",
+            url: "https://chips.gg/koth",
           },
         });
       }
