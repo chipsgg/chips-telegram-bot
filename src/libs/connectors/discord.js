@@ -9,7 +9,18 @@ const {
   AttachmentBuilder,
 } = require("discord.js");
 const discordMakeForm = (options) => {
-  const { emoji, title, content, footer, banner, url, buttonLabel } = options;
+  const { emoji, title, content, footer, banner, url, buttonLabel, rawImage } = options;
+  
+  // If rawImage is true, send image directly without embed
+  if (rawImage && banner) {
+    if (banner.startsWith('http')) {
+      const attachment = new AttachmentBuilder(banner);
+      return { files: [attachment] };
+    } else {
+      return { files: [new AttachmentBuilder(banner)] };
+    }
+  }
+
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setStyle(ButtonStyle.Link)
