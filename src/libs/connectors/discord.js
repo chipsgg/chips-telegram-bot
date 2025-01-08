@@ -35,7 +35,6 @@ const discordMakeForm = (options) => {
   }
   if (url) embed.setURL(url);
   return {
-    content: " ",
     embeds: [embed],
     components: url && buttonLabel ? [row] : [],
   };
