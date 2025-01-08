@@ -10,6 +10,6 @@ module.exports = ({ id, title, producer, rtp, images }) => ({
 🎩 RTP ${Humanize.formatNumber(rtp, 2)}%`,
   footer: "Good Luck and may the Chips be forever stacked in your favour ⭐️",
   banner: images.s2,
-  url:`https://chips.gg/casino/${id}`,
+  url: `https://chips.gg/casino/${id}`,
   buttonLabel: "🎰 PLAY NOW 🎰",
 });
