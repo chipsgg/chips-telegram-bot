@@ -6,17 +6,9 @@ const {
   ButtonBuilder,
   EmbedBuilder,
   ButtonStyle,
-  AttachmentBuilder,
 } = require("discord.js");
 const discordMakeForm = (options) => {
-  const { emoji, title, content, footer, banner, url, buttonLabel, rawImage } =
-    options;
-
-  // If rawImage is true, send image directly without embed
-  if (banner) {
-    return { content, files: [new AttachmentBuilder(banner)] };
-  }
-
+  const { emoji, title, content, footer, banner, url, buttonLabel } = options;
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setStyle(ButtonStyle.Link)
@@ -24,41 +16,20 @@ const discordMakeForm = (options) => {
       .setURL(url || "https://chips.gg/"),
   );
   const embed = new EmbedBuilder()
-    .setColor(0x0099ff)
     .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`)
-    .setURL(url || "https://chips.gg")
-    .setTimestamp();
-
-  if (content) {
-    embed.setDescription(_.trim(content));
-  }
-
-  const response = {
+    .setDescription(_.trim(content));
+  if (footer)
+    embed.setFooter(
+      _.trim(footer),
+      "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png",
+    );
+  if (banner) embed.setImage(banner);
+  if (url) embed.setURL(url);
+  return {
+    content: " ",
     embeds: [embed],
+    components: url && buttonLabel ? [row] : [],
   };
-
-  if (banner) {
-    if (banner.startsWith('http')) {
-      const attachment = new AttachmentBuilder(banner);
-      embed.setImage(`attachment://${banner.split('/').pop()}`);
-      response.files = [attachment];
-    } else {
-      embed.setImage(banner);
-    }
-  }
-  if (footer) {
-    embed.setFooter({
-      text: _.trim(footer),
-      iconURL:
-        "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png",
-    });
-  }
-
-  if (url && buttonLabel) {
-    response.components = [row];
-  }
-
-  return response;
 };
 
 const WrapperDiscord = (context, client) => {
