@@ -588,6 +588,47 @@ module.exports = (api) => {
     },
   };
 
+  commands.bet = {
+    description: "Show bet card. Usage: /bet betid",
+    handler: async (ctx) => {
+      let betId = null;
+      if (ctx.platform === "discord") {
+        betId = ctx?.getString("betid");
+        if (!betId) {
+          return ctx.sendText("Please provide a bet ID");
+        }
+      } else {
+        betId = ctx?.getArg(1);
+        if (!betId) {
+          return ctx.sendText("Please provide a bet ID");
+        }
+      }
+
+      if (ctx.platform === "telegram") {
+        return ctx.sendForm({
+          emoji: "🎲",
+          title: `Bet: ${betId}`,
+          banner: `https://stats.chips.gg/bets/${betId}`,
+          buttonLabel: "View Bet",
+          url: `https://chips.gg/bets/${betId}`,
+        });
+      } else {
+        return ctx.sendForm({
+          emoji: "🎲", 
+          title: `Bet: ${betId}`,
+          content: "Here is your bet card:",
+          image: {
+            url: `https://stats.chips.gg/bets/${betId}`,
+          },
+          button: {
+            label: "View Bet",
+            url: `https://chips.gg/bets/${betId}`,
+          },
+        });
+      }
+    },
+  };
+
   commands.help = {
     description: "Description of all commands",
     handler: (ctx) => ctx.sendForm(models.help(commands)),

@@ -98,21 +98,13 @@ module.exports = (token, commands) =>
               type: 3,
               required: true,
             });
-          } else if (name === "compare") {
-            options.push(
-              {
-                name: "username1",
-                description: "First username to compare",
-                type: 3,
-                required: true,
-              },
-              {
-                name: "username2",
-                description: "Second username to compare",
-                type: 3,
-                required: true,
-              }
-            );
+          } else if (name === "bet") {
+            options.push({
+              name: "betid",
+              description: "Bet ID to look up",
+              type: 3,
+              required: true,
+            });
           } else if (name === "auth" || name === "linkaccount") {
             options.push(
               {
@@ -128,7 +120,23 @@ module.exports = (token, commands) =>
                 required: true,
               },
             );
+          } else if (name === "compare") {
+            options.push(
+              {
+                name: "username1",
+                description: "First username to compare",
+                type: 3,
+                required: true,
+              },
+              {
+                name: "username2",
+                description: "Second username to compare",
+                type: 3,
+                required: true,
+              }
+            );
           }
+
 
           return {
             name,
