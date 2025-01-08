@@ -16,8 +16,11 @@ const discordMakeForm = (options) => {
       .setURL(url || "https://chips.gg/"),
   );
   const embed = new EmbedBuilder()
-    .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`)
-    .setDescription(_.trim(content));
+    .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`);
+  
+  if (content) {
+    embed.setDescription(_.trim(content));
+  }
   if (footer)
     embed.setFooter(
       _.trim(footer),
