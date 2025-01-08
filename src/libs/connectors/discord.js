@@ -32,10 +32,15 @@ const discordMakeForm = (options) => {
   if (content) {
     embed.setDescription(_.trim(content));
   }
+
+  const response = {
+    embeds: [embed],
+  };
+
   if (banner) {
-    if (banner.startsWith("http")) {
+    if (banner.startsWith('http')) {
       const attachment = new AttachmentBuilder(banner);
-      embed.setImage(`attachment://${banner.split("/").pop()}`);
+      embed.setImage(`attachment://${banner.split('/').pop()}`);
       response.files = [attachment];
     } else {
       embed.setImage(banner);
@@ -48,10 +53,6 @@ const discordMakeForm = (options) => {
         "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png",
     });
   }
-
-  const response = {
-    embeds: [embed],
-  };
 
   if (url && buttonLabel) {
     response.components = [row];
