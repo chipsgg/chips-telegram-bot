@@ -249,8 +249,9 @@ module.exports = (api) => {
         return;
       }
 
+      const { PermissionFlagsBits } = require('discord.js');
       const botMember = await guild.members.fetch(ctx.userid);
-      if (!botMember.permissions.has("MANAGE_ROLES")) {
+      if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
         console.warn("Bot missing MANAGE_ROLES permission");
         return;
       }
