@@ -34,6 +34,7 @@ const discordMakeForm = (options) => {
     content: " ",
     embeds: [embed],
     components: url && buttonLabel ? [row] : [],
+    ephemeral: options.ephemeral || false
   };
 };
 

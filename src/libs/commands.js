@@ -204,13 +204,15 @@ module.exports = (api) => {
           // Automatically assign the role in Discord after linking
           await assignDiscordRole(ctx, vip.rank);
 
-          return ctx.sendForm({
+          const response = {
             emoji: "🔐",
             title: "Authentication Success",
             content: `Your ${payload.platform} has been linked!`,
             buttonLabel: "Visit Profile",
             url: `https://chips.gg/user/${username}`,
-          });
+            ephemeral: true
+          };
+          return ctx.sendForm(response);
         } catch (error) {
           console.error("/linkaccount", error);
           return ctx.sendText("Failed to link account: " + error.message);
