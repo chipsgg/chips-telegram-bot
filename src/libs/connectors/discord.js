@@ -78,6 +78,7 @@ module.exports = (token, commands) =>
         GatewayIntentBits.GuildIntegrations,
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.ManageRol
       ],
     });
 

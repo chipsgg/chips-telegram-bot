@@ -1,0 +1,104 @@
+2025-01-09 15:23:25.34
+c11f111d
+User
+linkaccount { username: 'BTNGaming', totpCode: '581767' }
+2025-01-09 15:23:25.52
+c11f111d
+User
+Linking: {
+2025-01-09 15:23:25.52
+c11f111d
+User
+id: 'b18e0090-5dcf-41c6-862d-573cfcaa7bcc',
+2025-01-09 15:23:25.52
+c11f111d
+User
+username: 'BTNGaming',
+2025-01-09 15:23:25.52
+c11f111d
+User
+avatar: 'https://cdn.chips.gg/community/9e177164-6909-4f8d-bfb6-6a106bc07128.png',
+2025-01-09 15:23:25.52
+c11f111d
+User
+profileBannerURL: 'https://cdn.chips.gg/community/4ee65b8d-61e5-4da2-90bb-0d672e12d513.png',
+2025-01-09 15:23:25.52
+c11f111d
+User
+currency: 'ltc',
+2025-01-09 15:23:25.52
+c11f111d
+User
+created: 1703738201529
+2025-01-09 15:23:25.52
+c11f111d
+User
+} {
+2025-01-09 15:23:25.52
+c11f111d
+User
+exp: 22327,
+2025-01-09 15:23:25.52
+c11f111d
+User
+level: 26,
+2025-01-09 15:23:25.52
+c11f111d
+User
+tier: 1,
+2025-01-09 15:23:25.52
+c11f111d
+User
+rank: 'Flipper I',
+2025-01-09 15:23:25.52
+c11f111d
+User
+baseLevelExp: 22000,
+2025-01-09 15:23:25.52
+c11f111d
+User
+nextLevelExp: 24000
+2025-01-09 15:23:25.52
+c11f111d
+User
+}
+2025-01-09 15:23:25.72
+c11f111d
+User
+Error assigning role: RangeError [BitFieldInvalid]: Invalid bitfield flag or number: MANAGE_ROLES.
+2025-01-09 15:23:25.72
+c11f111d
+User
+at PermissionsBitField.resolve (/home/runner/workspace/node_modules/discord.js/src/util/BitField.js:174:11)
+2025-01-09 15:23:25.72
+c11f111d
+User
+at PermissionsBitField.has (/home/runner/workspace/node_modules/discord.js/src/util/BitField.js:60:28)
+2025-01-09 15:23:25.72
+c11f111d
+User
+at PermissionsBitField.has (/home/runner/workspace/node_modules/discord.js/src/util/PermissionsBitField.js:92:82)
+2025-01-09 15:23:25.72
+c11f111d
+User
+at assignDiscordRole (/home/runner/workspace/src/libs/commands.js:253:34)
+2025-01-09 15:23:25.72
+c11f111d
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-01-09 15:23:25.72
+c11f111d
+User
+at async Object.handler (/home/runner/workspace/src/libs/commands.js:205:11)
+2025-01-09 15:23:25.72
+c11f111d
+User
+at async Client. (/home/runner/workspace/src/libs/connectors/discord.js:178:9) {
+2025-01-09 15:23:25.72
+c11f111d
+User
+code: 'BitFieldInvalid'
+2025-01-09 15:23:25.72
+c11f111d
+User
+}
