@@ -1,37 +1,49 @@
 {
-  "dependencies": {
-    "@chipsgg/openservice-ws-client": "^1.0.34",
-    "@coingecko/cryptoformat": "^0.4.4",
-    "actions-http": "^2.1.0",
-    "big.js": "^6.2.2",
-    "dayjs": "^1.10.7",
-    "discord.js": "^14.17.3",
-    "dotenv": "^10.0.0",
-    "ejs": "^3.1.10",
-    "humanize-plus": "^1.8.2",
-    "hyperid": "^2.3.1",
-    "ioredis": "^4.27.9",
-    "lodash": "^4.17.21",
-    "markdown-it": "^14.1.0",
-    "marked": "^4.0.10",
-    "node-twitch": "^0.4.5",
-    "telegraf": "^4.4.1",
-    "telegraf-question": "^1.1.4",
-    "ws": "^8.2.0"
-  },
-  "name": "@chipsgg/telegram-bot",
-  "version": "3.4.0",
-  "description": "A community supported project built for chips.gg",
-  "main": "index.js",
-  "repository": "git@github.com:chipsgg/chips-telegram-bot.git",
-  "author": "Chips.gg <admin@chips.gg>",
-  "scripts": {
-    "start": "node index.js",
-    "shake": "prettier ./**/*.js --write",
-    "lint": "yarn shake && eslint --fix ./**/*.js"
-  },
-  "devDependencies": {
-    "eslint": "^8.24.0",
-    "prettier": "^2.7.1"
-  }
+	"name": "@chipsgg/telegram-bot",
+	"version": "3.4.0",
+	"description": "A community supported project built for chips.gg",
+	"main": "index.js",
+	"repository": "git@github.com:chipsgg/chips-telegram-bot.git",
+	"author": "Chips.gg <admin@chips.gg>",
+	"type": "module",
+	"engines": {
+		"node": ">=22.7.0"
+	},
+	"scripts": {
+		"dev": "tsx src/index.ts",
+		"start": "node dist/index.js",
+		"shake": "prettier ./**/*.js --write",
+		"lint": "yarn shake && npm biome check",
+		"format": "biome check --write"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/lodash": "^4.17.15",
+		"@types/node": "^22.7.0",
+		"@types/node-fetch": "^2.6.11",
+		"tslib": "^2.7.0",
+		"tsx": "^4.19.3",
+		"typescript": "^5.7.0"
+	},
+	"dependencies": {
+		"@chipsgg/openservice-ws-client": "^1.0.34",
+		"@coingecko/cryptoformat": "^0.4.4",
+		"actions-http": "^1.0.13",
+		"big.js": "^6.2.2",
+		"dayjs": "^1.10.7",
+		"discord.js": "^14.17.3",
+		"dotenv": "^16.4.5",
+		"ejs": "^3.1.10",
+		"humanize-plus": "^1.8.2",
+		"hyperid": "^2.3.1",
+		"ioredis": "^4.27.9",
+		"lodash": "^4.17.21",
+		"markdown-it": "^14.1.0",
+		"marked": "^4.0.10",
+		"node-twitch": "^0.4.5",
+		"telegraf": "^4.4.1",
+		"telegraf-question": "^1.1.4",
+		"ws": "^8.2.0"
+	},
+	"packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
