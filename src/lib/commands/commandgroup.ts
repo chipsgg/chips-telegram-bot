@@ -7,23 +7,25 @@ import {
 	type RESTPostAPIApplicationCommandsJSONBody,
 	type SlashCommandSubcommandsOnlyBuilder,
 } from 'discord.js';
-import { ChipsCommand, CommandAccess, CommandType, type GroupCommand } from './index.ts';
+import { ChipsCommand, CommandAccess, CommandType, type GroupCommand } from './index.js';
 
 export class CommandGroup<T = unknown> implements GroupCommand<T> {
-	public declare name: string;
-	public declare description: string;
-	public declare access: CommandAccess[];
-	public declare permissions?: bigint;
-	public declare type: CommandType.Group;
-	public declare fetchSettings?: boolean | undefined;
-	public declare adminRoleOverride?: boolean | undefined;
+	declare disabled: boolean;
+	declare name: string;
+	declare description: string;
+	declare access: CommandAccess[];
+	declare permissions?: bigint;
+	declare type: CommandType.Group;
+	declare fetchSettings?: boolean | undefined;
+	declare adminRoleOverride?: boolean | undefined;
 
-	public declare slash: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
+	declare slash: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
 
 	private declare selfExecute: (interaction: BaseInteraction, ...args: unknown[]) => T;
-	public declare subcommands: Record<string, ChipsCommand>;
+	declare subcommands: Record<string, ChipsCommand>;
 
 	constructor(settings: GroupCommand<T>) {
+		this.disabled = settings.disabled ?? false;
 		this.name = settings.name;
 		this.description = settings.description;
 		this.fetchSettings = settings.fetchSettings ?? false;

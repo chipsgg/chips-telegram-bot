@@ -7,12 +7,13 @@ import {
 	ContextMenuCommandInteraction,
 	Events,
 	GuildMember,
+	MessageFlags,
 	StringSelectMenuInteraction,
 	type Interaction,
 } from 'discord.js';
 import { CommandGroup, ChipsCommand, CommandAccess } from '../../../lib/commands/index.js';
-import { DiscordPlatformContext } from '../context.ts';
-import type { SDK } from '../../../lib/sdk/sdk.ts';
+import { DiscordPlatformContext } from '../context.js';
+import type { SDK } from '../../../lib/sdk/sdk.js';
 
 const settings = {
 	event: Events.InteractionCreate,
@@ -43,6 +44,16 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 		}
 	
 		if (!command) return;
+
+		if (command.disabled) {
+			await interaction
+				.reply({
+					content: 'This command is currently disabled!',
+					flags: [MessageFlags.Ephemeral],
+				})
+				.catch(() => undefined);
+			return;
+		}
 	
 		const hasPerms = await HasPermsAndAccess(command, interaction);
 		if (!hasPerms) return;
@@ -57,7 +68,7 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 			await interaction
 				.reply({
 					content: 'There was an error while executing this command!',
-					ephemeral: true,
+					flags: [MessageFlags.Ephemeral],
 				})
 				.catch(() => undefined);
 		}
@@ -72,17 +83,27 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 	
 		const hasPerms = await HasPermsAndAccess(command, interaction);
 		if (!hasPerms) return;
+
+		if (command.disabled) {
+			await interaction
+				.reply({
+					content: 'This command is currently disabled!',
+					flags: [MessageFlags.Ephemeral],
+				})
+				.catch(() => undefined);
+			return;
+		}
 	
 		try {
 			const ctx = new DiscordPlatformContext(sdk, command, interaction);
 	
 			ctx.processed = await command.process?.(ctx);
 			await command.handlers?.discord?.(ctx);
-		} catch (error) {
+		} catch (_) {
 			await interaction
 				.reply({
 					content: 'There was an error while executing this command!',
-					ephemeral: true,
+					flags: [MessageFlags.Ephemeral],
 				})
 				.catch(() => undefined);
 		}
@@ -93,10 +114,14 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 	
 		const command = GetCommand(interaction.commandName);
 		if (!command || command instanceof CommandGroup) return;
+		
+		if (command.disabled) return;
 	
 		try {
+			const ctx = new DiscordPlatformContext(sdk, command, interaction);
+
 			const auto = command.getAutocomplete(interaction);
-			await auto?.(interaction);
+			await auto?.(ctx);
 		} catch (error) {
 			console.log(error);
 		}
@@ -124,7 +149,7 @@ async function HasPermsAndAccess(
 		await interaction.reply({
 			content: "You don't have the required permissions for this command.",
 			allowedMentions: { repliedUser: true },
-			ephemeral: true,
+			flags: [MessageFlags.Ephemeral],
 		});
 		return false;
 	}

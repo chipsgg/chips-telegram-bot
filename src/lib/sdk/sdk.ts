@@ -1,7 +1,7 @@
 import WS from 'ws';
 import Client from '@chipsgg/openservice-ws-client';
 import lodash from 'lodash';
-import { sleep } from '../utils.ts';
+import { sleep } from '../utils.js';
 
 const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: unknown) => unknown = (x) => x)=> {
 	let state = {};
@@ -20,7 +20,7 @@ const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: u
 			.then((userid) => {
 				return { userid, tokenid };
 			})
-			.catch((err) => {
+			.catch(() => {
 				return Authenticate(actions);
 			});
 	}
@@ -53,6 +53,7 @@ const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: u
 				}
 				case 'close': {
 					console.log('Server Disconnected!');
+					console.log(state, newState);
 					break;
 				}
 				case 'reconnect': {

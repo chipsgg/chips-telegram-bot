@@ -1,17 +1,20 @@
 import {
+	BaseInteraction,
 	Client,
 	ContextMenuCommandBuilder,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	type SlashCommandSubcommandsOnlyBuilder,
 } from 'discord.js';
-import { ChipsCommand } from './command.ts';
-import type { ChipsSlashCommandOption } from './index.ts';
-import type { DiscordPlatformContext, IPlatformContext } from '../../platforms/context.ts';
+import { ChipsCommand } from './command.js';
+import type { ChipsSlashCommandOption } from './index.js';
+import type { DiscordPlatformContext, IPlatformContext } from '../../platforms/context.js';
 
 export interface PlatformContextHandlers<T> {
-	discord?: (ctx: DiscordPlatformContext<T>) => Promise<void> | void;
-	telegram?: (ctx: IPlatformContext<T>) => Promise<void> | void;
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	discord?: (ctx: DiscordPlatformContext<BaseInteraction, T>) => any;
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	telegram?: (ctx: IPlatformContext<T>) => any;
 }
 
 export interface CommandBase<T = undefined> {
@@ -19,11 +22,13 @@ export interface CommandBase<T = undefined> {
 	description: string;
 	fetchSettings?: boolean;
 	process?: (ctx: IPlatformContext<T>) => Promise<T> | T;
-	handlers: PlatformContextHandlers<T>;
+	handlers?: PlatformContextHandlers<T>;
 
 	permissions?: bigint;
 	adminRoleOverride?: boolean;
 	access: CommandAccess | CommandAccess[];
+
+	disabled?: boolean;
 }
 
 interface SlashCommandBase<T = undefined> extends CommandBase<T> {

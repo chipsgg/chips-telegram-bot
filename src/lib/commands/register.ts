@@ -1,5 +1,5 @@
 import fs from 'fs';
-import type { CommandGroup } from './index.ts';
+import type { CommandGroup } from './index.js';
 
 export async function registerFiles<T>(
 	folder: string,
@@ -21,11 +21,11 @@ export async function registerFiles<T>(
 		}
 	}
 
-	console.log(`Scanning: ${absolute}${folder}`);
+	// console.log(`Scanning: ${absolute}${folder}`);
 	const files = fs.readdirSync(`${absolute}${folder}`);
 
 	for (const file of files.filter(filter)) {
-		console.log(`Loading: ${relative}${folder}/${file.replace('.ts', '.js')}`);
+		// console.log(`Loading: ${relative}${folder}/${file.replace('.ts', '.js')}`);
 		const imported = await import(`${relative}${folder}/${file.replace('.ts', '.js')}`);
 		callback(imported.default);
 	}

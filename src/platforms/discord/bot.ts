@@ -8,7 +8,8 @@ import {
 } from 'discord.js';
 import dotenv from 'dotenv';
 import { ChipsCommand, CommandGroup, registerFiles } from '../../lib/commands/index.js';
-import type { SDK } from '../../lib/sdk/sdk.ts';
+import type { SDK } from '../../lib/sdk/sdk.js';
+import { DiscordPlatformContext } from './context.js';
 
 dotenv.config();
 
@@ -24,6 +25,8 @@ export default async function initializeDiscord(sdk: SDK, commands: Map<string, 
 	});
 
 	const filter = (fileName: string) => fileName.endsWith('.ts') || fileName.endsWith('.js');
+
+	DiscordPlatformContext.commands = commands;
 
 	console.log('[DISCORD] Registering events...');
 
@@ -42,14 +45,27 @@ export default async function initializeDiscord(sdk: SDK, commands: Map<string, 
 		console.log('[DISCORD] Bot Ready!');
 
 		const discordCommands = Array.from(commands.values())
+			.filter((command) => !command.disabled)
 			.map(getCommandJSON)
 			.filter((json) => json) as RESTPostAPIApplicationCommandsJSONBody[];
+
+		await client.application?.commands.fetch();
 
 		// Deploy commands if they don't exist or if there's more/less commands than expected
 		// Subsequent deploys are handled by the deploy script
 		if (client.application?.commands.cache.size !== discordCommands.length) {
 			await client.application?.commands.set(discordCommands);
 			console.log(`[DISCORD] Deployed ${discordCommands.length} commands`);
+			return;
+		}
+
+		for (const command of discordCommands) {
+			const existing = client.application?.commands.cache.get(command.name);
+			if (!existing) {
+				await client.application?.commands.set(discordCommands);
+				console.log(`[DISCORD] Deployed ${discordCommands.length} commands`);
+				return;
+			}
 		}
 	});
 

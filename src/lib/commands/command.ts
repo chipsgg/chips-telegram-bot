@@ -27,10 +27,13 @@ import {
 	type SlashCommand,
 	type CommandBase,
 	type PlatformContextHandlers,
-} from './index.ts';
-import type { IPlatformContext } from '../../platforms/context.ts';
+} from './index.js';
+import type { IPlatformContext } from '../../platforms/context.js';
 
 export class ChipsCommand<T = undefined> implements CommandBase<T> {
+	declare handlers: PlatformContextHandlers<T>;
+	declare disabled: boolean;
+
 	declare slash?:
 		| SlashCommandBuilder
 		| SlashCommandOptionsOnlyBuilder
@@ -42,7 +45,6 @@ export class ChipsCommand<T = undefined> implements CommandBase<T> {
 	declare access: CommandAccess[];
 	declare type: CommandType;
 	declare process?: (ctx: IPlatformContext<T>) => Promise<T> | T;
-	declare handlers: PlatformContextHandlers<T>;
 	declare name: string;
 	declare description: string;
 	declare fetchSettings?: boolean | undefined;
@@ -65,7 +67,9 @@ export class ChipsCommand<T = undefined> implements CommandBase<T> {
 		this.adminRoleOverride = settings.adminRoleOverride;
 
 		this.process = settings.process;
-		this.handlers = settings.handlers;
+		this.handlers = settings.handlers ?? {};
+
+		this.disabled = settings.disabled ?? false;
 
 		if ('slash' in settings) {
 			this.slash = settings.slash;

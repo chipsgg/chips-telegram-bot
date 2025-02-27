@@ -10,8 +10,9 @@ import {
 	SlashCommandStringOption,
 	SlashCommandUserOption,
 } from 'discord.js';
+import type { DiscordPlatformContext } from '../../platforms/context.js';
 
-export type AutocompleteHandler = (interaction: AutocompleteInteraction) => Promise<void>;
+export type AutocompleteHandler = (ctx: DiscordPlatformContext<AutocompleteInteraction, undefined>) => Promise<void>;
 
 export interface ChipsCommandOption {
 	name: string;
