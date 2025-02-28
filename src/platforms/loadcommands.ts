@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
-import { ChipsCommand, CommandGroup } from '../lib/commands/index.ts';
-import { registerCommandGroups, registerFiles } from '../lib/commands/register.ts';
+import { ChipsCommand, CommandGroup } from '../lib/commands/index.js';
+import { registerFeatures } from '../lib/commands/register.js';
 dotenv.config();
 
 /*
@@ -13,14 +13,13 @@ dotenv.config();
  */
 
 const commands = new Map<string, ChipsCommand | CommandGroup>();
-const proccessArgs = process.argv.slice(1);
 
 export async function loadCommands() {
 	const filter = (fileName: string) => fileName.endsWith('.ts') || fileName.endsWith('.js');
 
-	await registerFiles<ChipsCommand>('features', 2, filter, (cmd) => {
+	await registerFeatures<ChipsCommand>('features', filter, (cmd) => {
 		commands.set(cmd.name, cmd);
-	});
+	}, 2);
 
 	// const subFilter = (fileName: string) => filter(fileName) && !fileName.includes('command');
 

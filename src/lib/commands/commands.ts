@@ -21,7 +21,7 @@ export interface CommandBase<T = undefined> {
 	name: string;
 	description: string;
 	fetchSettings?: boolean;
-	process?: (ctx: IPlatformContext<T>) => Promise<T> | T;
+	process?: T extends undefined ? undefined : (ctx: IPlatformContext<T>) => Promise<T> | T;
 	handlers?: PlatformContextHandlers<T>;
 
 	permissions?: bigint;

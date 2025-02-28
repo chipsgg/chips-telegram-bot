@@ -14,7 +14,7 @@ declare module '@chipsgg/openservice-ws-client' {
 				userid: string;
 				code: string;
 			}
-		): Promise<unknown>;
+		): Promise<{ userid: string }>;
 
 		public(
 			route: 'echo',
@@ -73,7 +73,26 @@ declare module '@chipsgg/openservice-ws-client' {
 				/** @default "count" */
 				sortKey?: string;
 			}
-		): Promise<unknown>;
+		): Promise<{
+			id: string,
+			title: string,
+			provider: string,
+			producer: string,
+			images: {
+			  bg?: string,
+			  [key: string]: string | undefined
+			},
+			slug: string,
+			tags: string[],
+			rtp: string,
+			stats: {
+			  wageredUsd: number,
+			  profitMaxUsd: number,
+			  wageredMaxUsd: number,
+			  count: number,
+			  wins: number
+			}
+		  }[]>;
 
 		public(route: 'currencies'): Promise<unknown>;
 

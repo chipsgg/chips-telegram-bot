@@ -60,7 +60,7 @@ export default async function initializeDiscord(sdk: SDK, commands: Map<string, 
 		}
 
 		for (const command of discordCommands) {
-			const existing = client.application?.commands.cache.get(command.name);
+			const existing = client.application?.commands.cache.find((c) => c.name === command.name);
 			if (!existing) {
 				await client.application?.commands.set(discordCommands);
 				console.log(`[DISCORD] Deployed ${discordCommands.length} commands`);

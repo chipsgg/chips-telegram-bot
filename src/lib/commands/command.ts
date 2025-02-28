@@ -31,6 +31,7 @@ import {
 import type { IPlatformContext } from '../../platforms/context.js';
 
 export class ChipsCommand<T = undefined> implements CommandBase<T> {
+	declare process?: T extends undefined ? undefined : (ctx: IPlatformContext<T>) => Promise<T> | T;
 	declare handlers: PlatformContextHandlers<T>;
 	declare disabled: boolean;
 
@@ -44,7 +45,6 @@ export class ChipsCommand<T = undefined> implements CommandBase<T> {
 	declare adminRoleOverride?: boolean | undefined;
 	declare access: CommandAccess[];
 	declare type: CommandType;
-	declare process?: (ctx: IPlatformContext<T>) => Promise<T> | T;
 	declare name: string;
 	declare description: string;
 	declare fetchSettings?: boolean | undefined;

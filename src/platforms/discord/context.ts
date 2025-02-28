@@ -23,6 +23,10 @@ export class DiscordPlatformContext<I extends BaseInteraction, T> implements IPl
 	}
 
 	createEmbed() {
+		return DiscordPlatformContext.createEmbed();
+	}
+
+	static createEmbed() {
 		const embed = new EmbedBuilder();
 		embed.setColor('#d2ceaf');
 

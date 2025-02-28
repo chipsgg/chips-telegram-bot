@@ -13,6 +13,7 @@ const command = new ChipsCommand({
 	description: 'View all available commands!',
 	type: CommandType.Slash,
 	access: CommandAccess.Everywhere,
+	process: undefined,
 	options: {
 		command: {
 			name: 'command',
