@@ -1,7 +1,5 @@
 import Client from '@chipsgg/openservice-ws-client';
-import lodash from 'lodash';
 import WS from 'ws';
-import { sleep } from '../utils.js';
 
 const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: unknown) => unknown = (x) => x) => {
 	let state = {};
@@ -84,14 +82,6 @@ const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: u
 	// actions.community('removeChatMessage', {
 	//   messageid
 	// })
-
-	async function getRandomSlot() {
-		const slots = (await actions.public('listGamesMostPlayed', {
-			skip: 0,
-			limit: 100,
-		})) as { id: string; tags: string[] }[];
-		return lodash.sample(slots.filter((x) => x.tags.includes('slots')));
-	}
 
 	// const sendRngSlotChat = async (rngGame: { id: string }) => {
 	// 	const msg = await actions.community('publishChatMessage', {
@@ -183,11 +173,20 @@ const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: u
 		actions.community('on', { name: 'chats', path: ['public'] });
 	}, 1000);
 
+	/**
+	 * Get a value from the state object using a path
+	 * @param {string[]} path - The path to the value in the state object
+	 * @returns {any} - The value at the specified path
+	 */
+	function getValueFromState(path: string[]) {
+		// @ts-expect-error
+		return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), state);
+	}
+
 	return {
 		...actions,
 		state: () => state,
-		get: (...path: string[]) => lodash.get(state, path),
-		getRandomSlot,
+		get: async (...path: string[]) => getValueFromState(path),
 	};
 };
 

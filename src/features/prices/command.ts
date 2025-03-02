@@ -1,7 +1,7 @@
 import { formatCurrency } from '@coingecko/cryptoformat';
 import { MessageFlags } from 'discord.js';
-import { fetchCurrencies } from 'lib/utils.js';
 import { ChipsCommand, CommandAccess, CommandType } from '../../lib/commands/index.js';
+import { fetchCurrencies } from '../../lib/utils.js';
 
 const command = new ChipsCommand<Process>({
 	name: 'prices',

@@ -1,12 +1,6 @@
 import { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import type { DiscordPlatformContext } from 'platforms/context.js';
-import {
-	ChipsCommand,
-	CommandAccess,
-	CommandGroup,
-	CommandType,
-	SlashCommandOptionType,
-} from '../../lib/commands/index.js';
+import { ChipsCommand, CommandAccess, CommandType, SlashCommandOptionType } from '../../lib/commands/index.js';
 
 const command = new ChipsCommand({
 	name: 'game',

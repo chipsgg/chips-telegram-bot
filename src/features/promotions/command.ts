@@ -1,6 +1,6 @@
-import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
-import { completeMarkdown } from 'lib/utils.js';
-import { ChipsCommand, CommandAccess, CommandType, SlashCommandOptionType } from '../../lib/commands/index.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { ChipsCommand, CommandAccess, CommandType } from '../../lib/commands/index.js';
+import { completeMarkdown } from '../../lib/utils.js';
 
 const command = new ChipsCommand<Process>({
 	name: 'promotions',

@@ -10,7 +10,7 @@ const command = new ChipsCommand<Process>({
 		await ctx.deferReply();
 
 		try {
-			const koth = await ctx.sdk.get('public', 'koth');
+			const koth = (await ctx.sdk.get('public', 'koth')) as Koth;
 			const currency = (await ctx.sdk.get('public', 'currencies', koth.currency)) as {
 				name: string;
 				decimals: number;

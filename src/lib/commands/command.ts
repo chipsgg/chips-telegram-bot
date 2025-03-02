@@ -328,7 +328,7 @@ export class ChipsCommand<T = undefined> implements CommandBase<T> {
 export const getAutocomplete = getAutocompleteFunction;
 export async function getAutocompleteFunction(cmd: ChipsCommand | CommandGroup, interaction: AutocompleteInteraction) {
 	if (cmd instanceof CommandGroup) {
-		cmd.autocomplete(interaction);
+		// cmd.autocomplete(interaction);
 		return undefined;
 	}
 

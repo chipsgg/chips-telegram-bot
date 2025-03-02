@@ -6,8 +6,8 @@ import {
 	Routes,
 } from 'discord.js';
 import dotenv from 'dotenv';
-import { ChipsCommand, CommandGroup } from '../../lib/commands/index.ts';
-import { loadCommands } from '../../platforms/loadcommands.ts';
+import { ChipsCommand, CommandGroup } from '../../lib/commands/index.js';
+import { loadCommands } from '../../platforms/loadcommands.js';
 dotenv.config();
 
 /*

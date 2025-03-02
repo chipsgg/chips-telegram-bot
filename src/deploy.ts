@@ -1,4 +1,4 @@
-import { deploySlashCommands } from './platforms/discord/deploy.ts';
+import { deploySlashCommands } from './platforms/discord/deploy.js';
 
 // This file is run from the command line to deploy the slash commands
 

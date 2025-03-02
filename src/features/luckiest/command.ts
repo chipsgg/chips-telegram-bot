@@ -16,7 +16,10 @@ const command = new ChipsCommand<Process>({
 
 		for (const win of Object.values(bigwins)) {
 			const { bet } = win;
-			prices[bet.currency] ??= await ctx.sdk.get('public', 'currencies', bet.currency);
+			prices[bet.currency] ??= (await ctx.sdk.get('public', 'currencies', bet.currency)) as {
+				decimals: number;
+				price: number;
+			};
 			win.currency = prices[bet.currency];
 
 			bet.amountInUsd = (+bet.amount / Math.pow(10, win.currency.decimals)) * win.currency.price;

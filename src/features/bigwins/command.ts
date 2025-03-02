@@ -1,5 +1,5 @@
 import { formatCurrency } from '@coingecko/cryptoformat';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { MessageFlags } from 'discord.js';
 import { ChipsCommand, CommandAccess, CommandType } from '../../lib/commands/index.js';
 
 const command = new ChipsCommand<Process>({
@@ -16,7 +16,10 @@ const command = new ChipsCommand<Process>({
 
 		for (const win of Object.values(bigwins)) {
 			const { bet } = win;
-			prices[bet.currency] ??= await ctx.sdk.get('public', 'currencies', bet.currency);
+			prices[bet.currency] ??= (await ctx.sdk.get('public', 'currencies', bet.currency)) as {
+				decimals: number;
+				price: number;
+			};
 			win.currency = prices[bet.currency];
 
 			bet.amountInUsd = (+bet.amount / Math.pow(10, win.currency.decimals)) * win.currency.price;

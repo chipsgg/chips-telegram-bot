@@ -1,12 +1,4 @@
-import { AutocompleteInteraction, MessageFlags } from 'discord.js';
-import type { DiscordPlatformContext } from 'platforms/context.js';
-import {
-	ChipsCommand,
-	CommandAccess,
-	CommandGroup,
-	CommandType,
-	SlashCommandOptionType,
-} from '../../lib/commands/index.js';
+import { ChipsCommand, CommandAccess, CommandType } from '../../lib/commands/index.js';
 
 const command = new ChipsCommand({
 	name: 'chat',

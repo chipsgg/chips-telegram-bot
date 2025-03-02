@@ -1,10 +1,12 @@
-FROM node:latest as build
+FROM node:latest AS build
 WORKDIR /app
 COPY . .
-RUN yarn install --production=true
+RUN yarn install
+RUN npm run build
+RUN yarn install --production
 
 FROM node:alpine
 COPY --from=build /app /
 
 EXPOSE 80
-CMD [ "node", "index.js" ]
+CMD [ "node", "dist/index.js" ]
