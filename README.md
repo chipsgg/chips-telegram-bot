@@ -26,7 +26,7 @@ A powerful Discord and Telegram bot for the Chips.gg gaming platform that brings
 
 ### Community Tools
 - 💬 Access community links with `/chat`
-- 🔗 Link your account using `/auth`
+- 🔗 Link your account using `/link`
 - ❓ View all commands with `/help`
 
 ## 🚀 Getting Started
