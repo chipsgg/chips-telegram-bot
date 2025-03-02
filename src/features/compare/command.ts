@@ -1,5 +1,5 @@
-import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
-import { CommandType, ChipsCommand, CommandAccess, SlashCommandOptionType } from "../../lib/commands/index.js";
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { ChipsCommand, CommandAccess, CommandType, SlashCommandOptionType } from '../../lib/commands/index.js';
 
 const command = new ChipsCommand({
 	name: 'compare',
@@ -18,8 +18,8 @@ const command = new ChipsCommand({
 			description: 'The username of the player you want to compare with!',
 			type: SlashCommandOptionType.String,
 			required: true,
-		}
-	}
+		},
+	},
 });
 
 export default command;
@@ -60,7 +60,7 @@ command.handlers.discord = async ({ sdk, interaction }) => {
 		new ButtonBuilder()
 			.setStyle(ButtonStyle.Link)
 			.setLabel(`View ${secondUsername.slice(0, 19)}`)
-			.setURL('https://chips.gg/user/' + secondUsername)
+			.setURL('https://chips.gg/user/' + secondUsername),
 	);
 
 	const image = await fetch(`https://stats.chips.gg/compare/${firstUsername}/${secondUsername}`);
@@ -75,8 +75,10 @@ command.handlers.discord = async ({ sdk, interaction }) => {
 
 	await interaction.editReply({
 		files: [
-			new AttachmentBuilder(`https://stats.chips.gg/compare/${firstUsername}/${secondUsername}`, { name: `comparison.png` })
+			new AttachmentBuilder(`https://stats.chips.gg/compare/${firstUsername}/${secondUsername}`, {
+				name: `comparison.png`,
+			}),
 		],
-		components: [row]
+		components: [row],
 	});
 };

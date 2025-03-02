@@ -1,10 +1,10 @@
 import {
 	BaseInteraction,
+	type Interaction,
 	PermissionsBitField,
+	type RESTPostAPIApplicationCommandsJSONBody,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
-	type Interaction,
-	type RESTPostAPIApplicationCommandsJSONBody,
 	type SlashCommandSubcommandsOnlyBuilder,
 } from 'discord.js';
 import { ChipsCommand, CommandAccess, CommandType, type GroupCommand } from './index.js';

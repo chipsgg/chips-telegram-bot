@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
+import { initializeSdk } from './lib/sdk/sdk.js';
 import initializeDiscord from './platforms/discord/bot.js';
 import { loadCommands } from './platforms/loadcommands.js';
 import initializeTelegram from './platforms/telegram/bot.js';
-import { initializeSdk } from './lib/sdk/sdk.js';
 dotenv.config();
 
 console.log('Starting...');

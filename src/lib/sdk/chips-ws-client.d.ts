@@ -1,10 +1,7 @@
 declare module '@chipsgg/openservice-ws-client' {
 	type Actions = {
 		auth(route: 'token'): Promise<string>;
-		auth(
-			route: 'auth',
-			options: { token: string; user_id: string }
-		): Promise<unknown>;
+		auth(route: 'auth', options: { token: string; user_id: string }): Promise<unknown>;
 		auth(route: 'authenticate', token: string): Promise<string>;
 		auth(
 			route: 'linkPlatformID',
@@ -13,47 +10,52 @@ declare module '@chipsgg/openservice-ws-client' {
 				platform: string;
 				userid: string;
 				code: string;
-			}
+			},
 		): Promise<{ userid: string }>;
 
-		public(
-			route: 'echo',
-			options: { message: string }
-		): Promise<{ message: string }>;
+		public(route: 'echo', options: { message: string }): Promise<{ message: string }>;
 
-		public(
-			route: 'getBet',
-			options: { gamename: string; betid: string }
-		): Promise<unknown>;
+		public(route: 'getBet', options: { gamename: string; betid: string }): Promise<unknown>;
 
-		public(
-			route: 'listRaceRanks',
-			options: { raceid: string }
-		): Promise<unknown>;
+		public(route: 'listRaceRanks', options: { raceid: string }): Promise<unknown>;
 
-		public(
-			route: 'listRacePrizes',
-			options: { raceid: string }
-		): Promise<unknown>;
+		public(route: 'listRacePrizes', options: { raceid: string }): Promise<unknown>;
 
-		public(
-			route: 'listActiveRaces',
-			options: { skip: number; limit: number }
-		): Promise<unknown>;
+		public(route: 'listActiveRaces', options: { skip: number; limit: number }): Promise<unknown>;
 
-		public(
-			route: 'listDoneRaces',
-			options: { skip: number; limit: number }
-		): Promise<unknown>;
+		public(route: 'listDoneRaces', options: { skip: number; limit: number }): Promise<unknown>;
 
 		public(route: 'listSlotCategories'): Promise<unknown>;
 
-		public(
-			route: 'listSlotsByCategory',
-			options: { category: string }
-		): Promise<unknown>;
+		public(route: 'listSlotsByCategory', options: { category: string }): Promise<unknown>;
 
-		public(route: 'listRunningPromotions'): Promise<unknown>;
+		public(route: 'listRunningPromotions'): Promise<
+			{
+				gameprovider: 'chipsgg';
+				id: string;
+				roomid: string;
+				type: 'promotion';
+				gamename: 'promotion';
+				created: number;
+				done: boolean;
+				history: { pregame: unknown; running: unknown; cooldown: unknown };
+				state: 'cooldown' | 'running';
+				bets: {};
+				userid: string;
+				action: {
+					image: string;
+					title: string;
+					route: string;
+				};
+				bannerImage: string;
+				cardImage: string;
+				title: string;
+				subtitle: string;
+				description: string;
+				startTime: number;
+				endTime: number;
+			}[]
+		>;
 
 		public(
 			route: 'listGamesMostPlayed',
@@ -72,33 +74,42 @@ declare module '@chipsgg/openservice-ws-client' {
 				sortDirection?: -1 | 1;
 				/** @default "count" */
 				sortKey?: string;
-			}
-		): Promise<{
-			id: string,
-			title: string,
-			provider: string,
-			producer: string,
-			images: {
-			  bg?: string,
-			  [key: string]: string | undefined
 			},
-			slug: string,
-			tags: string[],
-			rtp: string,
-			stats: {
-			  wageredUsd: number,
-			  profitMaxUsd: number,
-			  wageredMaxUsd: number,
-			  count: number,
-			  wins: number
-			}
-		  }[]>;
+		): Promise<
+			{
+				id: string;
+				title: string;
+				provider: string;
+				producer: string;
+				images: {
+					bg?: string;
+					[key: string]: string | undefined;
+				};
+				slug: string;
+				tags: string[];
+				rtp: string;
+				stats: {
+					wageredUsd: number;
+					profitMaxUsd: number;
+					wageredMaxUsd: number;
+					count: number;
+					wins: number;
+				};
+			}[]
+		>;
 
-		public(route: 'currencies'): Promise<unknown>;
+		public(
+			route: 'currencies',
+			currency: string,
+		): Promise<{
+			decimals: boolean;
+			name: string;
+			price: number;
+		}>;
 
 		public(
 			route: 'getPlayer',
-			options: { userid: string }
+			options: { userid: string },
 		): Promise<{
 			id: string;
 			username: string;
@@ -174,7 +185,7 @@ declare module '@chipsgg/openservice-ws-client' {
 
 		public(
 			route: 'getUser',
-			options: { userid: string }
+			options: { userid: string },
 		): Promise<{
 			id: string;
 			username: string;
@@ -186,17 +197,14 @@ declare module '@chipsgg/openservice-ws-client' {
 			lastLogin: number;
 		}>;
 
-		public(
-			route: 'getUserVipRank',
-			options: { userid: string }
-		): Promise<unknown>;
+		public(route: 'getUserVipRank', options: { userid: string }): Promise<unknown>;
 
 		public(
 			route: 'getUserStats',
 			options: {
 				userid: string;
 				duration: string;
-			}
+			},
 		): Promise<unknown>;
 
 		public(
@@ -205,13 +213,10 @@ declare module '@chipsgg/openservice-ws-client' {
 				term: string;
 				limit: number;
 				skip: number;
-			}
+			},
 		): Promise<unknown>;
 
-		public(
-			route: 'getPromotion',
-			options: { gameid: string }
-		): Promise<unknown>;
+		public(route: 'getPromotion', options: { gameid: string }): Promise<unknown>;
 
 		community(
 			route: 'publishChatMessage',
@@ -220,13 +225,10 @@ declare module '@chipsgg/openservice-ws-client' {
 				text: string;
 				data: unknown;
 				id: string;
-			}
+			},
 		): Promise<unknown>;
 
-		community(
-			route: 'addChatMessageReaction',
-			options: { messageid: string; assetid: string }
-		): Promise<unknown>;
+		community(route: 'addChatMessageReaction', options: { messageid: string; assetid: string }): Promise<unknown>;
 
 		private(route: 'me'): Promise<{
 			id: string;
@@ -241,19 +243,13 @@ declare module '@chipsgg/openservice-ws-client' {
 				currency: string;
 				amount: string;
 				duration: number;
-			}
+			},
 		): Promise<unknown>;
 
-		profitshare(
-			route: 'on',
-			options: { name: 'profitshareInfo' | 'profitshareBalance' }
-		);
+		profitshare(route: 'on', options: { name: 'profitshareInfo' | 'profitshareBalance' });
 		stats(route: 'on', options: { game: string; type: string });
 
-		community(
-			route: 'on',
-			options: { name: string; path: string[] }
-		): Promise<unknown>;
+		community(route: 'on', options: { name: string; path: string[] }): Promise<unknown>;
 	};
 
 	function WSClient(
@@ -268,7 +264,7 @@ declare module '@chipsgg/openservice-ws-client' {
 				onError: (err: string) => void;
 			};
 		},
-		handle: (type: string, newState: Record<string, unknown>) => unknown
+		handle: (type: string, newState: Record<string, unknown>) => unknown,
 	): Promise<{ actions: Actions }>;
 
 	export = WSClient;

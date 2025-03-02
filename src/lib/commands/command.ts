@@ -5,30 +5,30 @@ import {
 	ApplicationIntegrationType,
 	AutocompleteInteraction,
 	ContextMenuCommandBuilder,
+	type ContextMenuCommandType,
 	InteractionContextType,
 	PermissionsBitField,
 	SharedNameAndDescription,
 	SlashCommandBuilder,
+	type SlashCommandOptionsOnlyBuilder,
 	SlashCommandSubcommandBuilder,
 	type SlashCommandSubcommandsOnlyBuilder,
-	type ContextMenuCommandType,
-	type SlashCommandOptionsOnlyBuilder,
 } from 'discord.js';
+import type { IPlatformContext } from '../../platforms/context.js';
 import {
-	CommandAccess,
-	CommandGroup,
-	CommandType,
-	SlashCommandOptionType,
-	type SubCommand,
 	type ButtonCommand,
 	type ChipsSlashCommandOption,
 	type Command,
-	type ContextMenuCommand,
-	type SlashCommand,
+	CommandAccess,
 	type CommandBase,
+	CommandGroup,
+	CommandType,
+	type ContextMenuCommand,
 	type PlatformContextHandlers,
+	type SlashCommand,
+	SlashCommandOptionType,
+	type SubCommand,
 } from './index.js';
-import type { IPlatformContext } from '../../platforms/context.js';
 
 export class ChipsCommand<T = undefined> implements CommandBase<T> {
 	declare process?: T extends undefined ? undefined : (ctx: IPlatformContext<T>) => Promise<T> | T;

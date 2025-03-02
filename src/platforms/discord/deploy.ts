@@ -1,9 +1,9 @@
 import {
 	REST,
-	Routes,
 	type RESTGetAPIApplicationCommandsResult,
 	type RESTPostAPIApplicationCommandsJSONBody,
 	type RESTPostAPIContextMenuApplicationCommandsJSONBody,
+	Routes,
 } from 'discord.js';
 import dotenv from 'dotenv';
 import { ChipsCommand, CommandGroup } from '../../lib/commands/index.ts';

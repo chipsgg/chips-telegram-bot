@@ -17,9 +17,14 @@ const commands = new Map<string, ChipsCommand | CommandGroup>();
 export async function loadCommands() {
 	const filter = (fileName: string) => fileName.endsWith('.ts') || fileName.endsWith('.js');
 
-	await registerFeatures<ChipsCommand>('features', filter, (cmd) => {
-		commands.set(cmd.name, cmd);
-	}, 2);
+	await registerFeatures<ChipsCommand>(
+		'features',
+		filter,
+		(cmd) => {
+			commands.set(cmd.name, cmd);
+		},
+		2,
+	);
 
 	// const subFilter = (fileName: string) => filter(fileName) && !fileName.includes('command');
 

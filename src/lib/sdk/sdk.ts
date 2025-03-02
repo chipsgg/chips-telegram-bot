@@ -1,9 +1,9 @@
-import WS from 'ws';
 import Client from '@chipsgg/openservice-ws-client';
 import lodash from 'lodash';
+import WS from 'ws';
 import { sleep } from '../utils.js';
 
-const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: unknown) => unknown = (x) => x)=> {
+const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: unknown) => unknown = (x) => x) => {
 	let state = {};
 
 	const channels = ['games', 'public', 'private', 'auth', 'affiliates', 'stats', 'profitshare', 'community'];
@@ -11,7 +11,10 @@ const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: u
 	/**
 	 * Authenticate user. If current token fails, fallback to a new token assigned to us
 	 */
-	async function Authenticate(actions: Awaited<ReturnType<typeof Client>>['actions'], tokenid?: string): Promise<{ userid: string; tokenid: string; }> {
+	async function Authenticate(
+		actions: Awaited<ReturnType<typeof Client>>['actions'],
+		tokenid?: string,
+	): Promise<{ userid: string; tokenid: string }> {
 		if (!tokenid) {
 			return Authenticate(actions, await actions.auth('token'));
 		}
@@ -83,10 +86,10 @@ const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: u
 	// })
 
 	async function getRandomSlot() {
-		const slots = await actions.public('listGamesMostPlayed', {
+		const slots = (await actions.public('listGamesMostPlayed', {
 			skip: 0,
 			limit: 100,
-		}) as { id: string; tags: string[] }[];
+		})) as { id: string; tags: string[] }[];
 		return lodash.sample(slots.filter((x) => x.tags.includes('slots')));
 	}
 

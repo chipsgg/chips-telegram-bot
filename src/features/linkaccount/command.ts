@@ -1,5 +1,5 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
-import { CommandType, ChipsCommand, CommandAccess, SlashCommandOptionType } from "../../lib/commands/index.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { ChipsCommand, CommandAccess, CommandType, SlashCommandOptionType } from '../../lib/commands/index.js';
 
 const command = new ChipsCommand({
 	name: 'link',
@@ -19,8 +19,8 @@ const command = new ChipsCommand({
 			type: SlashCommandOptionType.String,
 			required: true,
 			builder: (opt) => opt.setMaxLength(6).setMinLength(6),
-		}
-	}
+		},
+	},
 });
 
 export default command;
@@ -62,13 +62,13 @@ command.handlers.discord = async ({ sdk, interaction, platform, createEmbed }) =
 
 	const embed = createEmbed()
 		.setTitle('🔐 Account Linked!')
-		.setDescription(`Your Discord account has been successfully linked!`)
+		.setDescription(`Your Discord account has been successfully linked!`);
 
 	const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
 		new ButtonBuilder()
 			.setStyle(ButtonStyle.Link)
 			.setLabel('View Your Profile')
-			.setURL(`https://chips.gg/user/${username}`)
+			.setURL(`https://chips.gg/user/${username}`),
 	);
 
 	await interaction.editReply({ embeds: [embed], components: [row] });

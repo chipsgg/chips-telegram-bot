@@ -1,6 +1,6 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
-import { CommandType, ChipsCommand, CommandAccess } from "../../lib/commands/index.js";
-import { discordEmbed, getRandomSlot, type RandomSlotProcess } from "./randomslot.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { ChipsCommand, CommandAccess, CommandType } from '../../lib/commands/index.js';
+import { type RandomSlotProcess, discordEmbed, getRandomSlot } from './randomslot.js';
 
 const command = new ChipsCommand<RandomSlotProcess>({
 	name: 'slotcall',

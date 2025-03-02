@@ -7,13 +7,13 @@ import {
 	ContextMenuCommandInteraction,
 	Events,
 	GuildMember,
+	type Interaction,
 	MessageFlags,
 	StringSelectMenuInteraction,
-	type Interaction,
 } from 'discord.js';
-import { CommandGroup, ChipsCommand, CommandAccess } from '../../../lib/commands/index.js';
-import { DiscordPlatformContext } from '../context.js';
+import { ChipsCommand, CommandAccess, CommandGroup } from '../../../lib/commands/index.js';
 import type { SDK } from '../../../lib/sdk/sdk.js';
+import { DiscordPlatformContext } from '../context.js';
 
 const settings = {
 	event: Events.InteractionCreate,
@@ -22,7 +22,7 @@ const settings = {
 
 export default settings;
 
-function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGroup>) {	
+function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGroup>) {
 	async function execute(interaction: Interaction) {
 		if (interaction.isChatInputCommand() || interaction.isContextMenuCommand()) {
 			return OnCommandInteraction(interaction);
@@ -32,7 +32,7 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 		}
 		if (interaction.isAutocomplete()) return OnAutocompleteInteraction(interaction);
 	}
-	
+
 	async function OnCommandInteraction(interaction: ChatInputCommandInteraction | ContextMenuCommandInteraction) {
 		const command = GetCommand(interaction.commandName);
 		if (command instanceof ChipsCommand) {
@@ -42,7 +42,7 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 			console.error('Command groups not supported yet.');
 			return;
 		}
-	
+
 		if (!command) return;
 
 		if (command.disabled) {
@@ -54,13 +54,13 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 				.catch(() => undefined);
 			return;
 		}
-	
+
 		const hasPerms = await HasPermsAndAccess(command, interaction);
 		if (!hasPerms) return;
-	
+
 		try {
 			const ctx = new DiscordPlatformContext(sdk, command, interaction);
-	
+			// @ts-ignore - processed type not accessible from here
 			ctx.processed = await command.process?.(ctx);
 			await command.handlers?.discord?.(ctx);
 		} catch (error) {
@@ -73,14 +73,14 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 				.catch(() => undefined);
 		}
 	}
-	
+
 	async function OnButtonInteraction(interaction: ButtonInteraction | StringSelectMenuInteraction) {
 		const args = interaction.customId.split('|');
 		const commandName = args[0];
-	
+
 		const command = GetCommand(commandName);
 		if (!command || command instanceof CommandGroup || !command.isButtonCommand()) return;
-	
+
 		const hasPerms = await HasPermsAndAccess(command, interaction);
 		if (!hasPerms) return;
 
@@ -93,10 +93,10 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 				.catch(() => undefined);
 			return;
 		}
-	
+
 		try {
 			const ctx = new DiscordPlatformContext(sdk, command, interaction);
-	
+			// @ts-ignore - processed type not accessible from here
 			ctx.processed = await command.process?.(ctx);
 			await command.handlers?.discord?.(ctx);
 		} catch (_) {
@@ -108,15 +108,15 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 				.catch(() => undefined);
 		}
 	}
-	
+
 	async function OnAutocompleteInteraction(interaction: AutocompleteInteraction) {
 		if (interaction.responded) return;
-	
+
 		const command = GetCommand(interaction.commandName);
 		if (!command || command instanceof CommandGroup) return;
-		
+
 		if (command.disabled) return;
-	
+
 		try {
 			const ctx = new DiscordPlatformContext(sdk, command, interaction);
 
@@ -126,9 +126,9 @@ function createExecutor(sdk: SDK, commands: Map<string, ChipsCommand | CommandGr
 			console.log(error);
 		}
 	}
-	
-	function GetCommand(name: string): ChipsCommand | CommandGroup | undefined {
-		return commands.get(name);
+
+	function GetCommand(name: string): ChipsCommand | undefined {
+		return commands.get(name) as ChipsCommand;
 	}
 
 	return execute;

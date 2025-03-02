@@ -1,8 +1,8 @@
 import {
 	Client,
+	type ClientEvents,
 	Events,
 	GatewayIntentBits,
-	type ClientEvents,
 	type RESTPostAPIApplicationCommandsJSONBody,
 	type RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from 'discord.js';
@@ -13,7 +13,10 @@ import { DiscordPlatformContext } from './context.js';
 
 dotenv.config();
 
-export default async function initializeDiscord(sdk: SDK, commands: Map<string, ChipsCommand | CommandGroup>): Promise<Client> {
+export default async function initializeDiscord(
+	sdk: SDK,
+	commands: Map<string, ChipsCommand | CommandGroup>,
+): Promise<Client> {
 	const client = new Client({
 		intents: [
 			GatewayIntentBits.Guilds,
@@ -32,10 +35,20 @@ export default async function initializeDiscord(sdk: SDK, commands: Map<string, 
 
 	await registerFiles<{
 		event: keyof ClientEvents;
-		createExecutor: (sdk: SDK, commands: Map<string, ChipsCommand | CommandGroup>) => Parameters<typeof client.on<keyof ClientEvents>>[1];
-	}>('events', 1, filter, (event) => {
-		client.on(event.event, event.createExecutor(sdk, commands));
-	}, './src/platforms/discord/', '../../platforms/discord/');
+		createExecutor: (
+			sdk: SDK,
+			commands: Map<string, ChipsCommand | CommandGroup>,
+		) => Parameters<typeof client.on<keyof ClientEvents>>[1];
+	}>(
+		'events',
+		1,
+		filter,
+		(event) => {
+			client.on(event.event, event.createExecutor(sdk, commands));
+		},
+		'./src/platforms/discord/',
+		'../../platforms/discord/',
+	);
 
 	console.log('[DISCORD] Events registered!');
 

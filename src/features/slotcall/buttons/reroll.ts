@@ -1,6 +1,6 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
-import { CommandType, ChipsCommand, CommandAccess } from "../../../lib/commands/index.js";
-import { discordEmbed, getRandomSlot } from "../randomslot.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { ChipsCommand, CommandAccess, CommandType } from '../../../lib/commands/index.js';
+import { discordEmbed, getRandomSlot } from '../randomslot.js';
 
 const command = new ChipsCommand<Process>({
 	name: 'SLOTCALL',
@@ -39,7 +39,6 @@ command.handlers.discord = async ({ interaction, processed }) => {
 		});
 	}
 
-	
 	await interaction.update(discordEmbed(processed));
 };
 
@@ -57,5 +56,5 @@ type Process = {
 			bg?: string;
 			[key: string]: string | undefined;
 		};
-	}
+	};
 };
