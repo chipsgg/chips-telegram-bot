@@ -1,10 +1,8 @@
 import {
 	BaseInteraction,
-	type Interaction,
 	PermissionsBitField,
 	type RESTPostAPIApplicationCommandsJSONBody,
 	SlashCommandBuilder,
-	SlashCommandSubcommandBuilder,
 	type SlashCommandSubcommandsOnlyBuilder,
 } from 'discord.js';
 import { ChipsCommand, CommandAccess, CommandType, type GroupCommand } from './index.js';
@@ -38,47 +36,47 @@ export class CommandGroup<T = unknown> implements GroupCommand<T> {
 		this.slash = settings.slash ?? new SlashCommandBuilder().setName(this.name);
 		// .setDescription(this.description);
 
-		this.selfExecute = settings.process ?? (() => undefined);
+		// this.selfExecute = settings.process ?? (() => undefined);
 		this.subcommands = {};
 	}
 
-	public process(interaction: BaseInteraction, ...args: unknown[]) {
-		if (!interaction.isChatInputCommand()) {
-			return this.selfExecute(interaction, ...args);
-		}
+	// public process(interaction: BaseInteraction, ...args: unknown[]) {
+	// 	if (!interaction.isChatInputCommand()) {
+	// 		return this.selfExecute(interaction, ...args);
+	// 	}
 
-		const category = interaction.options.getSubcommand() ?? '';
+	// 	const category = interaction.options.getSubcommand() ?? '';
 
-		if (!category) {
-			return this.selfExecute(interaction, ...args);
-		}
+	// 	if (!category) {
+	// 		return this.selfExecute(interaction, ...args);
+	// 	}
 
-		this.subcommands[category]?.process(interaction, ...args);
-	}
+	// 	this.subcommands[category]?.process(interaction, ...args);
+	// }
 
-	public autocomplete(interaction: Interaction, ...args: unknown[]) {
-		if (!interaction.isAutocomplete()) {
-			return this.selfExecute(interaction, ...args);
-		}
+	// public autocomplete(interaction: Interaction, ...args: unknown[]) {
+	// 	if (!interaction.isAutocomplete()) {
+	// 		return this.selfExecute(interaction, ...args);
+	// 	}
 
-		const category = interaction.options.getSubcommand() ?? '';
+	// 	const category = interaction.options.getSubcommand() ?? '';
 
-		const auto = this.subcommands[category]?.getAutocomplete(interaction);
-		auto?.(interaction);
-		return;
-	}
+	// 	const auto = this.subcommands[category]?.getAutocomplete(interaction);
+	// 	auto?.(interaction);
+	// 	return;
+	// }
 
-	public addSubcommand(subCommand: ChipsCommand) {
-		if (!subCommand.isSubCommand() || !(subCommand.slash instanceof SlashCommandSubcommandBuilder)) {
-			return;
-		}
+	// public addSubcommand(subCommand: ChipsCommand) {
+	// 	if (!subCommand.isSubCommand() || !(subCommand.slash instanceof SlashCommandSubcommandBuilder)) {
+	// 		return;
+	// 	}
 
-		if (!this.subcommands[subCommand.name]) {
-			this.subcommands[subCommand.name] = subCommand;
-			this.slash.addSubcommand(() => subCommand.slash as SlashCommandSubcommandBuilder);
-			subCommand.setParent(this);
-		}
-	}
+	// 	if (!this.subcommands[subCommand.name]) {
+	// 		this.subcommands[subCommand.name] = subCommand;
+	// 		this.slash.addSubcommand(() => subCommand.slash as SlashCommandSubcommandBuilder);
+	// 		subCommand.setParent(this);
+	// 	}
+	// }
 
 	public getCommandJSON(): RESTPostAPIApplicationCommandsJSONBody | undefined {
 		this.slash ??= new SlashCommandBuilder();

@@ -85,7 +85,7 @@ command.handlers.discord = async ({ interaction, commands, createEmbed }) => {
 		cmds.forEach((command) => {
 			fields.push({
 				name: '/' + command.displayName,
-				value: command.description,
+				value: '-# ' + command.description,
 				inline: true,
 			});
 		});

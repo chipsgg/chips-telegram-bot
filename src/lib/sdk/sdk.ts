@@ -93,30 +93,30 @@ const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: u
 		return lodash.sample(slots.filter((x) => x.tags.includes('slots')));
 	}
 
-	const sendRngSlotChat = async (rngGame: { id: string }) => {
-		const msg = await actions.community('publishChatMessage', {
-			type: 'game',
-			text: `Random Slot Pick:`,
-			// image: rngGame.images.s2,
-			data: rngGame,
-			// roomid
-			id: rngGame.id,
-		});
+	// const sendRngSlotChat = async (rngGame: { id: string }) => {
+	// 	const msg = await actions.community('publishChatMessage', {
+	// 		type: 'game',
+	// 		text: `Random Slot Pick:`,
+	// 		// image: rngGame.images.s2,
+	// 		data: rngGame,
+	// 		// roomid
+	// 		id: rngGame.id,
+	// 	});
 
-		await sleep(250);
+	// 	await sleep(250);
 
-		await actions.community('addChatMessageReaction', {
-			messageid: msg.id,
-			assetid: 'chart_with_downwards_trend',
-		});
+	// 	await actions.community('addChatMessageReaction', {
+	// 		messageid: msg.id,
+	// 		assetid: 'chart_with_downwards_trend',
+	// 	});
 
-		await sleep(250);
+	// 	await sleep(250);
 
-		await actions.community('addChatMessageReaction', {
-			messageid: msg.id,
-			assetid: 'chart_with_upwards_trend',
-		});
-	};
+	// 	await actions.community('addChatMessageReaction', {
+	// 		messageid: msg.id,
+	// 		assetid: 'chart_with_upwards_trend',
+	// 	});
+	// };
 
 	// NOTE: Login Client SDK
 	const { userid } = await Authenticate(actions, CHIPS_TOKEN);
@@ -133,42 +133,42 @@ const initializeSdk = async (CHIPS_TOKEN: string, emit: (event: string, data?: u
 
 		// pickRandomForChat();
 
-		const tick = async () => {
-			const rngGame = await getRandomSlot();
-			if (!rngGame) {
-				console.error('No RNG Game Found');
-				await sleep(1000 * 60 * 30);
-				tick();
-				return;
-			}
+		// const tick = async () => {
+		// 	const rngGame = await getRandomSlot();
+		// 	if (!rngGame) {
+		// 		console.error('No RNG Game Found');
+		// 		await sleep(1000 * 60 * 30);
+		// 		tick();
+		// 		return;
+		// 	}
 
-			console.log('rng.game', rngGame.id);
+		// 	console.log('rng.game', rngGame.id);
 
-			try {
-				// make koth
-				await actions.private('createKothChallenge', {
-					catalogid: rngGame.id,
-					multiplier: 10,
-					// currency: "usdt",
-					// amount: "100000000",
-					currency: 'trx',
-					amount: '100000000',
-					duration: 1000 * 60 * 15, // 15min.
-				});
+		// 	try {
+		// 		// make koth
+		// 		await actions.private('createKothChallenge', {
+		// 			catalogid: rngGame.id,
+		// 			multiplier: 10,
+		// 			// currency: "usdt",
+		// 			// amount: "100000000",
+		// 			currency: 'trx',
+		// 			amount: '100000000',
+		// 			duration: 1000 * 60 * 15, // 15min.
+		// 		});
 
-				// notify chat
-				await sendRngSlotChat(rngGame);
+		// 		// notify chat
+		// 		await sendRngSlotChat(rngGame);
 
-				// wait to post again
-				await sleep(1000 * 60 * 60 * 1);
-			} catch (e) {
-				// wait...
-				console.error('ERROR:', e);
-			}
+		// 		// wait to post again
+		// 		await sleep(1000 * 60 * 60 * 1);
+		// 	} catch (e) {
+		// 		// wait...
+		// 		console.error('ERROR:', e);
+		// 	}
 
-			await sleep(1000 * 60 * 30);
-			tick();
-		};
+		// 	await sleep(1000 * 60 * 30);
+		// 	tick();
+		// };
 
 		// tick();
 	}
