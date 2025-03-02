@@ -38,7 +38,11 @@ declare module '@chipsgg/openservice-ws-client' {
 				gamename: 'promotion';
 				created: number;
 				done: boolean;
-				history: { pregame: unknown; running: unknown; cooldown: unknown };
+				history: {
+					pregame: unknown;
+					running: unknown;
+					cooldown: unknown;
+				};
 				state: 'cooldown' | 'running';
 				bets: {};
 				userid: string;
@@ -97,6 +101,32 @@ declare module '@chipsgg/openservice-ws-client' {
 				};
 			}[]
 		>;
+
+		public(route: 'searchGames', options: { term: string; limit: number; skip: number }): Promise<unknown>;
+
+		public(
+			route: 'getGameDetails',
+			options: { catalogid: string },
+		): Promise<{
+			_id: string;
+			slug: string;
+			created: number;
+			tags: string[];
+			restrictions: [];
+			images?: {
+				s1?: string;
+				s2?: string;
+				bg?: string;
+			};
+			enabled: true;
+			id: string;
+			title: string;
+			producer: string;
+			provider: string;
+			category: string;
+			updated: number;
+			rtp: number;
+		} | null>;
 
 		public(
 			route: 'currencies',
