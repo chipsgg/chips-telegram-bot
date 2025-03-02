@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Chips.gg Bot - Your gaming companion for cryptocurrency prices, user stats, and game recommendations">
+  <meta name="keywords" content="chips.gg, gaming, cryptocurrency, bot, stats, prices">
+  <meta name="robots" content="index, follow">
+  
+  <meta property="og:title" content="<%= title %>">
+  <meta property="og:description" content="Chips.gg Bot - Your gaming companion for cryptocurrency prices, user stats, and game recommendations">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Chips.gg Bot">
+  
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-content">
+      <div class="hero-badges">
+        <a href="https://github.com/chipsgg/chips-telegram-bot" class="hero-badge-link">
+          <div class="hero-badge">VERIFIED BOT</div>
+        </a>
+      </div>
+      <img src="https://cdn.chips.gg/assets/events/christmas/full_logo.svg" alt="Chips.gg Bot" class="hero-logo">
+      <p class="tagline">Your Ultimate Gaming & Crypto Companion</p>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-value">10+</span>
+          <span class="stat-label">Commands</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">24/7</span>
+          <span class="stat-label">Support</span>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="container">
+    <div class="markdown-content">
+      <%- content %>
+    </div>
+    <div class="cta-section">
+      <a href="/commands" class="button">Explore Commands</a>
+    </div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-javascript.min.js"></script>
+</body>
+</html>
