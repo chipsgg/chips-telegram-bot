@@ -51,6 +51,7 @@ const WrapperDiscord = (context, client) => {
   const getContent = () => context.message?.content || "";
   const getArg = (index) => getContent().split(" ")[index];
   const getString = (param) => context.options?.getString(param);
+  const getNumber = (param) => context.options?.getNumber(param);
 
   return {
     platform: "discord",
@@ -59,6 +60,7 @@ const WrapperDiscord = (context, client) => {
     sendForm,
     sendText,
     getString,
+    getNumber,
     getArg,
     getContent,
   };
