@@ -63,6 +63,7 @@ const WrapperDiscord = (context, client) => {
     getNumber,
     getArg,
     getContent,
+    interaction: context,
   };
 };
 
@@ -123,9 +124,12 @@ module.exports = (token, commands) =>
         if (!ctx.isCommand()) return;
         if (!_.has(commands, ctx.commandName))
           return ctx.reply("the command does not exist");
-        await ctx.deferReply();
+        const command = commands[ctx.commandName];
+        if (command.defer !== false) {
+          await ctx.deferReply();
+        }
         const wrapper = WrapperDiscord(ctx, client);
-        await Promise.resolve(commands[ctx.commandName].handler(wrapper));
+        await Promise.resolve(command.handler(wrapper));
       } catch (error) {
         if (error.code === 10062) {
           console.warn("Interaction expired:", error.message);

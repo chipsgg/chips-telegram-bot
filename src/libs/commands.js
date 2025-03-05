@@ -1,7 +1,7 @@
 const assert = require("assert");
 const _ = require("lodash");
 const models = require("./models");
-const { ApplicationCommandOptionType } = require("discord.js");
+const { ApplicationCommandOptionType, MessageFlags } = require("discord.js");
 
 module.exports = (api) => {
   assert(api, "requires api");
@@ -121,7 +121,7 @@ module.exports = (api) => {
           .orderBy(({ bet }) => {
             const currency = api.get("public", "currencies", bet.currency);
             if (!currency) return 0; // Skip invalid currencies
-            return bet.winnings / Math.pow(10, currency.decimals);
+            return bet.winnings / Math.pow(10, currency.decimals) * currency.price;
           })
           .reverse()
           .uniqBy("userid")
@@ -182,9 +182,14 @@ module.exports = (api) => {
           required: true,
         },
       },
+      defer: false,
       handler: async (ctx) => {
         let username, totpCode;
         if (ctx.platform === "discord") {
+          await ctx.interaction.deferReply({ 
+            flags: [MessageFlags.Ephemeral] 
+          });
+
           username = ctx.getString("username");
           totpCode = ctx.getNumber("totp");
         } else {
