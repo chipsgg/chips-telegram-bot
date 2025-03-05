@@ -114,7 +114,7 @@ module.exports = (api) => {
           .orderBy(({ bet }) => {
             const currency = api.get("public", "currencies", bet.currency);
             if (!currency) return 0; // Skip invalid currencies
-            return bet.winnings / Math.pow(10, currency.decimals);
+            return bet.winnings / Math.pow(10, currency.decimals) * currency.price;
           })
           .reverse()
           .uniqBy("userid")
