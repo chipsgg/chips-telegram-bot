@@ -1,7 +1,7 @@
 const assert = require("assert");
 const _ = require("lodash");
 const models = require("./models");
-const { MessageFlags } = require("discord.js");
+const { ApplicationCommandOptionType, MessageFlags } = require("discord.js");
 
 module.exports = (api) => {
   assert(api, "requires api");
@@ -22,10 +22,17 @@ module.exports = (api) => {
     prices: {
       description:
         "The different cryptocurrencies and their values in dollars. Usage: /prices [currency]",
+      options: {
+        currency: {
+          description: "Currency to filter by",
+          type: ApplicationCommandOptionType.String,
+          required: false,
+        },
+      },
       handler: (ctx) => {
         let currency = null;
         if (ctx.platform === "discord") {
-          const currency = ctx?.getString("currency")?.toLowerCase();
+          currency = ctx?.getString("currency")?.toLowerCase();
         } else {
           currency = ctx?.getArg(1);
         }
@@ -163,6 +170,18 @@ module.exports = (api) => {
     },
     linkaccount: {
       description: "Link your account to the site.",
+      options: {
+        username: {
+          description: "Your Chips.gg username",
+          type: ApplicationCommandOptionType.String,
+          required: true,
+        },
+        totp: {
+          description: "Your TOTP code",
+          type: ApplicationCommandOptionType.Number,
+          required: true,
+        },
+      },
       defer: false,
       handler: async (ctx) => {
         let username, totpCode;
@@ -172,7 +191,7 @@ module.exports = (api) => {
           });
 
           username = ctx.getString("username");
-          totpCode = ctx.getString("totp");
+          totpCode = ctx.getNumber("totp");
         } else {
           username = ctx.getArg(1);
           totpCode = ctx.getArg(2);
@@ -288,9 +307,16 @@ module.exports = (api) => {
     return match ? roles[match] : null;
   }
 
-  // help menu
+  // Get user
   commands.user = {
     description: "Get user information by username",
+    options: {
+      username: {
+        description: "Chips.gg username",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    },
     handler: async (ctx) => {
       let username = null;
       if (ctx.platform === "discord") {
@@ -430,6 +456,13 @@ module.exports = (api) => {
 
   commands.search = {
     description: "Search the game catalog. Usage: /search game_name",
+    options: {
+      query: {
+        description: "Search query",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    },
     handler: async (ctx) => {
       let query = null;
       if (ctx.platform === "discord" || ctx.platform === "api") {
@@ -483,6 +516,13 @@ module.exports = (api) => {
 
   commands.stats = {
     description: "Show user stats banner. Usage: /stats username",
+    options: {
+      username: {
+        description: "Chips.gg username",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    },
     handler: async (ctx) => {
       let username = null;
       if (ctx.platform === "discord") {
@@ -525,6 +565,13 @@ module.exports = (api) => {
 
   commands.promotion = {
     description: "Show promotion banner. Usage: /promotion promotionid",
+    options: {
+      promotionid: {
+        description: "Promotion ID",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    },
     handler: async (ctx) => {
       let promotionId = null;
       if (ctx.platform === "discord") {
@@ -568,7 +615,7 @@ module.exports = (api) => {
           });
         }
       } catch (e) {
-        return ctx.sendText("Error searching promotions: " + error.message);
+        return ctx.sendText("Error searching promotions: " + e.message);
       }
     },
   };
@@ -576,6 +623,18 @@ module.exports = (api) => {
   commands.compare = {
     description:
       "Compare two users' stats. Usage: /compare username1 username2",
+    options: {
+      username1: {
+        description: "First Chips.gg username",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+      username2: {
+        description: "Second Chips.gg username",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    },
     handler: async (ctx) => {
       let username1, username2;
       if (ctx.platform === "discord") {
@@ -619,6 +678,13 @@ module.exports = (api) => {
 
   commands.bet = {
     description: "Show bet card. Usage: /bet betid",
+    options: {
+      betid: {
+        description: "Bet ID",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    },
     handler: async (ctx) => {
       let betId = null;
       if (ctx.platform === "discord") {

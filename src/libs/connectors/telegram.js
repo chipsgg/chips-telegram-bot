@@ -53,8 +53,12 @@ const WrapperTelegram = (context) => {
       return x.contains(string).split(":")[1];
     });
 
-    return cmd ? cmd : text.split(" ")[1];
+    return cmd ? cmd : context.message.text.split(" ")[1];
   };
+
+  const getNumber = (string) => {
+    return parseInt(getString(string));
+  }
 
   return {
     platform: "telegram",
@@ -63,6 +67,7 @@ const WrapperTelegram = (context) => {
     sendText,
     getArg,
     getString,
+    getNumber,
   };
 };
 
