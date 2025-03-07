@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
-const HttpServer = require("actions-http");
 const SDK = require("./libs/sdk");
 const { makeBroadcast } = require("./libs/utils");
 const { Discord, Telegram } = require("./libs/connectors");
