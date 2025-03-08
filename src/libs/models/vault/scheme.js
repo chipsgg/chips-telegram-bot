@@ -4,7 +4,7 @@ const { formatCurrency } = require("@coingecko/cryptoformat");
 
 module.exports = ({
   currencies,
-  distributeAt,
+  distributeAt: _distributeAt,
   totalMinted,
   totalStaked,
   totalValue,

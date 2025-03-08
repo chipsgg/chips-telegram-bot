@@ -40,7 +40,7 @@ const discordMakeForm = (options) => {
   };
 };
 
-const WrapperDiscord = (context, client) => {
+const WrapperDiscord = (context, _client) => {
   console.log("WrapperDiscord", context);
 
   const sendForm = (...args) => {

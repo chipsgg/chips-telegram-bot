@@ -102,7 +102,7 @@ module.exports = async (token, commands) => {
         _.forEach(_.keys(commands), (commandName) => {
           bot.command(commandName, async (ctx) => {
             const { message } = ctx.update;
-            const { chat, text } = message;
+            const { chat, text: _text } = message;
             assert(message, "requires message");
             assert(chat, "requires chat");
 

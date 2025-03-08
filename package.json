@@ -7,8 +7,7 @@
   "author": "Chips.gg <admin@chips.gg>",
   "scripts": {
     "start": "node index.js",
-    "lint": "biome check",
-    "format": "biome check --write"
+    "lint": "biome check --write"
   },
   "packageManager": "yarn@4.7.0",
   "devDependencies": {
