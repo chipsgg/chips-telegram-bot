@@ -1,8 +1,6 @@
 const WS = require("ws");
 const Client = require("@chipsgg/openservice-ws-client");
 const lodash = require("lodash");
-// const assert = require("assert");
-const { sleep } = require("./utils");
 
 module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   let state = {};
@@ -30,7 +28,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     try {
       const userid = await actions.auth("authenticate", tokenid);
       return { userid, tokenid };
-    } catch (e) {
+    } catch {
       return Authenticate(actions);
     }
   }
@@ -74,7 +72,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
           break;
         }
       }
-    },
+    }
   );
 
   // // actions.community('replyToChatMessage', {

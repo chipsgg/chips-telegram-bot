@@ -1,4 +1,3 @@
-const assert = require("assert");
 const _ = require("lodash");
 const { formatCurrency } = require("@coingecko/cryptoformat");
 const Humanize = require("humanize-plus");

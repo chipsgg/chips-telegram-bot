@@ -1,11 +1,10 @@
-const assert = require("assert");
 const _ = require("lodash");
 const Humanize = require("humanize-plus");
 const { formatCurrency } = require("@coingecko/cryptoformat");
 
 module.exports = ({
   currencies,
-  distributeAt,
+  distributeAt: _distributeAt,
   totalMinted,
   totalStaked,
   totalValue,

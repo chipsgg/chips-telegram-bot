@@ -7,13 +7,11 @@
   "author": "Chips.gg <admin@chips.gg>",
   "scripts": {
     "start": "node index.js",
-    "shake": "prettier ./**/*.js --write",
-    "lint": "yarn shake && eslint --fix ./**/*.js"
+    "lint": "biome check --write"
   },
   "packageManager": "yarn@4.7.0",
   "devDependencies": {
-    "eslint": "^8.24.0",
-    "prettier": "^2.7.1"
+    "@biomejs/biome": "1.9.4"
   },
   "dependencies": {
     "@chipsgg/openservice-ws-client": "^1.0.34",

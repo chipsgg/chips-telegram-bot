@@ -28,7 +28,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
       .then((userid) => {
         return { userid, tokenid };
       })
-      .catch((err) => {
+      .catch(() => {
         return Authenticate(actions);
       });
   }
@@ -72,7 +72,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
           break;
         }
       }
-    },
+    }
   );
 
   // actions.community('replyToChatMessage', {
@@ -136,7 +136,10 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   };
 
   // NOTE: Login Client SDK
-  const { userid, tokenid } = await Authenticate(actions, CHIPS_TOKEN);
+  const { userid, tokenid: _tokenid } = await Authenticate(
+    actions,
+    CHIPS_TOKEN
+  );
 
   // console.log("sdk:auth", {
   //   tokenid,
@@ -155,7 +158,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
 
     // pickRandomForChat();
 
-    const tick = async () => {
+    const _tick = async () => {
       const rngGame = await getRandomSlot();
       console.log("rng.game", rngGame.id);
 
@@ -182,7 +185,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
       }
 
       await sleep(1000 * 60 * 30);
-      tick();
+      _tick();
     };
 
     // tick();
