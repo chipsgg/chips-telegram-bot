@@ -20,7 +20,7 @@ const loop = async (fn, delay, ...args) => {
   do {
     await fn(...args);
     await sleep(delay);
-    // eslint-disable-next-line no-constant-condition
+    // biome-ignore lint: Needed to run indefinitely
   } while (true);
 };
 

@@ -28,7 +28,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
       .then((userid) => {
         return { userid, tokenid };
       })
-      .catch((err) => {
+      .catch(() => {
         return Authenticate(actions);
       });
   }
@@ -72,7 +72,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
           break;
         }
       }
-    },
+    }
   );
 
   // actions.community('replyToChatMessage', {

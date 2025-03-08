@@ -1,6 +1,6 @@
-const bigwin = require('./bigwin');
-const luckiest = require('./luckiest');
+const bigwin = require("./bigwin");
+const luckiest = require("./luckiest");
 module.exports = {
   bigwin,
-  luckiest
-}
+  luckiest,
+};

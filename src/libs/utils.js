@@ -76,7 +76,7 @@ exports.Stack = class {
   }
 };
 
-exports.sleep = (t) => new Promise((resolve, reject) => setTimeout(resolve, t));
+exports.sleep = (t) => new Promise((resolve) => setTimeout(resolve, t));
 const rateLimit = new Map();
 
 function checkRateLimit(userId, limitMs = 1000) {
@@ -91,5 +91,5 @@ function checkRateLimit(userId, limitMs = 1000) {
 
 module.exports = {
   ...module.exports,
-  checkRateLimit
+  checkRateLimit,
 };

@@ -44,6 +44,7 @@
         "noUnsafeOptionalChaining": "error",
         "noUnusedLabels": "error",
         "noUnusedPrivateClassMembers": "error",
+        "noUnusedFunctionParameters": "off",
         "noUnusedVariables": "error",
         "useIsNan": "error",
         "useValidForDirection": "error",
@@ -93,7 +94,7 @@
       "semicolons": "always",
       "arrowParentheses": "always",
       "bracketSameLine": false,
-      "quoteStyle": "single",
+      "quoteStyle": "double",
       "attributePosition": "auto",
       "bracketSpacing": true
     },

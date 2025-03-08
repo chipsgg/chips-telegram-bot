@@ -88,7 +88,7 @@ app.get("/commands", (req, res) => {
     try {
       console.log(
         "Initializing Telegram bot with token length:",
-        process.env.TELEGRAM_TOKEN?.length,
+        process.env.TELEGRAM_TOKEN?.length
       );
       const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
       connectors.push(telegram);

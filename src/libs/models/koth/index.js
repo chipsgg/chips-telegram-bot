@@ -1,3 +1,2 @@
-
-const scheme = require('./scheme');
+const scheme = require("./scheme");
 module.exports = scheme;

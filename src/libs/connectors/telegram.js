@@ -1,4 +1,3 @@
-
 const assert = require("assert");
 const _ = require("lodash");
 const marked = require("marked");
@@ -8,7 +7,7 @@ const parseAndClean = (content) =>
   _.replace(marked.parseInline(_.trim(content)), "<br>", "\n");
 
 const telegramMakeForm = ({ emoji, title, content, footer }) => `${_.trim(
-  emoji,
+  emoji
 )} <strong>${_.trim(title)}</strong> ${_.trim(emoji)}
 ${parseAndClean(content)}${footer ? `\n\n${parseAndClean(footer)}` : ""}`;
 
@@ -29,7 +28,7 @@ const WrapperTelegram = (context) => {
               url && buttonLabel ? [{ text: buttonLabel, url }] : [],
             ],
           },
-        },
+        }
       );
     } else {
       return context.replyWithHTML(caption, {
@@ -58,7 +57,7 @@ const WrapperTelegram = (context) => {
 
   const getNumber = (string) => {
     return parseInt(getString(string));
-  }
+  };
 
   return {
     platform: "telegram",
@@ -83,7 +82,7 @@ module.exports = async (token, commands) => {
       if (botInstance) {
         try {
           await botInstance.stop();
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Increased cleanup wait time
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Increased cleanup wait time
         } catch (err) {
           console.log("Error stopping previous bot instance:", err);
         }
@@ -131,7 +130,7 @@ module.exports = async (token, commands) => {
           _.forEach(allGroups, (groupId) =>
             bot.telegram.sendMessage(groupId, parseAndClean(message), {
               parse_mode: "HTML",
-            }),
+            })
           );
         }
 
@@ -151,8 +150,8 @@ module.exports = async (token, commands) => {
                       url && buttonLabel ? [{ text: buttonLabel, url }] : [],
                     ],
                   },
-                },
-              ),
+                }
+              )
             );
           } else {
             _.forEach(allGroups, (id) =>
@@ -163,7 +162,7 @@ module.exports = async (token, commands) => {
                     url && buttonLabel ? [{ text: buttonLabel, url }] : [],
                   ],
                 },
-              }),
+              })
             );
           }
         }
@@ -179,8 +178,8 @@ module.exports = async (token, commands) => {
             allowedUpdates: ["message", "callback_query"],
             polling: {
               timeout: 30,
-              limit: 100
-            }
+              limit: 100,
+            },
           })
           .then(() => {
             console.log("Telegram bot started successfully");
@@ -196,16 +195,23 @@ module.exports = async (token, commands) => {
               errorName: error.name,
               errorMessage: error.message,
               errorCode: error.response?.error_code,
-              description: error.response?.description
+              description: error.response?.description,
             });
-            
-            if (error.response?.error_code === 409 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+
+            if (
+              error.response?.error_code === 409 &&
+              reconnectAttempts < MAX_RECONNECT_ATTEMPTS
+            ) {
               reconnectAttempts++;
-              console.log(`Retrying bot connection in ${RECONNECT_DELAY/1000} seconds... (Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
-              await new Promise(resolve => setTimeout(resolve, RECONNECT_DELAY));
+              console.log(
+                `Retrying bot connection in ${RECONNECT_DELAY / 1000} seconds... (Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
+              );
+              await new Promise((resolve) =>
+                setTimeout(resolve, RECONNECT_DELAY)
+              );
               return startBot();
             }
-            
+
             reject(error);
           });
       });

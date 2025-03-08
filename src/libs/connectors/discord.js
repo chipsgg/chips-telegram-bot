@@ -13,11 +13,12 @@ const discordMakeForm = (options) => {
     new ButtonBuilder()
       .setStyle(ButtonStyle.Link)
       .setLabel(buttonLabel || "Click on link")
-      .setURL(url || "https://chips.gg/"),
+      .setURL(url || "https://chips.gg/")
   );
-  const embed = new EmbedBuilder()
-    .setTitle(`${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`);
-  
+  const embed = new EmbedBuilder().setTitle(
+    `${_.trim(emoji)} ${_.trim(title)} ${_.trim(emoji)}`
+  );
+
   // Only set description if content is not empty after trimming
   const trimmedContent = _.trim(content);
   if (trimmedContent) {
@@ -26,7 +27,8 @@ const discordMakeForm = (options) => {
   if (footer)
     embed.setFooter({
       text: _.trim(footer),
-      iconURL: "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png"
+      iconURL:
+        "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png",
     });
   if (banner) embed.setImage(banner);
   if (url) embed.setURL(url);
@@ -34,7 +36,7 @@ const discordMakeForm = (options) => {
     content: " ",
     embeds: [embed],
     components: url && buttonLabel ? [row] : [],
-    ephemeral: options.ephemeral || false
+    ephemeral: options.ephemeral || false,
   };
 };
 
@@ -82,7 +84,7 @@ module.exports = (token, commands) =>
         GatewayIntentBits.GuildIntegrations,
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMembers
+        GatewayIntentBits.GuildMembers,
       ],
     });
 
@@ -128,7 +130,7 @@ module.exports = (token, commands) =>
                 description: "Your TOTP authentication code",
                 type: 3,
                 required: true,
-              },
+              }
             );
           } else if (name === "compare") {
             options.push(
@@ -143,7 +145,7 @@ module.exports = (token, commands) =>
                 description: "Second username to compare",
                 type: 3,
                 required: true,
-              },
+              }
             );
           }
 
@@ -207,7 +209,7 @@ module.exports = (token, commands) =>
             .filter(
               (channel) =>
                 channel.permissionsFor(client.user).has("SEND_MESSAGES") &&
-                channel.isText(),
+                channel.isText()
             )
             .first();
           if (chan) {
