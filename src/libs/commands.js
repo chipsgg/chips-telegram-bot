@@ -60,13 +60,6 @@ module.exports = (api) => {
         return ctx.sendForm(models.prices(currencies.value()));
       },
     },
-    promotions: {
-      description: "Ongoing promotions and events",
-      handler: async (ctx) => {
-        const activeRaces = await api._actions.public("listRunningPromotions");
-        return ctx.sendForm(models.events(activeRaces));
-      },
-    },
     vault: {
       description: "The vault and rewards related",
       handler: (ctx) => {
