@@ -1,28 +1,6 @@
 const { formatDate } = require("../../utils");
-// const { convertDecimals } = require("../../../utils");
 
 const Big = require("big.js");
-
-function makeid(length = 10) {
-  var result = "";
-  var characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
-
-const sleep = (delay = 0) => new Promise((res) => setTimeout(res, delay));
-
-const loop = async (fn, delay, ...args) => {
-  do {
-    await fn(...args);
-    await sleep(delay);
-    // eslint-disable-next-line no-constant-condition
-  } while (true);
-};
 
 const convertDecimals = (amount, fromDecimals, toDecimals) => {
   if (isNaN(parseFloat(amount))) return;
@@ -57,14 +35,14 @@ module.exports = (koth) => {
   }
 
   const {
-    done,
-    id,
-    state: gameState,
-    winningBet,
-    created,
-    updated,
-    countdown,
-    duration,
+    // done,
+    // id,
+    // state: gameState,
+    // winningBet,
+    // created,
+    // updated,
+    // countdown,
+    // duration,
     multiplier,
     game,
     catalogid,
@@ -99,3 +77,24 @@ module.exports = (koth) => {
     url: `https://chips.gg/play/${catalogid}`,
   };
 };
+
+// function makeid(length = 10) {
+//   var result = "";
+//   var characters =
+//     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+//   var charactersLength = characters.length;
+//   for (var i = 0; i < length; i++) {
+//     result += characters.charAt(Math.floor(Math.random() * charactersLength));
+//   }
+//   return result;
+// }
+
+// const sleep = (delay = 0) => new Promise((res) => setTimeout(res, delay));
+
+// const loop = async (fn, delay, ...args) => {
+//   do {
+//     await fn(...args);
+//     await sleep(delay);
+//     // biome-ignore lint: Needed to run indefinitely
+//   } while (true);
+// };

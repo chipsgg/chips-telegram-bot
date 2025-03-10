@@ -15,7 +15,7 @@ module.exports = (api) => {
         return ctx.sendForm(
           models.slotcall({
             ...slot,
-          }),
+          })
         );
       },
     },
@@ -43,16 +43,16 @@ module.exports = (api) => {
             x.name !== "chips" &&
             x.name !== "chips_staking" &&
             !_.startsWith(x.name, "usd") &&
-            !_.endsWith(x.name, "usd"),
+            !_.endsWith(x.name, "usd")
         );
 
         if (currency) {
           currencies = currencies.filter(
-            (x) => x.name.toLowerCase() === currency,
+            (x) => x.name.toLowerCase() === currency
           );
           if (currencies.value().length === 0) {
             return ctx.sendText(
-              "Currency not found. Use /prices to see all available currencies.",
+              "Currency not found. Use /prices to see all available currencies."
             );
           }
         }
@@ -73,7 +73,7 @@ module.exports = (api) => {
         const distributeAt = api.get(
           "profitshare",
           "profitshareInfo",
-          "distributeAt",
+          "distributeAt"
         );
         const totalMinted =
           api.get("profitshare", "profitshareInfo", "totalMinted") / 1000000;
@@ -82,7 +82,7 @@ module.exports = (api) => {
         const currencies = _.chain(api.get("public", "currencies"))
           .filter(
             ({ name, hidden }) =>
-              !hidden && !_.includes(name, ["chips", "chips_staking"]),
+              !hidden && !_.includes(name, ["chips", "chips_staking"])
           )
           .map(({ name, price, decimals }) => ({
             name: _.upperCase(name),
@@ -106,7 +106,7 @@ module.exports = (api) => {
             totalStaked,
             totalValue,
             perThousand,
-          }),
+          })
         );
       },
     },
@@ -121,7 +121,9 @@ module.exports = (api) => {
           .orderBy(({ bet }) => {
             const currency = api.get("public", "currencies", bet.currency);
             if (!currency) return 0; // Skip invalid currencies
-            return bet.winnings / Math.pow(10, currency.decimals) * currency.price;
+            return (
+              (bet.winnings / Math.pow(10, currency.decimals)) * currency.price
+            );
           })
           .reverse()
           .uniqBy("userid")
@@ -186,8 +188,8 @@ module.exports = (api) => {
       handler: async (ctx) => {
         let username, totpCode;
         if (ctx.platform === "discord") {
-          await ctx.interaction.deferReply({ 
-            flags: [MessageFlags.Ephemeral] 
+          await ctx.interaction.deferReply({
+            flags: [MessageFlags.Ephemeral],
           });
 
           username = ctx.getString("username");
@@ -201,7 +203,7 @@ module.exports = (api) => {
 
         if (!username || !totpCode) {
           return ctx.sendText(
-            "Please provide both username and TOTP code. Usage: /linkaccount username:YOUR_USERNAME totp:YOUR_CODE",
+            "Please provide both username and TOTP code. Usage: /linkaccount username:YOUR_USERNAME totp:YOUR_CODE"
           );
         }
 
@@ -235,7 +237,7 @@ module.exports = (api) => {
             content: `Your ${payload.platform} has been linked!`,
             buttonLabel: "Visit Profile",
             url: `https://chips.gg/user/${username}`,
-            ephemeral: true
+            ephemeral: true,
           };
           return ctx.sendForm(response);
         } catch (error) {
@@ -276,8 +278,10 @@ module.exports = (api) => {
         return;
       }
 
-      const { PermissionFlagsBits } = require('discord.js');
-      const botMember = await guild.members.fetch(client.user.id);
+      const { PermissionFlagsBits } = require("discord.js");
+      const botMember = await guild.members.fetch(
+        ctx.interaction.client.user.id
+      );
       if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
         console.warn("Bot missing MANAGE_ROLES permission");
         return;
@@ -305,7 +309,7 @@ module.exports = (api) => {
     };
 
     const match = Object.keys(roles).find((key) =>
-      rank.toLowerCase().includes(key),
+      rank.toLowerCase().includes(key)
     );
     return match ? roles[match] : null;
   }
@@ -367,21 +371,21 @@ module.exports = (api) => {
               {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-              },
+              }
             )}`,
             `Total Bonuses: $${(stats.bonusesUsd || 0).toLocaleString(
               undefined,
               {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-              },
+              }
             )}`,
             `Join Date: ${new Date(user.created).toLocaleDateString()}`,
           ].join("\n"),
           url: `https://chips.gg/user/${user.username}`,
           buttonLabel: "View Profile",
         });
-      } catch (error) {
+      } catch {
         return ctx.sendText("Error fetching user information");
       }
     },
@@ -418,7 +422,7 @@ module.exports = (api) => {
         title: "Most Played Games",
         content: games
           .map(
-            (game, index) => `${index + 1}. ${game.title} (${game.provider})`,
+            (game, index) => `${index + 1}. ${game.title} (${game.provider})`
           )
           .join("\n"),
         url: "https://chips.gg/casino",
@@ -430,7 +434,7 @@ module.exports = (api) => {
   commands.koth = {
     description: "Display current King of the Hill information",
     handler: async (ctx) => {
-      const koth = api.get("public", "koth");
+      // const koth = api.get('public', 'koth');
 
       return ctx.sendForm({
         emoji: "👑",
@@ -461,7 +465,7 @@ module.exports = (api) => {
 
       if (!query) {
         return ctx.sendText(
-          "Please provide a search query. Usage: /search game_name",
+          "Please provide a search query. Usage: /search game_name"
         );
       }
 
@@ -485,7 +489,7 @@ module.exports = (api) => {
         const gameList = games
           .map(
             (game, index) =>
-              `${index + 1}. ${game.title} (${game.provider})\n   ID: ${game.id}`,
+              `${index + 1}. ${game.title} (${game.provider})\n   ID: ${game.id}`
           )
           .join("\n");
 

@@ -20,7 +20,7 @@ const md = new MarkdownIt({
   },
 });
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   const readmeContent = fs.readFileSync("README.md", "utf-8");
   const renderedContent = md.render(readmeContent);
   res.render("index", {
@@ -29,7 +29,7 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/commands", (req, res) => {
+app.get("/commands", (_req, res) => {
   const commands = Commands({});
   res.render("commands", {
     title: "Available Commands",
@@ -45,7 +45,8 @@ app.get("/commands", (req, res) => {
   const api = await SDK(process.env.CHIPS_TOKEN);
 
   if (!api) {
-    return res.status(500).json({ error: "Bot not initialized" });
+    console.error("SDK not initialized!");
+    return;
   }
 
   const commands = Commands(api);
@@ -54,7 +55,7 @@ app.get("/commands", (req, res) => {
   // API endpoint for executing commands
   app.get("/api/command/:name", async (req, res) => {
     const { name } = req.params;
-    const { username } = req.query;
+    // const { username } = req.query;
 
     const command = commands[name];
     if (!command) {
@@ -88,7 +89,7 @@ app.get("/commands", (req, res) => {
     try {
       console.log(
         "Initializing Telegram bot with token length:",
-        process.env.TELEGRAM_TOKEN?.length,
+        process.env.TELEGRAM_TOKEN?.length
       );
       const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
       connectors.push(telegram);
@@ -107,6 +108,6 @@ app.get("/commands", (req, res) => {
     connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
   }
 
-  const broadcastText = makeBroadcast(connectors, "broadcastText");
-  const broadcastForm = makeBroadcast(connectors, "broadcastForm");
+  const _broadcastText = makeBroadcast(connectors, "broadcastText");
+  const _broadcastForm = makeBroadcast(connectors, "broadcastForm");
 })();

@@ -6,7 +6,7 @@ const slotcall = require("./slotcall");
 const luckiest = require("./luckiest");
 const bigwins = require("./bigwins");
 const autoevents = require("./autoevents");
-const koth = require('./koth');
+const koth = require("./koth");
 
 module.exports = {
   help,
