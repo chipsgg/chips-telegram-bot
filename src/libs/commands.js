@@ -1,7 +1,14 @@
 const assert = require("assert");
 const _ = require("lodash");
 const models = require("./models");
-const { ApplicationCommandOptionType, MessageFlags } = require("discord.js");
+const {
+  ApplicationCommandOptionType,
+  MessageFlags,
+  AttachmentBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require("discord.js");
 
 module.exports = (api) => {
   assert(api, "requires api");
@@ -517,25 +524,40 @@ module.exports = (api) => {
     },
     handler: async (ctx) => {
       let username = null;
-      if (ctx.platform === "discord") {
-        username = ctx?.getString("username");
-        if (!username) {
-          return ctx.sendText("Please provide a username");
-        }
-      } else {
+      if (ctx.platform !== "discord") {
         username = ctx?.getArg(1);
         if (!username) {
           return ctx.sendText("Please provide a username");
         }
+        return ctx.sendForm({
+          emoji: "📊",
+          title: `Stats Banner: ${username}`,
+          // content: "Here are your stats:",
+          banner: `https://stats.chips.gg/stats/${username}`,
+          buttonLabel: "View Profile",
+          url: `https://chips.gg/user/${username}`,
+        });
       }
 
-      return ctx.sendForm({
-        emoji: "📊",
-        title: `Stats Banner: ${username}`,
-        // content: "Here are your stats:",
-        banner: `https://stats.chips.gg/stats/${username}`,
-        buttonLabel: "View Profile",
-        url: `https://chips.gg/user/${username}`,
+      username = ctx?.getString("username");
+      if (!username) {
+        return ctx.sendText("Please provide a username");
+      }
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel(`View ${username.slice(0, 19)}`)
+          .setURL("https://chips.gg/user/" + username)
+      );
+
+      await ctx.interaction.editReply({
+        files: [
+          new AttachmentBuilder("https://stats.chips.gg/stats/" + username, {
+            name: `${username}.png`,
+          }),
+        ],
+        components: [row],
       });
     },
   };
