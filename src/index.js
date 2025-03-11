@@ -86,26 +86,30 @@ app.get("/commands", (_req, res) => {
   // START THE BOTS
 
   if (process.env.TELEGRAM_TOKEN) {
-    try {
-      console.log(
-        "Initializing Telegram bot with token length:",
-        process.env.TELEGRAM_TOKEN?.length
-      );
-      const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
+    console.log(
+      "Initializing Telegram bot with token length:",
+      process.env.TELEGRAM_TOKEN?.length
+    );
+    const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
+    if (telegram) {
       connectors.push(telegram);
-    } catch (error) {
-      console.error("Error starting Telegram bot:", {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      });
     }
   } else {
     console.log("No Telegram token provided");
   }
 
   if (process.env.DISCORD_TOKEN) {
-    connectors.push(await Discord(process.env.DISCORD_TOKEN, commands));
+    try {
+      const discord = await Discord(process.env.DISCORD_TOKEN, commands);
+      if (discord) {
+        connectors.push(discord);
+      }
+    } catch (error) {
+      console.error("Error starting Discord bot:", {
+        name: error.name,
+        message: error.message,
+      });
+    }
   }
 
   const _broadcastText = makeBroadcast(connectors, "broadcastText");
