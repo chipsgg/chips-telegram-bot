@@ -1,0 +1,123 @@
+2025-03-11 16:52:48.98
+7034d40a
+User
+error_code: 409,
+2025-03-11 16:52:48.98
+7034d40a
+User
+description: 'Conflict: terminated by other getUpdates request; make sure that only one bot instance is running'
+2025-03-11 16:52:48.98
+7034d40a
+User
+},
+2025-03-11 16:52:48.98
+7034d40a
+User
+on: {
+2025-03-11 16:52:48.98
+7034d40a
+User
+method: 'getUpdates',
+2025-03-11 16:52:48.98
+7034d40a
+User
+payload: {
+2025-03-11 16:52:48.98
+7034d40a
+User
+timeout: 50,
+2025-03-11 16:52:48.98
+7034d40a
+User
+offset: 180561700,
+2025-03-11 16:52:48.98
+7034d40a
+User
+allowed_updates: [ 'message', 'callback_query' ]
+2025-03-11 16:52:48.98
+7034d40a
+User
+}
+2025-03-11 16:52:48.98
+7034d40a
+User
+}
+2025-03-11 16:52:48.98
+7034d40a
+User
+}
+2025-03-11 16:52:48.98
+7034d40a
+User
+2025-03-11 16:52:48.98
+7034d40a
+User
+Node.js v20.18.1
+2025-03-11 16:54:15.15
+91a25f92
+System
+starting up user application
+2025-03-11 16:54:15.45
+91a25f92
+System
+forwarding local port 3000 to external port 80
+2025-03-11 16:54:23.30
+91a25f92
+User
+> @chipsgg/telegram-bot@3.4.0 start
+2025-03-11 16:54:23.30
+91a25f92
+User
+> node index.js
+2025-03-11 16:54:26.04
+91a25f92
+User
+Server Connected!
+2025-03-11 16:54:26.25
+91a25f92
+User
+Authenticated SDK: e4c2ba09-e831-46b5-8cfc-7f8be7803efe tacyarg
+2025-03-11 16:54:26.26
+91a25f92
+User
+Loaded 17 commands!
+2025-03-11 16:54:26.26
+91a25f92
+User
+Initializing Telegram bot with token length: 46
+2025-03-11 16:54:26.26
+91a25f92
+User
+Attempting to start Telegram bot...
+2025-03-11 16:54:26.27
+91a25f92
+User
+Web server and bot running on port 3000
+2025-03-11 16:54:26.98
+6b5acc0a
+User
+Failed to start Telegram bot. Details: {
+2025-03-11 16:54:26.98
+6b5acc0a
+User
+errorName: 'Error',
+2025-03-11 16:54:26.98
+6b5acc0a
+User
+errorMessage: '409: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running',
+2025-03-11 16:54:26.98
+6b5acc0a
+User
+errorCode: 409,
+2025-03-11 16:54:26.98
+6b5acc0a
+User
+description: 'Conflict: terminated by other getUpdates request; make sure that only one bot instance is running'
+2025-03-11 16:54:26.98
+6b5acc0a
+User
+}
+2025-03-11 16:54:26.98
+6b5acc0a
+User
+Retrying bot connection in 5 seconds... (Attempt 1/3)
