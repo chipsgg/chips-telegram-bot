@@ -9,7 +9,6 @@
     "start": "node index.js",
     "lint": "biome check --write"
   },
-  "packageManager": "yarn@4.7.0",
   "devDependencies": {
     "@biomejs/biome": "1.9.4"
   },
