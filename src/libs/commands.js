@@ -1,7 +1,14 @@
 const assert = require("assert");
 const _ = require("lodash");
 const models = require("./models");
-const { ApplicationCommandOptionType, MessageFlags } = require("discord.js");
+const {
+  ApplicationCommandOptionType,
+  MessageFlags,
+  AttachmentBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require("discord.js");
 
 module.exports = (api) => {
   assert(api, "requires api");
@@ -517,25 +524,40 @@ module.exports = (api) => {
     },
     handler: async (ctx) => {
       let username = null;
-      if (ctx.platform === "discord") {
-        username = ctx?.getString("username");
-        if (!username) {
-          return ctx.sendText("Please provide a username");
-        }
-      } else {
+      if (ctx.platform !== "discord") {
         username = ctx?.getArg(1);
         if (!username) {
           return ctx.sendText("Please provide a username");
         }
+        return ctx.sendForm({
+          emoji: "📊",
+          title: `Stats Banner: ${username}`,
+          // content: "Here are your stats:",
+          banner: `https://stats.chips.gg/stats/${username}`,
+          buttonLabel: "View Profile",
+          url: `https://chips.gg/user/${username}`,
+        });
       }
 
-      return ctx.sendForm({
-        emoji: "📊",
-        title: `Stats Banner: ${username}`,
-        // content: "Here are your stats:",
-        banner: `https://stats.chips.gg/stats/${username}`,
-        buttonLabel: "View Profile",
-        url: `https://chips.gg/user/${username}`,
+      username = ctx?.getString("username");
+      if (!username) {
+        return ctx.sendText("Please provide a username");
+      }
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel(`View ${username.slice(0, 19)}`)
+          .setURL("https://chips.gg/user/" + username)
+      );
+
+      await ctx.interaction.editReply({
+        files: [
+          new AttachmentBuilder("https://stats.chips.gg/stats/" + username, {
+            name: `${username}.png`,
+          }),
+        ],
+        components: [row],
       });
     },
   };
@@ -599,26 +621,62 @@ module.exports = (api) => {
     },
     handler: async (ctx) => {
       let username1, username2;
-      if (ctx.platform === "discord") {
-        username1 = ctx?.getString("username1");
-        username2 = ctx?.getString("username2");
-        if (!username1 || !username2) {
-          return ctx.sendText("Please provide both usernames to compare");
-        }
-      } else {
+      if (ctx.platform !== "discord") {
         username1 = ctx?.getArg(1);
         username2 = ctx?.getArg(2);
         if (!username1 || !username2) {
           return ctx.sendText("Please provide both usernames to compare");
         }
+
+        return ctx.sendForm({
+          emoji: "🔄",
+          title: `Comparing ${username1} vs ${username2}`,
+          banner: `https://stats.chips.gg/compare/${username1}/${username2}`,
+          buttonLabel: "View Profiles",
+          url: `https://chips.gg/user/${username1}`,
+        });
       }
 
-      return ctx.sendForm({
-        emoji: "🔄",
-        title: `Comparing ${username1} vs ${username2}`,
-        banner: `https://stats.chips.gg/compare/${username1}/${username2}`,
-        buttonLabel: "View Profiles",
-        url: `https://chips.gg/user/${username1}`,
+      username1 = ctx?.getString("username1");
+      username2 = ctx?.getString("username2");
+      if (!username1 || !username2) {
+        return ctx.sendText("Please provide both usernames to compare");
+      }
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel(`View ${username1.slice(0, 19)}`)
+          .setURL("https://chips.gg/user/" + username1),
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel(`View ${username2.slice(0, 19)}`)
+          .setURL("https://chips.gg/user/" + username2)
+      );
+
+      const image = await fetch(
+        `https://stats.chips.gg/compare/${username1}/${username2}`
+      );
+      if (
+        !image.ok ||
+        !image.headers.get("content-type").startsWith("image/")
+      ) {
+        await ctx.interaction.deleteReply();
+        await ctx.interaction.followUp({
+          content: `Failed to fetch comparison image! Please try again later.`,
+          flags: [MessageFlags.Ephemeral],
+        });
+        return;
+      }
+
+      const buffer = await image.arrayBuffer();
+      await ctx.interaction.editReply({
+        files: [
+          new AttachmentBuilder(Buffer.from(buffer), {
+            name: "comparison.png",
+          }),
+        ],
+        components: [row],
       });
     },
   };
