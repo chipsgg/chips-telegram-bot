@@ -67,13 +67,6 @@ module.exports = (api) => {
         return ctx.sendForm(models.prices(currencies.value()));
       },
     },
-    promotions: {
-      description: "Ongoing promotions and events",
-      handler: async (ctx) => {
-        const activeRaces = await api._actions.public("listRunningPromotions");
-        return ctx.sendForm(models.events(activeRaces));
-      },
-    },
     vault: {
       description: "The vault and rewards related",
       handler: (ctx) => {
@@ -719,5 +712,33 @@ module.exports = (api) => {
     handler: (ctx) => ctx.sendForm(models.help(commands)),
   };
 
+  const loadedCommands = loadCommands(api);
+  Object.assign(commands, loadedCommands);
+
+  console.log(`Loaded ${Object.keys(commands).length} commands!`);
+
   return commands;
 };
+
+function loadCommands(api) {
+  const fs = require("fs");
+  const path = require("path");
+
+  const commands = {};
+  const dir = path.join(__dirname, "../commands");
+  const files = fs.readdirSync(dir);
+
+  for (const file of files) {
+    if (!file.endsWith(".js")) continue;
+
+    try {
+      const module = require(path.join(dir, file));
+      const command = module(api);
+      commands[command.name || file.replace(".js", "").trim()] = command;
+    } catch (error) {
+      console.error("Error loading command:", file, error);
+    }
+  }
+
+  return commands;
+}
