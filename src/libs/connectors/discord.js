@@ -96,57 +96,16 @@ module.exports = (token, commands) =>
           const command = commands[name];
           const options = [];
 
-          if (name === "user" || name === "stats") {
-            options.push({
-              name: "username",
-              description: "Username to look up",
-              type: 3,
-              required: true,
-            });
-          } else if (name === "promotion") {
-            options.push({
-              name: "promotionid",
-              description: "Promotion ID to look up",
-              type: 3,
-              required: true,
-            });
-          } else if (name === "bet") {
-            options.push({
-              name: "betid",
-              description: "Bet ID to look up",
-              type: 3,
-              required: true,
-            });
-          } else if (name === "auth" || name === "linkaccount") {
-            options.push(
-              {
-                name: "username",
-                description: "Your Chips.gg username",
-                type: 3,
-                required: true,
-              },
-              {
-                name: "totp",
-                description: "Your TOTP authentication code",
-                type: 3,
-                required: true,
-              }
-            );
-          } else if (name === "compare") {
-            options.push(
-              {
-                name: "username1",
-                description: "First username to compare",
-                type: 3,
-                required: true,
-              },
-              {
-                name: "username2",
-                description: "Second username to compare",
-                type: 3,
-                required: true,
-              }
-            );
+          for (const [name, settings] of Object.entries(
+            command.options ?? {}
+          )) {
+            const option = {
+              name,
+              description: settings.description,
+              type: settings.type,
+              required: settings.required,
+            };
+            options.push(option);
           }
 
           return {
