@@ -173,23 +173,25 @@ module.exports = async (token, commands) => {
 
         console.log("Attempting to start Telegram bot...");
         bot
-          .launch({
-            dropPendingUpdates: true,
-            allowedUpdates: ["message", "callback_query"],
-            polling: {
-              timeout: 30,
-              limit: 100,
+          .launch(
+            {
+              dropPendingUpdates: true,
+              allowedUpdates: ["message", "callback_query"],
+              polling: {
+                timeout: 30,
+                limit: 100,
+              },
             },
-          })
-          .then(() => {
-            console.log("Telegram bot started successfully");
-            console.log("Bot info:", bot.botInfo);
-            resolve({
-              broadcastText,
-              broadcastForm,
-              cleanup: () => bot.stop(),
-            });
-          })
+            () => {
+              console.log("Telegram bot started successfully");
+              console.log("Bot info:", bot.botInfo);
+              resolve({
+                broadcastText,
+                broadcastForm,
+                cleanup: () => bot.stop(),
+              });
+            }
+          )
           .catch(async (error) => {
             console.error("Failed to start Telegram bot. Details:", {
               errorName: error.name,
