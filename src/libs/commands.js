@@ -110,39 +110,6 @@ module.exports = (api) => {
         );
       },
     },
-    bigwins: {
-      description: "Ranking of players with big wins",
-      handler: (ctx) => {
-        const bigwins = api.get("stats", "bets", "bigwins");
-        const top = _.chain(bigwins)
-          .keys()
-          .map((id) => bigwins[id])
-          .filter(({ bet }) => _.keys(bet).length > 0)
-          .orderBy(({ bet }) => {
-            const currency = api.get("public", "currencies", bet.currency);
-            if (!currency) return 0; // Skip invalid currencies
-            return (
-              (bet.winnings / Math.pow(10, currency.decimals)) * currency.price
-            );
-          })
-          .reverse()
-          .uniqBy("userid")
-          .take(10)
-          .map((obj) => {
-            const currency = api.get("public", "currencies", obj.bet.currency);
-            if (!currency) return obj; // Skip currency conversion if data missing
-            const { price, decimals } = currency;
-            obj.bet.amountInDollar =
-              (obj.bet.amount / Math.pow(10, decimals)) * price;
-            obj.bet.winningsInDollar =
-              (obj.bet.winnings / Math.pow(10, decimals)) * price;
-            return obj;
-          })
-          .value();
-
-        return ctx.sendForm(models.bigwins(top));
-      },
-    },
     luckiest: {
       description: "Ranking of the luckiest players",
       handler: (ctx) => {
