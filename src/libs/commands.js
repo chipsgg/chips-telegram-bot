@@ -110,33 +110,6 @@ module.exports = (api) => {
         );
       },
     },
-    luckiest: {
-      description: "Ranking of the luckiest players",
-      handler: (ctx) => {
-        const luckiest = api.get("stats", "bets", "luckiest");
-        const top = _.chain(luckiest)
-          .keys()
-          .map((id) => luckiest[id])
-          .filter((obj) => _.keys(obj.bet).length > 0)
-          .orderBy((obj) => obj.bet.multiplier)
-          .reverse()
-          .uniqBy("userid")
-          .take(10)
-          .map((obj) => {
-            const currency = api.get("public", "currencies", obj.bet.currency);
-            obj.bet.amountInDollar =
-              (obj.bet.amount / Math.pow(10, currency.decimals)) *
-              currency.price;
-            obj.bet.winningsInDollar =
-              (obj.bet.winnings / Math.pow(10, currency.decimals)) *
-              currency.price;
-            return obj;
-          })
-          .value();
-
-        return ctx.sendForm(models.luckiest(top));
-      },
-    },
     linkaccount: {
       description: "Link your account to the site.",
       options: {
