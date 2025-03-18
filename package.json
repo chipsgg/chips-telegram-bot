@@ -7,7 +7,8 @@
   "author": "Chips.gg <admin@chips.gg>",
   "scripts": {
     "start": "node index.js",
-    "lint": "biome check --write"
+    "lint": "biome check --write",
+    "deploy": "node src/libs/deploy.js"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4"
@@ -28,8 +29,7 @@
     "markdown-it": "^14.1.0",
     "marked": "^4.0.10",
     "node-twitch": "^0.4.5",
-    "telegraf": "^4.4.1",
-    "telegraf-question": "^1.1.4",
+    "telegraf": "^4.16.3",
     "ws": "^8.18.0"
   }
 }
