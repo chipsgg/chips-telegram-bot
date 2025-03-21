@@ -7,18 +7,6 @@ module.exports = (api) => {
   assert(api, "requires api");
 
   const commands = {
-    slotcall: {
-      description: "Get a random slot",
-      handler: async (ctx) => {
-        const slot = await api.getRandomSlot();
-
-        return ctx.sendForm(
-          models.slotcall({
-            ...slot,
-          })
-        );
-      },
-    },
     prices: {
       description:
         "The different cryptocurrencies and their values in dollars. Usage: /prices [currency]",
