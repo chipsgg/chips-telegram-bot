@@ -8,7 +8,8 @@ const {
   ButtonStyle,
 } = require("discord.js");
 const discordMakeForm = (options) => {
-  const { emoji, title, content, footer, banner, url, buttonLabel } = options;
+  const { emoji, title, content, footer, banner, url, buttonLabel, files } =
+    options;
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setStyle(ButtonStyle.Link)
@@ -37,6 +38,7 @@ const discordMakeForm = (options) => {
     embeds: [embed],
     components: url && buttonLabel ? [row] : [],
     ephemeral: options.ephemeral || false,
+    files: files || [],
   };
 };
 
