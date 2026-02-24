@@ -24,7 +24,7 @@
     "express": "^4.21.2",
     "humanize-plus": "^1.8.2",
     "hyperid": "^2.3.1",
-    "ioredis": "^4.27.9",
+    "ioredis": "^5.0.0",
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",
     "marked": "^4.0.10",
