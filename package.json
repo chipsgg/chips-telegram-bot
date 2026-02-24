@@ -28,7 +28,7 @@
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",
     "marked": "^4.0.10",
-    "node-twitch": "^0.4.5",
+    "node-twitch": "^0.5.0",
     "telegraf": "^4.16.3",
     "ws": "^8.18.0"
   }
