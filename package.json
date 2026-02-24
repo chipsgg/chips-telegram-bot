@@ -14,7 +14,7 @@
     "@biomejs/biome": "1.9.4"
   },
   "dependencies": {
-    "@chipsgg/openservice-ws-client": "^1.0.34",
+    "@chipsgg/openservice-ws-client": "^4.0.0",
     "@coingecko/cryptoformat": "^0.4.4",
     "big.js": "^6.2.2",
     "dayjs": "^1.10.7",
