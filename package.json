@@ -16,7 +16,7 @@
   "dependencies": {
     "@chipsgg/openservice-ws-client": "^1.0.34",
     "@coingecko/cryptoformat": "^0.4.4",
-    "big.js": "^6.2.2",
+    "big.js": "^7.0.0",
     "dayjs": "^1.10.7",
     "discord.js": "^14.18.0",
     "dotenv": "^10.0.0",
