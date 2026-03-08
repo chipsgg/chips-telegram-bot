@@ -11,7 +11,7 @@
     "deploy": "node src/libs/deploy.js"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4"
+    "@biomejs/biome": "2.4.6"
   },
   "dependencies": {
     "@chipsgg/openservice-ws-client": "^1.0.34",
