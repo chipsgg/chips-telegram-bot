@@ -1,3 +1,10 @@
+/**
+ * Link Account Command
+ * Links a Discord or Telegram account to a Chips.gg account using
+ * a username and TOTP (time-based one-time password) verification code.
+ * On Discord, the reply is ephemeral to protect sensitive credentials.
+ * After successful linking, assigns the appropriate VIP role on Discord.
+ */
 const { ApplicationCommandOptionType, MessageFlags } = require("discord.js");
 
 module.exports = (api) => ({
@@ -19,6 +26,7 @@ module.exports = (api) => ({
   handler: async (ctx) => {
     let username, totpCode;
     if (ctx.platform === "discord") {
+      // Defer reply as ephemeral to hide sensitive TOTP info
       await ctx.interaction.deferReply({
         flags: [MessageFlags.Ephemeral],
       });
@@ -34,10 +42,11 @@ module.exports = (api) => ({
 
     if (!username || !totpCode) {
       return ctx.sendText(
-        "Please provide both username and TOTP code. Usage: /linkaccount username:YOUR_USERNAME totp:YOUR_CODE"
+        "Please provide both username and TOTP code. Usage: /linkaccount username:YOUR_USERNAME totp:YOUR_CODE",
       );
     }
 
+    // Build the linking payload with platform identity and TOTP code
     const payload = {
       platformid: ctx.userid.toString(),
       platform: ctx.platform,
@@ -46,21 +55,14 @@ module.exports = (api) => ({
     };
 
     try {
+      // Link the platform account via auth API and fetch player data
       const account = await api._actions.auth("linkPlatformID", payload);
+      const player = await api._actions.public("getPlayer", {
+        userid: account.userid,
+      });
 
-      const [player, vip] = await Promise.all([
-        api._actions.public("getUser", {
-          userid: account.userid,
-        }),
-        api._actions.public("getUserVipRank", {
-          userid: account.userid,
-        }),
-      ]);
-
-      console.log("Linking:", player, vip);
-
-      // Automatically assign the role in Discord after linking
-      await assignDiscordRole(ctx, vip.rank);
+      // Assign the corresponding Discord VIP role based on player rank
+      await assignDiscordRole(ctx, player.vip.rank);
 
       const response = {
         emoji: "🔐",
@@ -78,16 +80,23 @@ module.exports = (api) => ({
   },
 });
 
+/**
+ * Assigns a Discord VIP role to the user based on their Chips.gg rank.
+ * Verifies guild context and bot permissions before assigning.
+ */
 async function assignDiscordRole(ctx, rank) {
   try {
+    // Only applies to Discord platform
     if (ctx.platform !== "discord") return;
 
+    // Map the player rank to a Discord role ID
     const roleID = getRoleIdByRank(rank);
     if (!roleID) {
       console.warn(`No role ID found for rank: ${rank}`);
       return;
     }
 
+    // Fetch the guild (server) context
     const guild = await ctx.guild?.fetch();
     if (!guild) {
       console.warn("No guild context available");
@@ -102,12 +111,14 @@ async function assignDiscordRole(ctx, rank) {
       // }
     }
 
+    // Fetch the member from the guild
     const member = await guild.members.fetch(ctx.userid);
     if (!member) {
       console.warn(`Member ${ctx.userid} not found in guild`);
       return;
     }
 
+    // Verify the bot has permission to manage roles
     const { PermissionFlagsBits } = require("discord.js");
     const botMember = await guild.members.fetch(ctx.interaction.client.user.id);
     if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
@@ -125,6 +136,10 @@ async function assignDiscordRole(ctx, rank) {
   }
 }
 
+/**
+ * Maps a Chips.gg VIP rank name to its corresponding Discord role ID.
+ * Returns null if no matching role is found.
+ */
 function getRoleIdByRank(rank) {
   const roles = {
     flipper: "1106398232382291978",
@@ -137,7 +152,7 @@ function getRoleIdByRank(rank) {
   };
 
   const match = Object.keys(roles).find((key) =>
-    rank.toLowerCase().includes(key)
+    rank.toLowerCase().includes(key),
   );
   return match ? roles[match] : null;
 }

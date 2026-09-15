@@ -1,3 +1,9 @@
+/**
+ * Main entry point for the Chips.gg Bot application.
+ * Sets up the Express web server, initializes the Chips.gg SDK,
+ * loads bot commands, and starts Discord and Telegram connectors.
+ */
+
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
@@ -5,31 +11,38 @@ const SDK = require("./libs/sdk");
 const { makeBroadcast } = require("./libs/utils");
 const { Discord, Telegram } = require("./libs/connectors");
 const Commands = require("./libs/commands");
+const { getMetrics, trackCommand, trackMessage } = require("./libs/metrics");
 
+// Initialize Express application
 const app = express();
+
+// Configure view engine to use EJS templates
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+
+// Serve static files from public directory
 app.use(express.static(path.join(__dirname, "public")));
 
-// Routes
-const fs = require("fs");
-const MarkdownIt = require("markdown-it");
-const md = new MarkdownIt({
-  highlight: function (str, lang) {
-    return `<pre class="code-block"><code class="language-${lang}">${md.utils.escapeHtml(str)}</code></pre>`;
-  },
-});
-
-app.get("/", (_req, res) => {
-  const readmeContent = fs.readFileSync("README.md", "utf-8");
-  const renderedContent = md.render(readmeContent);
+// Route: Home page displaying bot metrics
+app.get("/", async (_req, res) => {
+  res.set("Cache-Control", "no-cache");
+  const metrics = await getMetrics();
   res.render("index", {
     title: "Chips.gg Bot",
-    content: renderedContent,
+    metrics,
   });
 });
 
+// Route: API endpoint for retrieving metrics in JSON format
+app.get("/api/metrics", async (_req, res) => {
+  res.set("Cache-Control", "no-cache");
+  const metrics = await getMetrics();
+  res.json(metrics);
+});
+
+// Route: Commands page displaying all available bot commands
 app.get("/commands", (_req, res) => {
+  res.set("Cache-Control", "no-cache");
   const commands = Commands({});
   res.render("commands", {
     title: "Available Commands",
@@ -40,8 +53,9 @@ app.get("/commands", (_req, res) => {
   });
 });
 
-// Bot setup
+// Initialize SDK and start bot connectors
 (async () => {
+  // Initialize Chips.gg SDK with authentication token
   const api = await SDK(process.env.CHIPS_TOKEN);
 
   if (!api) {
@@ -49,14 +63,13 @@ app.get("/commands", (_req, res) => {
     return;
   }
 
+  // Load all available bot commands with API context
   const commands = Commands(api);
   const connectors = [];
 
-  // API endpoint for executing commands
+  // Route: API endpoint for executing bot commands via HTTP
   app.get("/api/command/:name", async (req, res) => {
     const { name } = req.params;
-    // const { username } = req.query;
-
     const command = commands[name];
     if (!command) {
       return res.status(404).json({ error: "Command not found" });
@@ -67,28 +80,30 @@ app.get("/commands", (_req, res) => {
         platform: "api",
         sendForm: (form) => form,
         sendText: (text) => ({ text }),
-        // getArg: req.query
         getString: (key) => req.query[key],
+        getArg: () => null,
       };
 
       const result = await command.handler(ctx);
+      await trackCommand("api");
+      await trackMessage();
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  const port = process.env.PORT || 3000;
+  // Start Express web server
+  const port = process.env.PORT || 5000;
   app.listen(port, "0.0.0.0", () => {
     console.log(`Web server and bot running on port ${port}`);
   });
 
-  // START THE BOTS
-
+  // Initialize Telegram bot connector if token is provided
   if (process.env.TELEGRAM_TOKEN) {
     console.log(
       "Initializing Telegram bot with token length:",
-      process.env.TELEGRAM_TOKEN?.length
+      process.env.TELEGRAM_TOKEN?.length,
     );
     const telegram = await Telegram(process.env.TELEGRAM_TOKEN, commands);
     if (telegram) {
@@ -98,6 +113,7 @@ app.get("/commands", (_req, res) => {
     console.log("No Telegram token provided");
   }
 
+  // Initialize Discord bot connector if token is provided
   if (process.env.DISCORD_TOKEN) {
     try {
       const discord = await Discord(process.env.DISCORD_TOKEN, commands);
@@ -112,6 +128,7 @@ app.get("/commands", (_req, res) => {
     }
   }
 
+  // Create broadcast helper functions for sending messages to all connectors
   const _broadcastText = makeBroadcast(connectors, "broadcastText");
   const _broadcastForm = makeBroadcast(connectors, "broadcastForm");
 })();

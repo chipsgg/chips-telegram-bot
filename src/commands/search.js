@@ -1,3 +1,8 @@
+/**
+ * Search Command
+ * Searches the Chips.gg game catalog by a query term.
+ * Returns up to 5 matching games with their title, provider, and ID.
+ */
 const { ApplicationCommandOptionType } = require("discord.js");
 
 module.exports = (api) => ({
@@ -11,6 +16,7 @@ module.exports = (api) => ({
     },
   },
   handler: async (ctx) => {
+    // Extract search query based on platform
     let query = null;
     if (ctx.platform === "discord" || ctx.platform === "api") {
       query = ctx?.getString("query");
@@ -25,6 +31,7 @@ module.exports = (api) => ({
     }
 
     try {
+      // Search for games via the public API (limited to 5 results)
       const games = await api._actions.public("searchGames", {
         skip: 0,
         limit: 5,
@@ -41,6 +48,7 @@ module.exports = (api) => ({
         });
       }
 
+      // Format each game result with title, provider, and ID
       const gameList = games
         .map(
           (game, index) =>

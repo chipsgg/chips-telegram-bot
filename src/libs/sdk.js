@@ -1,3 +1,9 @@
+/**
+ * Chips.gg WebSocket SDK Client
+ * Establishes and manages a persistent WebSocket connection to the Chips.gg API,
+ * providing authenticated access to platform services including community chat,
+ * game data, affiliates, stats, and profitshare channels.
+ */
 const WS = require("ws");
 const Client = require("@chipsgg/openservice-ws-client");
 const lodash = require("lodash");
@@ -7,6 +13,7 @@ const { sleep } = require("./utils");
 module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   let state = {};
 
+  // WebSocket channels to subscribe to on the Chips.gg platform
   const channels = [
     "games",
     "public",
@@ -16,9 +23,10 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     "stats",
     "profitshare",
     "community",
+    "backoffice",
   ];
 
-  // if current token fails, fallback to a new token assigned to us
+  // Authenticate with the Chips.gg API; if the provided token fails, request a new one
   async function Authenticate(actions, tokenid) {
     if (!tokenid) {
       return Authenticate(actions, await actions.auth("token"));
@@ -33,6 +41,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
       });
   }
 
+  // Initialize the WebSocket client and handle connection lifecycle events
   const { actions } = await Client(
     WS,
     {
@@ -72,7 +81,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
           break;
         }
       }
-    }
+    },
   );
 
   // actions.community('replyToChatMessage', {
@@ -90,17 +99,8 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
   // })
 
   // shorthand
-  const listRaceRanks = (raceid) => actions.public("listRaceRanks", { raceid });
-  const listRacePrizes = (raceid) =>
-    actions.public("listRacePrizes", { raceid });
-  const listActiveRaces = (skip = 0, limit = 100) =>
-    actions.public("listActiveRaces", { skip, limit });
-  const listDoneRaces = (skip = 0, limit = 100) =>
-    actions.public("listDoneRaces", { skip, limit });
-  const listSlotCategories = () => actions.public("listSlotCategories");
-  const listSlotsByCategory = (args) =>
-    actions.public("listSlotsByCategory", args);
 
+  // Fetch the most played games and return a random slot from the list
   async function getRandomSlot() {
     const slots = await actions.public("listGamesMostPlayed", {
       skip: 0,
@@ -109,7 +109,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     return lodash.sample(slots.filter((x) => x.tags.includes("slots")));
   }
 
-  // pick a random slot and send it to chat.
+  // Publish a random slot pick to the community chat with up/down reaction buttons
   const sendRngSlotChat = async (rngGame) => {
     const msg = await actions.community("publishChatMessage", {
       type: "game",
@@ -135,10 +135,10 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     });
   };
 
-  // NOTE: Login Client SDK
+  // Perform initial authentication with the provided token
   const { userid, tokenid: _tokenid } = await Authenticate(
     actions,
-    CHIPS_TOKEN
+    CHIPS_TOKEN,
   );
 
   // console.log("sdk:auth", {
@@ -191,7 +191,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     // tick();
   }
 
-  // subscriptions
+  // Periodically re-subscribe to real-time data feeds (profitshare, bets, chat)
   setInterval(() => {
     actions.profitshare("on", { name: "profitshareInfo" });
     actions.profitshare("on", { name: "profitshareBalance" });
@@ -201,6 +201,23 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     actions.community("on", { name: "chats", path: ["public"] });
   }, 1000);
 
+  // Public API helper methods for races, slots, affiliates, and user lookups
+  const listRaceRanks = (raceid) => actions.public("listRaceRanks", { raceid });
+  const listRacePrizes = (raceid) =>
+    actions.public("listRacePrizes", { raceid });
+  const listActiveRaces = (skip = 0, limit = 100) =>
+    actions.public("listActiveRaces", { skip, limit });
+  const listDoneRaces = (skip = 0, limit = 100) =>
+    actions.public("listDoneRaces", { skip, limit });
+  const listSlotCategories = () => actions.public("listSlotCategories");
+  const listSlotsByCategory = (args) =>
+    actions.public("listSlotsByCategory", args);
+  const listAffiliateCampaigns = (userid) =>
+    actions.affiliates("listAffiliateCampaigns", { userid });
+  const getUserByPlatformID = (platform, platformid) =>
+    actions.auth("getUserByPlatformID", { platformid, platform });
+
+  // Exported SDK interface exposing state access and platform query methods
   return {
     _actions: actions,
     state: () => state,
@@ -212,5 +229,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     listDoneRaces,
     listSlotCategories,
     listSlotsByCategory,
+    listAffiliateCampaigns,
+    getUserByPlatformID,
   };
 };

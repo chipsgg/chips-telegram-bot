@@ -1,3 +1,8 @@
+/**
+ * Bet Command
+ * Displays a bet card/banner image for a specific bet by its ID.
+ * The banner image is fetched from stats.chips.gg/bets/{betId}.
+ */
 const { ApplicationCommandOptionType } = require("discord.js");
 
 module.exports = () => ({
@@ -11,6 +16,7 @@ module.exports = () => ({
     },
   },
   handler: async (ctx) => {
+    // Extract bet ID based on platform
     let betId = null;
     if (ctx.platform === "discord") {
       betId = ctx?.getString("betid");
@@ -24,6 +30,7 @@ module.exports = () => ({
       }
     }
 
+    // Display the bet card banner image
     return ctx.sendForm({
       emoji: "🎲",
       title: `Bet: ${betId}`,

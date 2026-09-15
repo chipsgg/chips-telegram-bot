@@ -14,6 +14,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
     "stats",
     "profitshare",
     "community",
+    "backoffice",
   ];
 
   // if current token fails, fallback to a new token assigned to us
@@ -72,7 +73,7 @@ module.exports = async (CHIPS_TOKEN, emit = (x) => x) => {
           break;
         }
       }
-    }
+    },
   );
 
   // // actions.community('replyToChatMessage', {

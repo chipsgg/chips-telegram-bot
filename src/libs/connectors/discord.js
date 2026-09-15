@@ -1,3 +1,8 @@
+/**
+ * Discord Bot Connector
+ * Manages the Discord bot lifecycle including client initialization, slash command
+ * registration, interaction handling, and message broadcasting across guilds.
+ */
 const _ = require("lodash");
 const {
   Client,
@@ -7,6 +12,8 @@ const {
   EmbedBuilder,
   ButtonStyle,
 } = require("discord.js");
+const { trackCommand, trackMessage } = require("../metrics");
+// Build a Discord embed message with optional button, banner image, and footer
 const discordMakeForm = (options) => {
   const { emoji, title, content, footer, banner, url, buttonLabel, files } =
     options;
@@ -42,6 +49,7 @@ const discordMakeForm = (options) => {
   };
 };
 
+// Context wrapper that normalizes Discord interactions into a unified command interface
 const WrapperDiscord = (context, _client) => {
   console.log("WrapperDiscord", context);
 
@@ -77,8 +85,10 @@ const WrapperDiscord = (context, _client) => {
   };
 };
 
+// Initialize the Discord client, register slash commands, and wire up event handlers
 module.exports = (token, commands) =>
   new Promise((resolve, reject) => {
+    // Create client with required gateway intents for guild messages and reactions
     const client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
@@ -94,6 +104,7 @@ module.exports = (token, commands) =>
       console.log(`[DISCORD]: Logged in as ${client.user.tag}!`);
 
       try {
+        // Transform command definitions into Discord application command format
         const commandData = _.map(_.keys(commands), (name) => {
           const command = commands[name];
           const options = [];
@@ -117,7 +128,7 @@ module.exports = (token, commands) =>
           };
         });
 
-        // Check if we need to register commands
+        // Compare existing registered commands with current definitions to avoid unnecessary updates
         await client.application?.commands.fetch();
         let registrationNeeded = false;
 
@@ -173,6 +184,7 @@ module.exports = (token, commands) =>
       }
     });
 
+    // Handle incoming slash command interactions
     client.on("interactionCreate", async (ctx) => {
       try {
         if (!ctx.isCommand()) return;
@@ -184,6 +196,8 @@ module.exports = (token, commands) =>
         }
         const wrapper = WrapperDiscord(ctx, client);
         await Promise.resolve(command.handler(wrapper));
+        await trackCommand("discord");
+        await trackMessage();
       } catch (error) {
         if (error.code === 10062) {
           console.warn("Interaction expired:", error.message);
@@ -200,6 +214,7 @@ module.exports = (token, commands) =>
         }
       }
     });
+    // Broadcast a message to the first available text channel in each guild
     const broadcast = (form) => {
       try {
         client.guilds.cache.forEach((guild) => {

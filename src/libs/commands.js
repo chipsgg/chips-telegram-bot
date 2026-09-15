@@ -1,3 +1,8 @@
+/**
+ * Command Loader and Registry
+ * Registers the built-in help command and dynamically loads all command
+ * modules from the src/commands directory into a unified commands map.
+ */
 const assert = require("assert");
 const _ = require("lodash");
 const models = require("./models");
@@ -7,7 +12,7 @@ module.exports = (api) => {
 
   const commands = {};
 
-  // Help command is defined here for easy access to the commands object
+  // Register the help command inline so it has direct access to the commands map
   commands.help = {
     description: "Description of all commands",
     handler: (ctx) => ctx.sendForm(models.help(commands)),
@@ -17,10 +22,12 @@ module.exports = (api) => {
   Object.assign(commands, loadedCommands);
 
   console.log(`Loaded ${Object.keys(commands).length} commands!`);
+  console.log(Object.keys(commands));
 
   return commands;
 };
 
+// Dynamically load all .js command files from the commands directory
 function loadCommands(api) {
   const fs = require("fs");
   const path = require("path");

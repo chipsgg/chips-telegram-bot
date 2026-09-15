@@ -1,3 +1,10 @@
+/**
+ * Compare Command
+ * Compares two users' stats side-by-side using a generated comparison image
+ * from stats.chips.gg. On Discord, the image is fetched, validated, and
+ * uploaded as an attachment with profile link buttons for both users.
+ * On other platforms, the banner URL is sent directly.
+ */
 const {
   ApplicationCommandOptionType,
   MessageFlags,
@@ -24,6 +31,8 @@ module.exports = () => ({
   },
   handler: async (ctx) => {
     let username1, username2;
+
+    // Non-Discord platforms: send the comparison banner URL directly
     if (ctx.platform !== "discord") {
       username1 = ctx?.getArg(1);
       username2 = ctx?.getArg(2);
@@ -40,12 +49,14 @@ module.exports = () => ({
       });
     }
 
+    // Discord: extract usernames from slash command options
     username1 = ctx?.getString("username1");
     username2 = ctx?.getString("username2");
     if (!username1 || !username2) {
       return ctx.sendText("Please provide both usernames to compare");
     }
 
+    // Build profile link buttons for both users
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setStyle(ButtonStyle.Link)
@@ -57,9 +68,12 @@ module.exports = () => ({
         .setURL("https://chips.gg/user/" + username2)
     );
 
+    // Fetch the comparison image from stats service
     const image = await fetch(
       `https://stats.chips.gg/compare/${username1}/${username2}`
     );
+
+    // Validate the response is a valid image
     if (!image.ok || !image.headers.get("content-type").startsWith("image/")) {
       await ctx.interaction.deleteReply();
       await ctx.interaction.followUp({
@@ -69,6 +83,7 @@ module.exports = () => ({
       return;
     }
 
+    // Upload the image as a Discord attachment
     const buffer = await image.arrayBuffer();
     await ctx.interaction.editReply({
       files: [

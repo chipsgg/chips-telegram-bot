@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+.neon-casino-theme {
+  --neon-pink: 326 100% 60%;
+  --neon-blue: 195 100% 50%;
+  --neon-purple: 270 100% 60%;
+  --dark-bg: 240 10% 4%;
+  --surface: 240 10% 8%;
+  
+  font-family: 'Rajdhani', sans-serif;
+  background-color: hsl(var(--dark-bg));
+  color: white;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+.font-display {
+  font-family: 'Orbitron', sans-serif;
+}
+
+.text-glow-pink {
+  text-shadow: 0 0 10px hsl(var(--neon-pink) / 0.8), 0 0 20px hsl(var(--neon-pink) / 0.5);
+}
+
+.text-glow-blue {
+  text-shadow: 0 0 10px hsl(var(--neon-blue) / 0.8), 0 0 20px hsl(var(--neon-blue) / 0.5);
+}
+
+.box-glow-pink {
+  box-shadow: 0 0 20px hsl(var(--neon-pink) / 0.3), inset 0 0 10px hsl(var(--neon-pink) / 0.2);
+  border: 1px solid hsl(var(--neon-pink) / 0.5);
+}
+
+.box-glow-blue {
+  box-shadow: 0 0 20px hsl(var(--neon-blue) / 0.3), inset 0 0 10px hsl(var(--neon-blue) / 0.2);
+  border: 1px solid hsl(var(--neon-blue) / 0.5);
+}
+
+.box-glow-purple {
+  box-shadow: 0 0 20px hsl(var(--neon-purple) / 0.3), inset 0 0 10px hsl(var(--neon-purple) / 0.2);
+  border: 1px solid hsl(var(--neon-purple) / 0.5);
+}
+
+.bg-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.8;
+    filter: brightness(1.2);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 4s infinite ease-in-out;
+}
+
+/* Custom Scrollbar */
+.neon-casino-theme::-webkit-scrollbar {
+  width: 10px;
+}
+.neon-casino-theme::-webkit-scrollbar-track {
+  background: hsl(var(--dark-bg));
+}
+.neon-casino-theme::-webkit-scrollbar-thumb {
+  background: hsl(var(--neon-purple) / 0.5);
+  border-radius: 5px;
+}
+.neon-casino-theme::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--neon-pink));
+}

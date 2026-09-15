@@ -1,6 +1,20 @@
+/**
+ * Shared Utility Functions
+ * Common helpers used across the bot for formatting, file system operations,
+ * broadcasting, rate limiting, and general-purpose data structures.
+ */
 const _ = require("lodash");
 const fs = require("fs");
 
+// Format a number as a USD string with two decimal places
+exports.formatUsd = (num) => {
+  return num.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+// Format a date into DD-MM-YYYY HH:00 UTC string
 exports.formatDate = (date) => {
   var d = new Date(date),
     month = "" + (d.getMonth() + 1),
@@ -19,24 +33,27 @@ exports.formatDate = (date) => {
   return cd;
 };
 
+// Format a number with a variable number of decimal places (min 2, max 8)
 exports.convertDecimals = (num, decimals) =>
   Number(num).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: decimals < 2 ? 2 : Math.min(8, decimals),
   });
 
+// Return an array of subdirectory names within the given path
 exports.getDirectories = (path) => {
   return fs.readdirSync(path).filter(function (file) {
     return fs.statSync(path + "/" + file).isDirectory();
   });
 };
 
+// Create a broadcast function that invokes a named method across all connectors
 exports.makeBroadcast =
   (listMethods, funcName) =>
   (...args) =>
     _.forEach(listMethods, (methods) => _.get(methods, funcName)(...args));
+// Fixed-size stack that evicts the oldest items when the max capacity is reached
 exports.Stack = class {
-  // Array is used to implement stack
   constructor(maxsize) {
     this.stack = [];
     this.maxsize = maxsize;
@@ -76,9 +93,12 @@ exports.Stack = class {
   }
 };
 
+// Return a promise that resolves after t milliseconds
 exports.sleep = (t) => new Promise((resolve) => setTimeout(resolve, t));
+// In-memory rate limiter keyed by user ID
 const rateLimit = new Map();
 
+// Returns true if the user is allowed to proceed; false if within the cooldown window
 function checkRateLimit(userId, limitMs = 1000) {
   const now = Date.now();
   const lastRequest = rateLimit.get(userId) || 0;

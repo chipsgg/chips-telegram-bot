@@ -1,0 +1,50 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "VVA2ryMFW7d_Nepg3IRF2"
+uri = "file://artifacts/mockup-sandbox/public/images/crypto-terminal-bg.png"
+type = "image"
+title = "Terminal background"
+
+[[generated]]
+id = "81qgtSt6TUM9mkK5sbF5Z"
+uri = "file://artifacts/mockup-sandbox/public/images/crypto-terminal-hero.png"
+type = "image"
+title = "Terminal hero graphic"
+
+[[generated]]
+id = "_KMjsahYqXoQriyQiEDso"
+uri = "file://artifacts/mockup-sandbox/public/images/neon-chips-bg.png"
+type = "image"
+title = "neon casino chips background"
+
+[[generated]]
+id = "rbAgYzlSITJnP8GhWSv3R"
+uri = "file://artifacts/mockup-sandbox/public/images/neon-big-win.png"
+type = "image"
+title = "glowing slot machine big win"
+
+[[generated]]
+id = "xp93ou6SreWERp8XcHuvC"
+uri = "file://artifacts/mockup-sandbox/public/images/neon-bot-avatar.png"
+type = "image"
+title = "neon crypto bot avatar"
+
+[[generated]]
+id = "wvlYgQe-sq2fuGcs03zGZ"
+uri = "file://artifacts/mockup-sandbox/public/images/vip-hero-bg.png"
+type = "image"
+title = "vip hero background"
+
+[[generated]]
+id = "0nFTUnEZu4sSeIcv1W7mq"
+uri = "file://artifacts/mockup-sandbox/public/images/vip-gold-chip.png"
+type = "image"
+title = "vip gold chip icon"
+
+[[generated]]
+id = "lAZ1foQzFu8BwDEMZ2UmN"
+uri = "file://artifacts/mockup-sandbox/public/images/vip-bg-texture.png"
+type = "image"
+title = "vip velvet texture"

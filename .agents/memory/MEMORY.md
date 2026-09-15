@@ -1,0 +1,2 @@
+- [Screenshotting mockup previews](mockup-preview-screenshots.md) — app_preview defaults to port 5000 (main app → "Cannot GET /__mockup/"); pass the vite preview port explicitly.
+- [Live demo command behavior](chips-live-demo.md) — /api/command demo runs real handlers with no args; arg-required commands (promotions, search) error by design, not a regression.

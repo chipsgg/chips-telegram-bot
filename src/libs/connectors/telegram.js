@@ -1,16 +1,25 @@
+/**
+ * Telegram Bot Connector
+ * Manages the Telegram bot lifecycle using Telegraf, including command registration,
+ * message handling, group tracking, polling with reconnect logic, and broadcasting.
+ */
 const assert = require("assert");
 const _ = require("lodash");
 const marked = require("marked");
 const { Telegraf } = require("telegraf");
+const { trackCommand, trackMessage } = require("../metrics");
 
+// Parse inline markdown and sanitize line breaks for Telegram HTML messages
 const parseAndClean = (content) =>
   _.replace(marked.parseInline(_.trim(content)), "<br>", "\n");
 
+// Build an HTML-formatted message string for Telegram with emoji, title, content, and footer
 const telegramMakeForm = ({ emoji, title, content, footer }) => `${_.trim(
   emoji
 )} <strong>${_.trim(title)}</strong> ${_.trim(emoji)}
 ${parseAndClean(content)}${footer ? `\n\n${parseAndClean(footer)}` : ""}`;
 
+// Context wrapper that normalizes Telegram messages into a unified command interface
 const WrapperTelegram = (context) => {
   console.log("WrapperTelegram", context);
 
@@ -70,11 +79,13 @@ const WrapperTelegram = (context) => {
   };
 };
 
+// Track bot instance and reconnection state for graceful restarts
 let botInstance = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 5000;
 
+// Launch the Telegram bot with polling, register command handlers, and set up broadcasting
 module.exports = async (token, commands) => {
   const startBot = async () => {
     try {
@@ -112,6 +123,8 @@ module.exports = async (token, commands) => {
 
             const wrapper = WrapperTelegram(ctx);
             await Promise.resolve(commands[commandName].handler(wrapper));
+            await trackCommand("telegram");
+            await trackMessage();
           });
         });
 
@@ -125,6 +138,7 @@ module.exports = async (token, commands) => {
           }
         });
 
+        // Send a plain HTML text message to all tracked groups
         function broadcastText(message) {
           assert(message, "requires message");
           _.forEach(allGroups, (groupId) =>
@@ -134,6 +148,7 @@ module.exports = async (token, commands) => {
           );
         }
 
+        // Broadcast a rich form (with optional banner image) to all tracked groups
         function broadcastForm(options) {
           const { banner, url, buttonLabel } = options;
           const caption = telegramMakeForm(options);
@@ -200,6 +215,7 @@ module.exports = async (token, commands) => {
               description: error.response?.description,
             });
 
+            // On 409 conflict (another instance running), retry with backoff
             if (
               error.response?.error_code === 409 &&
               reconnectAttempts < MAX_RECONNECT_ATTEMPTS

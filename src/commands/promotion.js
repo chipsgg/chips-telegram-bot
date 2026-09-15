@@ -1,3 +1,9 @@
+/**
+ * Promotion Command
+ * Displays a single promotion's banner image by its promotion ID.
+ * Fetches promotion details from the public API and renders the
+ * banner from stats.chips.gg with a link to the promotion page.
+ */
 const { ApplicationCommandOptionType } = require("discord.js");
 
 module.exports = (api) => ({
@@ -11,6 +17,7 @@ module.exports = (api) => ({
     },
   },
   handler: async (ctx) => {
+    // Extract promotion ID based on platform
     let promotionId = null;
     if (ctx.platform === "discord") {
       promotionId = ctx?.getString("promotionid");
@@ -25,11 +32,13 @@ module.exports = (api) => ({
     }
 
     try {
+      // Fetch promotion details from the public API
       const promotion = await api._actions.public("getPromotion", {
         // game: "promotion",
         gameid: promotionId, // roomid replaced with gameid when old game
       });
 
+      // Display the promotion banner with a link to the full page
       return ctx.sendForm({
         emoji: "🎉",
         title: promotion.title,

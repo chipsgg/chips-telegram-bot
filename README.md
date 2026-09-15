@@ -30,37 +30,6 @@ A powerful Discord and Telegram bot for the Chips.gg gaming platform that brings
 - 🔗 Link your account using `/auth`
 - ❓ View all commands with `/help`
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js
-- Discord bot token and/or Telegram bot token
-- Chips.gg API token
-
-### Environment Setup
-Create a `.env` file with:
-
-```ini
-HTTP_PORT=3000          # Web interface port
-CHIPS_TOKEN=your_token  # Chips.gg API token
-DISCORD_TOKEN=your_token       # Discord bot token
-TELEGRAM_TOKEN=your_token      # Telegram bot token
-alertInterval=60000            # Alert interval in milliseconds
-alertMinimumDollar=1000       # Minimum dollar amount for alerts
-alertMinimumMultiplier=100    # Minimum multiplier for alerts
-```
-
-### Quick Start
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. Start the bot:
-```bash
-npm start
-```
-
 ## 🔐 Authentication
 
 Link your platform account:

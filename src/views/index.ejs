@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,47 +6,346 @@
   <meta name="description" content="Chips.gg Bot - Your gaming companion for cryptocurrency prices, user stats, and game recommendations">
   <meta name="keywords" content="chips.gg, gaming, cryptocurrency, bot, stats, prices">
   <meta name="robots" content="index, follow">
-  
+
   <meta property="og:title" content="<%= title %>">
   <meta property="og:description" content="Chips.gg Bot - Your gaming companion for cryptocurrency prices, user stats, and game recommendations">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Chips.gg Bot">
-  
+
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
 </head>
 <body>
-  <header class="hero">
-    <div class="hero-content">
-      <div class="hero-badges">
-        <a href="https://github.com/chipsgg/chips-telegram-bot" class="hero-badge-link">
-          <div class="hero-badge">VERIFIED BOT</div>
+  <div class="bg-glow"></div>
+
+  <!-- NAV -->
+  <nav class="term-nav">
+    <div class="nav-brand">
+      <span class="wordmark glitch" data-text="CHIPS.GG">CHIPS.GG</span>
+      <span class="verified-badge"><span class="verified-dot blink"></span>VERIFIED BOT</span>
+    </div>
+    <div class="nav-links">
+      <a href="#demo">[ DEMO ]</a>
+      <a href="#features">[ FEATURES ]</a>
+      <a href="#auth">[ AUTH ]</a>
+      <a href="/commands">[ COMMANDS ]</a>
+    </div>
+  </nav>
+
+  <!-- TICKER -->
+  <div class="ticker">
+    <div class="ticker-track">
+      <span>BTC $64,231.00 <span class="ticker-up">&#9650;2.4%</span></span>
+      <span>ETH $3,412.50 <span class="ticker-up">&#9650;1.1%</span></span>
+      <span>SOL $142.10 <span class="ticker-down">&#9660;0.8%</span></span>
+      <span>CHIP $0.05 <span class="ticker-up">&#9650;12.4%</span></span>
+      <span class="ticker-sys">// SYSTEM ONLINE //</span>
+      <span>BTC $64,231.00 <span class="ticker-up">&#9650;2.4%</span></span>
+      <span>ETH $3,412.50 <span class="ticker-up">&#9650;1.1%</span></span>
+      <span>SOL $142.10 <span class="ticker-down">&#9660;0.8%</span></span>
+      <span>CHIP $0.05 <span class="ticker-up">&#9650;12.4%</span></span>
+      <span class="ticker-sys">// SYSTEM ONLINE //</span>
+    </div>
+  </div>
+
+  <main class="term-main">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-text">
+        <p class="hero-prompt">root@chips-bot:~# ./initialize_companion.sh</p>
+        <h1>YOUR ULTIMATE<br>GAMING &amp; CRYPTO<br>COMPANION.</h1>
+        <div class="hero-typebox">
+          <span id="typewriter" data-text="> Bringing the Chips.gg crypto-casino directly into your Discord and Telegram. Real-time prices, stats, and alpha."></span><span class="cursor">_</span>
+        </div>
+        <div class="hero-cta">
+          <a href="https://discord.com/oauth2/authorize?client_id=901908108136308757&permissions=0&scope=bot%20applications.commands" class="term-btn term-btn-filled">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            [ ADD TO DISCORD ]
+          </a>
+          <a href="http://t.me/chipsgg_dev_bot" class="term-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+            [ ADD TO TELEGRAM ]
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <img src="/crypto-terminal-hero.png" alt="Chips.gg data visualization">
+        <div class="hero-visual-stats">
+          <div><span class="muted">STATUS:</span> <span class="blink">CONNECTED</span></div>
+          <div><span class="muted">LATENCY:</span> 12ms</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">COMMANDS RUN</div>
+        <div class="stat-value"><span class="stat-prefix">&gt;</span><span id="commands-count"><%= (metrics.commands_executed || 0).toLocaleString('en-US') %></span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">MESSAGES SENT</div>
+        <div class="stat-value"><span class="stat-prefix">&gt;</span><span id="messages-count"><%= (metrics.messages_sent || 0).toLocaleString('en-US') %></span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">DISCORD CMDS</div>
+        <div class="stat-value"><span class="stat-prefix">#</span><span id="discord-count"><%= (metrics.discord_commands || 0).toLocaleString('en-US') %></span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TELEGRAM CMDS</div>
+        <div class="stat-value"><span class="stat-prefix">@</span><span id="telegram-count"><%= (metrics.telegram_commands || 0).toLocaleString('en-US') %></span></div>
+      </div>
+    </section>
+
+    <!-- LIVE DEMO -->
+    <section id="demo">
+      <div class="section-head">
+        <h2>/// LIVE_DEMO.EXE</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="demo-layout">
+        <div class="demo-commands">
+          <div class="demo-commands-label">Select Command:</div>
+          <button class="demo-btn" data-command="prices"><span class="demo-btn-cmd">/prices</span><span class="demo-btn-desc">Crypto prices</span></button>
+          <button class="demo-btn" data-command="slotcall"><span class="demo-btn-cmd">/slotcall</span><span class="demo-btn-desc">Random slot pick</span></button>
+          <button class="demo-btn" data-command="mostplayed"><span class="demo-btn-cmd">/mostplayed</span><span class="demo-btn-desc">Top games</span></button>
+          <button class="demo-btn" data-command="bigwins"><span class="demo-btn-cmd">/bigwins</span><span class="demo-btn-desc">Biggest wins</span></button>
+          <button class="demo-btn" data-command="luckiest"><span class="demo-btn-cmd">/luckiest</span><span class="demo-btn-desc">Luckiest players</span></button>
+          <button class="demo-btn" data-command="koth"><span class="demo-btn-cmd">/koth</span><span class="demo-btn-desc">King of the Hill</span></button>
+          <button class="demo-btn" data-command="promotions"><span class="demo-btn-cmd">/promotions</span><span class="demo-btn-desc">Live promos</span></button>
+          <button class="demo-btn" data-command="stats" data-query="username=tacyarg"><span class="demo-btn-cmd">/stats</span><span class="demo-btn-desc">Player stats</span></button>
+        </div>
+
+        <div class="demo-window">
+          <div class="demo-window-bar">
+            <div class="demo-dots">
+              <span class="d-red"></span><span class="d-yellow"></span><span class="d-green"></span>
+            </div>
+            <div class="demo-window-title">bash &mdash; <span id="demo-active-cmd">chips-bot</span> &mdash; 80x24</div>
+          </div>
+          <div class="demo-result" id="demo-result">
+            <div class="demo-placeholder">guest@chips:~$ _ select a command to execute</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+      <div class="section-head">
+        <h2>/// MODULES_OVERVIEW</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-head">
+            <div class="feature-icon">&gt;_</div>
+            <div>
+              <h3 class="feature-title">Real-time Gaming Info</h3>
+              <div class="feature-cmds"><code>/slotcall</code><code>/mostplayed</code><code>/koth</code></div>
+            </div>
+          </div>
+          <p class="feature-desc">Instantly query active game states, random slot recommendations, and King of the Hill status directly from the casino core.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-head">
+            <div class="feature-icon">#</div>
+            <div>
+              <h3 class="feature-title">Player Stats &amp; Rankings</h3>
+              <div class="feature-cmds"><code>/bigwins</code><code>/luckiest</code><code>/stats</code><code>/banner</code></div>
+            </div>
+          </div>
+          <p class="feature-desc">Track the degens. Pull high roller leaderboards, luckiest RTP metrics, and generate visual stat banners on demand.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-head">
+            <div class="feature-icon">~</div>
+            <div>
+              <h3 class="feature-title">Platform Updates</h3>
+              <div class="feature-cmds"><code>/promotions</code><code>/prices</code><code>/search</code></div>
+            </div>
+          </div>
+          <p class="feature-desc">Stay plugged into live crypto market feeds, active platform promotions, and instantly search the entire game catalog.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-head">
+            <div class="feature-icon">@</div>
+            <div>
+              <h3 class="feature-title">Community Tools</h3>
+              <div class="feature-cmds"><code>/chat</code><code>/auth</code><code>/help</code></div>
+            </div>
+          </div>
+          <p class="feature-desc">Securely link your platform account, access help directories, and connect with the broader Chips community.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AUTH -->
+    <section id="auth">
+      <div class="section-head">
+        <h2>/// SECURE_AUTH</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="auth-panel">
+        <p class="auth-intro">Link your Chips.gg account securely to enable advanced tracking and personalized stats. Requires 2FA/TOTP enabled on your main account.</p>
+        <div class="auth-steps">
+          <div class="auth-step">
+            <span class="step-num">01.</span>
+            <span class="step-text">Enable 2FA/TOTP on your Chips.gg account settings.</span>
+          </div>
+          <div class="auth-step">
+            <span class="step-num">02.</span>
+            <div class="step-text">
+              Run the auth command in any supported channel:
+              <div class="auth-cmd"><code>/auth username:<span class="arg">YOUR_NAME</span> totp:<span class="arg">YOUR_CODE</span></code></div>
+            </div>
+          </div>
+          <div class="auth-step">
+            <span class="step-num">03.</span>
+            <span class="step-text">Await system confirmation of successful handshake.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUPPORT -->
+    <section class="support">
+      <div class="section-head">
+        <h2>/// SUPPORT_CHANNELS</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="support-grid">
+        <a href="https://discord.gg/chips" target="_blank" rel="noopener noreferrer" class="support-card">
+          <div class="support-card-left">
+            <svg viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            <div>
+              <div class="support-card-title">Discord Command Center</div>
+              <div class="support-card-sub">discord.gg/chips</div>
+            </div>
+          </div>
+          <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a href="https://t.me/chipsgg" target="_blank" rel="noopener noreferrer" class="support-card">
+          <div class="support-card-left">
+            <svg viewBox="0 0 24 24" fill="#0088cc"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+            <div>
+              <div class="support-card-title">Telegram Operations</div>
+              <div class="support-card-sub">t.me/chipsgg</div>
+            </div>
+          </div>
+          <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         </a>
       </div>
-      <img src="https://cdn.chips.gg/assets/events/christmas/full_logo.svg" alt="Chips.gg Bot" class="hero-logo">
-      <p class="tagline">Your Ultimate Gaming & Crypto Companion</p>
-      <div class="hero-stats">
-        <div class="stat">
-          <span class="stat-value">10+</span>
-          <span class="stat-label">Commands</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value">24/7</span>
-          <span class="stat-label">Support</span>
-        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+      <a href="/commands" class="cta-button">&gt; EXPLORE_ALL_COMMANDS</a>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-status"><span class="dot"></span>SYSTEM OPERATIONAL</div>
+      <div class="footer-credit">
+        <span>Developed by</span>
+        <a href="https://redpkt.com" target="_blank" rel="noopener noreferrer">
+          <img src="/redpkt-logo.png" alt="REDPKT" class="footer-logo">
+        </a>
       </div>
     </div>
-  </header>
-  <main class="container">
-    <div class="markdown-content">
-      <%- content %>
-    </div>
-    <div class="cta-section">
-      <a href="/commands" class="button">Explore Commands</a>
-    </div>
-  </main>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-javascript.min.js"></script>
+  </footer>
+
+  <script>
+    // Hero typewriter
+    (function () {
+      var el = document.getElementById('typewriter');
+      if (!el) return;
+      var text = el.getAttribute('data-text') || '';
+      el.textContent = '';
+      var i = 0;
+      var timer = setInterval(function () {
+        if (i < text.length) {
+          el.textContent += text.charAt(i);
+          i++;
+        } else {
+          clearInterval(timer);
+        }
+      }, 22);
+    })();
+
+    // Live demo (real API) - built with DOM APIs so SDK content is never
+    // interpreted as HTML and URLs are validated before use.
+    var resultDiv = document.getElementById('demo-result');
+    var activeCmdLabel = document.getElementById('demo-active-cmd');
+
+    function makeEl(tag, className, text) {
+      var el = document.createElement(tag);
+      if (className) el.className = className;
+      if (text != null) el.textContent = text;
+      return el;
+    }
+
+    function promptLine(command, query) {
+      var argText = query ? ' ' + query.replace(/&/g, ' ').replace(/=/g, ':') : '';
+      return makeEl('div', 'demo-prompt-line', 'guest@chips:~$ /' + command + argText);
+    }
+
+    function safeHttpUrl(value) {
+      try {
+        var u = new URL(value, window.location.origin);
+        if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+      } catch (e) {}
+      return null;
+    }
+
+    document.querySelectorAll('.demo-btn').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var command = btn.dataset.command;
+        var query = btn.dataset.query || '';
+        document.querySelectorAll('.demo-btn').forEach(function (b) {
+          b.classList.remove('active');
+        });
+        btn.classList.add('active');
+        if (activeCmdLabel) activeCmdLabel.textContent = command;
+
+        var loading = makeEl('div', 'demo-loading', '[ FETCHING DATA ] ');
+        loading.appendChild(makeEl('span', 'cursor', '_'));
+        resultDiv.replaceChildren(promptLine(command, query), loading);
+
+        try {
+          var response = await fetch('/api/command/' + command + (query ? '?' + query : ''));
+          var data = await response.json();
+
+          if (data.error) {
+            resultDiv.replaceChildren(promptLine(command, query), makeEl('div', 'demo-error', 'ERROR: ' + data.error));
+            return;
+          }
+
+          var resp = makeEl('div', 'demo-response');
+          if (data.emoji) resp.appendChild(makeEl('span', 'demo-emoji', data.emoji));
+          if (data.title) resp.appendChild(makeEl('div', 'demo-title', data.title));
+          if (data.content) resp.appendChild(makeEl('pre', 'demo-content', data.content));
+          if (data.text) resp.appendChild(makeEl('pre', 'demo-content', data.text));
+          if (data.url) {
+            var safe = safeHttpUrl(data.url);
+            if (safe) {
+              var link = makeEl('a', 'demo-link', '[ ' + (data.buttonLabel || 'VIEW MORE') + ' ]');
+              link.href = safe;
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+              resp.appendChild(link);
+            }
+          }
+          resp.appendChild(makeEl('span', 'cursor', '_'));
+          resultDiv.replaceChildren(promptLine(command, query), resp);
+        } catch (err) {
+          resultDiv.replaceChildren(promptLine(command, query), makeEl('div', 'demo-error', 'FAILED TO FETCH COMMAND RESULTS'));
+        }
+      });
+    });
+  </script>
 </body>
 </html>
