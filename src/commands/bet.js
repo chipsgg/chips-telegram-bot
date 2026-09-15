@@ -4,6 +4,7 @@
  * The banner image is fetched from stats.chips.gg/bets/{betId}.
  */
 const { ApplicationCommandOptionType } = require("discord.js");
+const { arg } = require("../libs/utils");
 
 module.exports = () => ({
   name: "bet",
@@ -16,18 +17,9 @@ module.exports = () => ({
     },
   },
   handler: async (ctx) => {
-    // Extract bet ID based on platform
-    let betId = null;
-    if (ctx.platform === "discord") {
-      betId = ctx?.getString("betid");
-      if (!betId) {
-        return ctx.sendText("Please provide a bet ID");
-      }
-    } else {
-      betId = ctx?.getArg(1);
-      if (!betId) {
-        return ctx.sendText("Please provide a bet ID");
-      }
+    const betId = arg(ctx, "betid", 1);
+    if (!betId) {
+      return ctx.sendText("Please provide a bet ID. Usage: /bet betid");
     }
 
     // Display the bet card banner image

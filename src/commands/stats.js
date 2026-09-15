@@ -1,14 +1,17 @@
 /**
  * Stats Command
- * Fetches and displays a player's public stats from the Chips.gg API.
- * Shows VIP rank/level, bet count, total wagered, bonuses, PnL,
- * and account join date. Supports optional date range filtering.
+ * A player's public stats: VIP rank/level, bets, wagered, bonuses, PnL, join date.
+ *
+ * Window: `public/getUserStats` honours `start`/`end` (ms) or a `duration` enum;
+ * `public/getPlayer` does NOT (its embedded stats are always trailing 30 days),
+ * so profile and stats are fetched separately.
  */
 const { ApplicationCommandOptionType } = require("discord.js");
+const { arg, dateRange, formatUsd, formatInt } = require("../libs/utils");
 
 module.exports = (api) => ({
   name: "stats",
-  description: "Get user stats by username",
+  description: "Player stats by username. Usage: /stats username [start] [end]",
   options: {
     username: {
       description: "Chips.gg username",
@@ -27,76 +30,65 @@ module.exports = (api) => ({
     },
   },
   handler: async (ctx) => {
-    let username, startDate, endDate;
-    if (ctx.platform === "discord" || ctx.platform === "api") {
-      username = ctx?.getString("username");
-      startDate = ctx?.getString("start");
-      endDate = ctx?.getString("end");
-    } else {
-      username = ctx?.getArg(1);
-      startDate = ctx?.getArg(2);
-      endDate = ctx?.getArg(3);
-    }
-
+    const username = arg(ctx, "username", 1);
     if (!username) {
-      return ctx.sendText("Please provide a username");
-    }
-
-    const now = new Date();
-    const start = startDate
-      ? new Date(startDate).getTime()
-      : new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const end = endDate ? new Date(endDate).getTime() : now.getTime();
-
-    if (isNaN(start) || isNaN(end)) {
       return ctx.sendText(
-        "Invalid date format. Please use YYYY-MM-DD (e.g. 2026-01-15).",
+        "Please provide a username. Usage: /stats username [start] [end]"
       );
     }
 
-    const startLabel = new Date(start).toLocaleDateString();
-    const endLabel = new Date(end).toLocaleDateString();
+    const startArg = arg(ctx, "start", 2);
+    const endArg = arg(ctx, "end", 3);
+    const explicit = Boolean(startArg || endArg);
+    const period = dateRange(startArg, endArg);
+    if (period.error) return ctx.sendText(period.error);
 
     try {
-      // Fetch player profile, VIP info, and stats from public API
-      const { vip, stats, ...user } = await api._actions.public("getPlayer", {
+      const player = await api._actions.public("getPlayer", {
         userid: username,
-        start,
-        end,
       });
+      if (!player?.id) return ctx.sendText(`User "${username}" not found.`);
 
-      console.log("/stats", {
-        user,
-        vip,
-        stats,
-      });
+      // Explicit dates -> exact window; otherwise trailing 30 days (server enum)
+      const stats = await api._actions.public(
+        "getUserStats",
+        explicit
+          ? { userid: player.id, start: period.start, end: period.end }
+          : { userid: player.id, duration: "1m" }
+      );
+      const periodLabel = explicit
+        ? `${period.startLabel} — ${period.endLabel}`
+        : "last 30 days";
+
+      const vip = player.vip || {};
+      const s = stats || {};
+      // Player-side PnL: positive = player is up over the window.
+      const pnl = Number(s.pnlUsd || 0);
 
       return ctx.sendForm({
         emoji: "👤",
-        title: `Player: ${user.username}`,
+        title: `Player: ${player.username}`,
         content: [
-          `**Period:** ${startLabel} — ${endLabel}`,
-          `**Rank:** ${vip.rank} (${vip.level || "0"})`,
-          `**Bets:** ${stats.count.toLocaleString() || 0}`,
-          `**Wagered:** $${(stats.wageredUsd || 0).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`,
-          `**Bonuses:** $${(stats.bonusesUsd || 0).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`,
-          `**PnL:** $${(stats.pnlUsd || 0).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`,
-          `**Join Date:** ${new Date(user.created).toLocaleDateString()}`,
+          `**Period:** ${periodLabel}`,
+          `**Rank:** ${vip.rank || "Unranked"}${vip.level ? ` (level ${vip.level})` : ""}`,
+          `**Bets:** ${formatInt(s.count)}`,
+          `**Wagered:** $${formatUsd(s.wageredUsd)}`,
+          `**Bonuses:** $${formatUsd(s.bonusesUsd)}`,
+          `**PnL:** ${pnl < 0 ? "-" : ""}$${formatUsd(Math.abs(pnl))}`,
+          `**Joined:** ${
+            player.created
+              ? new Date(player.created).toISOString().slice(0, 10)
+              : "unknown"
+          }`,
         ].join("\n"),
-        url: `https://chips.gg/user/${user.username}`,
+        url: `https://chips.gg/user/${player.username}`,
         buttonLabel: "View Profile",
       });
     } catch (e) {
-      return ctx.sendText(`Error fetching user information: ${e.message}`);
+      console.error("[stats] failed:", e.message);
+      return ctx.sendText(
+        `Could not fetch stats for "${username}": ${e.message}`
+      );
     }
   },
 });

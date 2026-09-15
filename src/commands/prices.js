@@ -7,6 +7,7 @@
 const models = require("../libs/models");
 const _ = require("lodash");
 const { ApplicationCommandOptionType } = require("discord.js");
+const { arg } = require("../libs/utils");
 
 module.exports = (api) => ({
   name: "prices",
@@ -20,13 +21,7 @@ module.exports = (api) => ({
     },
   },
   handler: (ctx) => {
-    // Extract optional currency filter
-    let currency = null;
-    if (ctx.platform === "discord") {
-      currency = ctx?.getString("currency")?.toLowerCase();
-    } else {
-      currency = ctx?.getArg(1);
-    }
+    const currency = arg(ctx, "currency", 1)?.toLowerCase();
 
     // Filter out hidden, internal, and USD-based currencies
     let currencies = _.chain(api.get("public", "currencies")).filter(

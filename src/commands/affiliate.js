@@ -1,16 +1,18 @@
 /**
- * Affiliate Stats Command (Backoffice)
- * Looks up affiliate campaign stats for any user by username.
- * Requires the invoking user to have the "backoffice" role.
- * Supports optional date range filtering (defaults to current month).
- * Aggregates campaign metrics and displays top referrals.
+ * Affiliate Stats Command (staff)
+ * Affiliate campaign report for ANY user by username, for a date range
+ * (defaults to the current UTC month). Caller must have a linked Chips.gg
+ * account with admin/mod flags or the backoffice role.
  */
 const { ApplicationCommandOptionType } = require("discord.js");
-const { formatUsd } = require("../libs/utils");
+const { arg, dateRange } = require("../libs/utils");
+const { linkedAccount, isStaff } = require("../libs/auth");
+const affiliate = require("../libs/models/affiliate");
 
 module.exports = (api) => ({
   name: "affiliate",
-  description: "View affiliate stats for a user.",
+  description:
+    "Staff: affiliate stats for any user. Usage: /affiliate username [start] [end]",
   options: {
     username: {
       description: "Chips.gg username",
@@ -29,138 +31,62 @@ module.exports = (api) => ({
     },
   },
   handler: async (ctx) => {
-    // Extract arguments based on platform
-    let username, startDate, endDate;
-    if (ctx.platform === "discord") {
-      username = ctx.getString("username");
-      startDate = ctx.getString("start");
-      endDate = ctx.getString("end");
-    } else {
-      username = ctx.getArg(1);
-      startDate = ctx.getArg(2);
-      endDate = ctx.getArg(3);
-    }
-
+    const username = arg(ctx, "username", 1);
     if (!username) {
-      return ctx.sendText("Please provide a username.");
-    }
-
-    // Default date range: start of current month to now
-    const now = new Date();
-    const start = startDate
-      ? new Date(startDate).getTime()
-      : new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const end = endDate ? new Date(endDate).getTime() : now.getTime();
-
-    // Validate parsed dates
-    if (isNaN(start) || isNaN(end)) {
       return ctx.sendText(
-        "Invalid date format. Please use YYYY-MM-DD (e.g. 2026-01-15).",
+        "Please provide a username. Usage: /affiliate username [start] [end]"
       );
     }
 
-    const startLabel = new Date(start).toLocaleDateString();
-    const endLabel = new Date(end).toLocaleDateString();
+    const period = dateRange(arg(ctx, "start", 2), arg(ctx, "end", 3));
+    if (period.error) return ctx.sendText(period.error);
 
     try {
-      // Authorize: look up the invoking user by platform ID
-      const player = await api._actions.auth("getUserByPlatformID", {
-        platform: ctx.platform,
-        platformid: ctx.userid.toString(),
-      });
-
-      // Verify the invoking user has backoffice privileges
-      if (!player.roles.includes("backoffice")) {
+      const caller = await linkedAccount(api, ctx);
+      if (!caller) {
+        return ctx.sendText(
+          "Link your Chips.gg account first with /linkaccount, then try again."
+        );
+      }
+      if (!(await isStaff(api, caller))) {
         return ctx.sendText("You are not authorized to use this command.");
       }
 
-      // Fetch the target player's public profile
-      const user = await api._actions.public("getPlayer", {
-        userid: username,
-      });
+      const user = await api._actions.public("getPlayer", { userid: username });
+      if (!user?.id) return ctx.sendText(`User "${username}" not found.`);
 
-      // Retrieve affiliate campaigns for the target user within the date range
-      const campaigns = await api._actions.backoffice("listCampaignsByUser", {
-        sortKey: "wageredUsd",
-        userid: user.id,
-        start,
-        end,
-      });
-
-      if (!Array.isArray(campaigns) || campaigns.length === 0) {
+      const { campaigns, referrals } = await affiliate.fetch(
+        api,
+        user.id,
+        period
+      );
+      if (campaigns.length === 0) {
         return ctx.sendForm({
           emoji: "📊",
-          title: "Affiliate Stats",
-          content: `No affiliate campaigns found for **${username}** (${startLabel} — ${endLabel}).`,
+          title: `Affiliate Stats: ${user.username}`,
+          content: `No affiliate campaigns found for **${user.username}** (${period.startLabel} — ${period.endLabel}).`,
           buttonLabel: "View Profile",
-          url: `https://chips.gg/user/${username}`,
+          url: `https://chips.gg/user/${user.username}`,
         });
-      }
-
-      // Aggregate stats across all campaigns
-      let totalSignups = 0;
-      let totalBets = 0;
-      let totalWagered = 0;
-      let totalCommission = 0;
-      let totalDeposits = 0;
-      let totalFTD = 0;
-      let activeCampaigns = 0;
-
-      campaigns.forEach((c) => {
-        totalSignups += c.signups || 0;
-        totalBets += c.stats?.bets || 0;
-        totalWagered += c.stats?.wageredUsd || 0;
-        totalCommission += c.stats?.commissionUsd || 0;
-        totalDeposits += c.stats?.depositUsd || 0;
-        totalFTD += c.stats?.ftd || 0;
-        if (!c.done) activeCampaigns++;
-      });
-
-      // Build the response content with aggregated stats
-      let content = `**Account:** ${user.username}\n`;
-      content += `**Period:** ${startLabel} — ${endLabel}\n\n`;
-
-      content += `📈 **Overall Stats**\n`;
-      content += `Signups: ${totalSignups}\n`;
-      content += `First Time Deposits: ${totalFTD}\n`;
-      content += `Total Deposits: $${formatUsd(totalDeposits)}\n`;
-      content += `Total Bets: ${formatUsd(totalBets)}\n`;
-      content += `Total Wagered: $${formatUsd(totalWagered)}\n`;
-      content += `Commission Earned: $${formatUsd(totalCommission)}\n`;
-
-      // Fetch and append top 5 referrals sorted by wagered amount
-      try {
-        const referrals = await api._actions.backoffice("listReferralsByUser", {
-          userid: user.id,
-          sortKey: "wageredUsd",
-          sortDirection: -1,
-          start,
-          end,
-          skip: 0,
-          limit: 5,
-        });
-
-        if (Array.isArray(referrals) && referrals.length > 0) {
-          content += `\n🏆 **Top Referrals**\n`;
-          referrals.forEach((r, i) => {
-            content += `${i + 1}. **${r.user.username}** — $${formatUsd(r.depositUsd)} deposited, $${formatUsd(r.wageredUsd)} wagered\n`;
-          });
-        }
-      } catch (refErr) {
-        console.error("listReferralsByUser error:", refErr);
       }
 
       return ctx.sendForm({
         emoji: "📊",
         title: `Affiliate Stats: ${user.username}`,
-        content,
+        content: affiliate.render({
+          user,
+          period,
+          totals: affiliate.aggregate(campaigns),
+          referrals,
+          staff: true,
+        }),
         buttonLabel: "View Profile",
-        url: `https://chips.gg/user/${username}`,
+        url: `https://chips.gg/user/${user.username}`,
       });
     } catch (error) {
-      console.error("/affiliate error:", error);
+      console.error("[affiliate] failed:", error.message);
       return ctx.sendText(
-        "Failed to fetch affiliate data. Please try again later.",
+        "Failed to fetch affiliate data. Please try again later."
       );
     }
   },

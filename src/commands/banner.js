@@ -12,6 +12,7 @@ const {
   AttachmentBuilder,
   ApplicationCommandOptionType,
 } = require("discord.js");
+const { arg } = require("../libs/utils");
 
 module.exports = () => ({
   name: "banner",
@@ -24,14 +25,13 @@ module.exports = () => ({
     },
   },
   handler: async (ctx) => {
-    let username = null;
+    const username = arg(ctx, "username", 1);
+    if (!username) {
+      return ctx.sendText("Please provide a username. Usage: /banner username");
+    }
 
     // Non-Discord platforms: send banner URL directly
     if (ctx.platform !== "discord") {
-      username = ctx?.getArg(1);
-      if (!username) {
-        return ctx.sendText("Please provide a username");
-      }
       return ctx.sendForm({
         emoji: "📊",
         title: `Stats Banner: ${username}`,
@@ -43,11 +43,6 @@ module.exports = () => ({
     }
 
     // Discord: upload the banner image as a file attachment
-    username = ctx?.getString("username");
-    if (!username) {
-      return ctx.sendText("Please provide a username");
-    }
-
     // Build a "View Profile" link button
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
