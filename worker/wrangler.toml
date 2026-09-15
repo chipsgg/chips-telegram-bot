@@ -1,0 +1,45 @@
+name = "chips-bot"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# Custom domains: Cloudflare creates DNS + cert. bot-cf.chips.gg = staging alias;
+# bot.chips.gg is added at cutover (see README).
+routes = [
+  { pattern = "bot-cf.chips.gg", custom_domain = true }
+]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[vars]
+VERSION = "4.0.0"
+CHIPS_API_HOST = "https://api.chips.gg/prod/api"
+
+# Secrets (set with `wrangler secret put <NAME>`):
+#   CHIPS_TOKEN               operator token (staff commands + /affiliate); optional for public-only
+#   DISCORD_PUBLIC_KEY        from the Discord developer portal (General Information)
+#   DISCORD_APPLICATION_ID    901908108136308757
+#   DISCORD_TOKEN             bot token (role assignment + command registration)
+#   TELEGRAM_TOKEN            bot token
+#   TELEGRAM_WEBHOOK_SECRET   random string, passed to setWebhook as secret_token
+
+[[durable_objects.bindings]]
+name = "CHIPS_FEED"
+class_name = "ChipsFeed"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChipsFeed"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chips-bot-metrics"
+database_id = "6f8f9eb1-f9f7-4678-833a-a8a6aa40be79"
+migrations_dir = "migrations"
+
+[observability]
+enabled = true
