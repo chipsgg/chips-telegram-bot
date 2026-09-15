@@ -1,15 +1,17 @@
 /**
  * My Affiliates Command
- * Personal affiliate dashboard that uses the invoking user's linked account.
- * Displays campaign stats (signups, deposits, wagered, commission) and
- * top referrals within an optional date range (defaults to current month).
+ * Affiliate report for the caller's own linked Chips.gg account, for a date
+ * range (defaults to the current UTC month). Player-facing: no cost lines.
  */
 const { ApplicationCommandOptionType } = require("discord.js");
-const { formatUsd } = require("../libs/utils");
+const { arg, dateRange } = require("../libs/utils");
+const { linkedAccount } = require("../libs/auth");
+const affiliate = require("../libs/models/affiliate");
 
 module.exports = (api) => ({
   name: "myaffiliates",
-  description: "View your own affiliate campaign stats.",
+  description:
+    "Your own affiliate campaign stats. Usage: /myaffiliates [start] [end]",
   options: {
     start: {
       description: "Start date (YYYY-MM-DD)",
@@ -23,127 +25,61 @@ module.exports = (api) => ({
     },
   },
   handler: async (ctx) => {
-    // Ensure the user's platform identity is available
-    if (!ctx.platform || !ctx.userid) {
-      return ctx.sendText("Could not identify your account. Please try again.");
-    }
-
-    // Extract optional date range arguments
-    let startDate, endDate;
-    if (ctx.platform === "discord") {
-      startDate = ctx.getString("start");
-      endDate = ctx.getString("end");
-    } else {
-      startDate = ctx.getArg(1);
-      endDate = ctx.getArg(2);
-    }
-
-    // Default date range: start of current month to now
-    const now = new Date();
-    const start = startDate
-      ? new Date(startDate).getTime()
-      : new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const end = endDate ? new Date(endDate).getTime() : now.getTime();
-
-    // Validate parsed dates
-    if (isNaN(start) || isNaN(end)) {
+    if (ctx.platform === "api") {
       return ctx.sendText(
-        "Invalid date format. Please use YYYY-MM-DD (e.g. 2026-01-15).",
+        "This command needs a linked Discord or Telegram account."
       );
     }
 
-    const startLabel = new Date(start).toLocaleDateString();
-    const endLabel = new Date(end).toLocaleDateString();
+    const period = dateRange(arg(ctx, "start", 1), arg(ctx, "end", 2));
+    if (period.error) return ctx.sendText(period.error);
 
     try {
-      // Look up the invoking user's linked Chips.gg account
-      const user = await api.getUserByPlatformID(
-        ctx.platform,
-        ctx.userid.toString(),
+      const user = await linkedAccount(api, ctx);
+      if (!user) {
+        return ctx.sendForm({
+          emoji: "🔗",
+          title: "No Linked Account",
+          content:
+            "Link your Chips.gg account first with **/linkaccount**, then run /myaffiliates again.",
+          buttonLabel: "Affiliate Program",
+          url: "https://chips.gg/affiliates",
+        });
+      }
+
+      const { campaigns, referrals } = await affiliate.fetch(
+        api,
+        user.id,
+        period
       );
-
-      // Fetch affiliate campaigns for the linked user
-      const campaigns = await api._actions.backoffice("listCampaignsByUser", {
-        sortKey: "wageredUsd",
-        userid: user.id,
-        start,
-        end,
-      });
-
-      if (!Array.isArray(campaigns) || campaigns.length === 0) {
+      if (campaigns.length === 0) {
         return ctx.sendForm({
           emoji: "📊",
-          title: "Affiliate Stats",
-          content: `No affiliate campaigns found for ${startLabel} — ${endLabel}.`,
+          title: "Affiliate Dashboard",
+          content: `No affiliate campaigns found for ${period.startLabel} — ${period.endLabel}.`,
           buttonLabel: "Create Campaign",
           url: "https://chips.gg/affiliates/affiliates-campaigns",
         });
       }
 
-      // Aggregate stats across all campaigns
-      let totalSignups = 0;
-      let totalBets = 0;
-      let totalWagered = 0;
-      let totalCommission = 0;
-      let totalDeposits = 0;
-      let totalFTD = 0;
-      let activeCampaigns = 0;
-
-      campaigns.forEach((c) => {
-        totalSignups += c.signups || 0;
-        totalBets += c.stats?.bets || 0;
-        totalWagered += c.stats?.wageredUsd || 0;
-        totalCommission += c.stats?.commissionUsd || 0;
-        totalDeposits += c.stats?.depositUsd || 0;
-        totalFTD += c.stats?.ftd || 0;
-        if (!c.done) activeCampaigns++;
-      });
-
-      // Build the response content with aggregated stats
-      let content = `**Account:** ${user.username}\n`;
-      content += `**Period:** ${startLabel} — ${endLabel}\n\n`;
-
-      content += `📈 **Overall Stats**\n`;
-      content += `Signups: ${totalSignups}\n`;
-      content += `First Time Deposits: ${totalFTD}\n`;
-      content += `Total Deposits: $${formatUsd(totalDeposits)}\n`;
-      content += `Total Bets: ${formatUsd(totalBets)}\n`;
-      content += `Total Wagered: $${formatUsd(totalWagered)}\n`;
-      content += `Commission Earned: $${formatUsd(totalCommission)}\n`;
-
-      // Fetch and append top 5 referrals sorted by wagered amount
-      try {
-        const referrals = await api._actions.backoffice("listReferralsByUser", {
-          userid: user.id,
-          sortKey: "wageredUsd",
-          sortDirection: -1,
-          start,
-          end,
-          skip: 0,
-          limit: 5,
-        });
-
-        if (Array.isArray(referrals) && referrals.length > 0) {
-          content += `\n🏆 **Top Referrals**\n`;
-          referrals.forEach((r, i) => {
-            content += `${i + 1}. **${r.user.username}** — $${formatUsd(r.depositUsd)} deposited, $${formatUsd(r.wageredUsd)} wagered\n`;
-          });
-        }
-      } catch (refErr) {
-        console.error("listReferralsByUser error:", refErr);
-      }
-
       return ctx.sendForm({
         emoji: "📊",
         title: "Affiliate Dashboard",
-        content,
+        content: affiliate.render({
+          user,
+          period,
+          totals: affiliate.aggregate(campaigns),
+          referrals,
+          staff: false,
+        }),
         buttonLabel: "View Full Dashboard",
-        url: "https://chips.gg/affiliate",
+        url: "https://chips.gg/affiliates",
+        ephemeral: true,
       });
     } catch (error) {
-      console.error("/affiliate error:", error);
+      console.error("[myaffiliates] failed:", error.message);
       return ctx.sendText(
-        "Failed to fetch affiliate data. Please try again later.",
+        "Failed to fetch affiliate data. Please try again later."
       );
     }
   },

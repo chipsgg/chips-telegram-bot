@@ -1,106 +1,150 @@
 /**
- * PostgreSQL-backed Bot Usage Metrics
- * Tracks and persists bot activity metrics such as commands executed,
- * messages sent, and per-platform command counts (Discord, Telegram, API).
+ * Bot Usage Metrics
+ * Tracks commands executed, messages sent, and per-platform command counts.
+ *
+ * Storage is PostgreSQL when DATABASE_URL is set; otherwise an in-memory
+ * store so the bot runs cleanly (no pool errors, no `null` connection
+ * attempts) on a laptop or a container without a database. The public
+ * interface is identical either way.
  */
-const { Pool } = require("pg");
+const METRIC_NAMES = [
+  "messages_sent",
+  "commands_executed",
+  "discord_commands",
+  "telegram_commands",
+  "api_commands",
+];
 
-// Configure a small connection pool to the PostgreSQL database
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 3,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+const PLATFORM_METRIC = {
+  discord: "discord_commands",
+  telegram: "telegram_commands",
+  api: "api_commands",
+};
 
-pool.on("error", (err) => {
-  console.error("Database pool error:", err.message);
-});
+const zeroed = () => Object.fromEntries(METRIC_NAMES.map((name) => [name, 0]));
 
-// Ensure all default metric rows exist in the database on startup
-async function initMetrics() {
-  const defaultMetrics = [
-    "messages_sent",
-    "commands_executed", 
-    "discord_commands",
-    "telegram_commands",
-    "api_commands"
-  ];
-  
-  try {
-    for (const metric of defaultMetrics) {
+// ---------------------------------------------------------------------------
+// Backends
+// ---------------------------------------------------------------------------
+
+function memoryBackend() {
+  const store = zeroed();
+  return {
+    kind: "memory",
+    init: async () => undefined,
+    increment: async (name, amount) => {
+      store[name] = (store[name] || 0) + amount;
+    },
+    getAll: async () => ({ ...store }),
+    close: async () => undefined,
+  };
+}
+
+function postgresBackend(connectionString) {
+  const { Pool } = require("pg");
+  const pool = new Pool({
+    connectionString,
+    max: 3,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  });
+  pool.on("error", (err) => {
+    console.error("[metrics] pool error:", err.message);
+  });
+
+  return {
+    kind: "postgres",
+    pool,
+    init: async () => {
       await pool.query(
-        `INSERT INTO bot_metrics (metric_name, metric_value) 
-         VALUES ($1, 0) 
-         ON CONFLICT (metric_name) DO NOTHING`,
-        [metric]
+        `CREATE TABLE IF NOT EXISTS bot_metrics (
+           metric_name  TEXT PRIMARY KEY,
+           metric_value BIGINT NOT NULL DEFAULT 0,
+           updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+         )`
       );
-    }
-    console.log("Metrics initialized");
-  } catch (error) {
-    console.error("Error initializing metrics:", error.message);
-  }
+      for (const name of METRIC_NAMES) {
+        await pool.query(
+          `INSERT INTO bot_metrics (metric_name, metric_value)
+           VALUES ($1, 0) ON CONFLICT (metric_name) DO NOTHING`,
+          [name]
+        );
+      }
+    },
+    increment: async (name, amount) => {
+      await pool.query(
+        `UPDATE bot_metrics
+         SET metric_value = metric_value + $1, updated_at = NOW()
+         WHERE metric_name = $2`,
+        [amount, name]
+      );
+    },
+    getAll: async () => {
+      const { rows } = await pool.query(
+        "SELECT metric_name, metric_value FROM bot_metrics"
+      );
+      const out = zeroed();
+      for (const row of rows) out[row.metric_name] = Number(row.metric_value);
+      return out;
+    },
+    close: () => pool.end(),
+  };
 }
 
-initMetrics();
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
-// Atomically increment a named metric by the given amount
+const backend = process.env.DATABASE_URL
+  ? postgresBackend(process.env.DATABASE_URL)
+  : memoryBackend();
+
+const ready = backend
+  .init()
+  .then(() => console.log(`[metrics] ${backend.kind} store ready`))
+  .catch((err) =>
+    console.error(`[metrics] init failed (${backend.kind}):`, err.message)
+  );
+
+// Increment a named metric; never throws (metrics must not break commands).
 async function incrementMetric(metricName, amount = 1) {
+  if (!METRIC_NAMES.includes(metricName)) return;
   try {
-    await pool.query(
-      `UPDATE bot_metrics 
-       SET metric_value = metric_value + $1, updated_at = NOW() 
-       WHERE metric_name = $2`,
-      [amount, metricName]
-    );
-  } catch (error) {
-    console.error("Error incrementing metric:", error.message);
+    await ready;
+    await backend.increment(metricName, amount);
+  } catch (err) {
+    console.error("[metrics] increment failed:", err.message);
   }
 }
 
-// Retrieve all metrics as a key-value object; returns defaults on error
+// Return all metrics; zeroes on failure so the landing page always renders.
 async function getMetrics() {
   try {
-    const result = await pool.query("SELECT metric_name, metric_value FROM bot_metrics");
-    const metrics = {};
-    result.rows.forEach((row) => {
-      metrics[row.metric_name] = parseInt(row.metric_value);
-    });
-    console.log("Metrics loaded:", metrics);
-    return metrics;
-  } catch (error) {
-    console.error("Error getting metrics:", error.message, error.code);
-    return {
-      messages_sent: 0,
-      commands_executed: 0,
-      discord_commands: 0,
-      telegram_commands: 0,
-      api_commands: 0,
-    };
+    await ready;
+    return await backend.getAll();
+  } catch (err) {
+    console.error("[metrics] read failed:", err.message);
+    return zeroed();
   }
 }
 
-// Increment both the global and platform-specific command counters
+// One command executed on `platform` (also counts as one message sent).
 async function trackCommand(platform) {
   await incrementMetric("commands_executed");
-  if (platform === "discord") {
-    await incrementMetric("discord_commands");
-  } else if (platform === "telegram") {
-    await incrementMetric("telegram_commands");
-  } else if (platform === "api") {
-    await incrementMetric("api_commands");
-  }
+  await incrementMetric("messages_sent");
+  const platformMetric = PLATFORM_METRIC[platform];
+  if (platformMetric) await incrementMetric(platformMetric);
 }
 
-// Increment the messages_sent counter
-async function trackMessage() {
-  await incrementMetric("messages_sent");
-}
+// Kept for callers that count non-command messages.
+const trackMessage = () => incrementMetric("messages_sent");
 
 module.exports = {
+  METRIC_NAMES,
   incrementMetric,
   getMetrics,
   trackCommand,
   trackMessage,
-  pool,
+  close: () => backend.close(),
+  backendKind: backend.kind,
 };

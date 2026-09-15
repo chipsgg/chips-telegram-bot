@@ -11,8 +11,9 @@ const {
   ButtonBuilder,
   EmbedBuilder,
   ButtonStyle,
+  PermissionFlagsBits,
 } = require("discord.js");
-const { trackCommand, trackMessage } = require("../metrics");
+const { trackCommand } = require("../metrics");
 // Build a Discord embed message with optional button, banner image, and footer
 const discordMakeForm = (options) => {
   const { emoji, title, content, footer, banner, url, buttonLabel, files } =
@@ -51,7 +52,11 @@ const discordMakeForm = (options) => {
 
 // Context wrapper that normalizes Discord interactions into a unified command interface
 const WrapperDiscord = (context, _client) => {
-  console.log("WrapperDiscord", context);
+  console.log("[discord] command", {
+    guild: context.guildId,
+    user: context.user?.id,
+    name: context.commandName,
+  });
 
   const sendForm = (...args) => {
     if (context.deferred || context.replied) {
@@ -66,10 +71,17 @@ const WrapperDiscord = (context, _client) => {
     return context.reply({ content });
   };
 
-  const getContent = () => context.message?.content || "";
-  const getArg = (index) => getContent().split(" ")[index];
-  const getString = (param) => context.options?.getString(param);
-  const getNumber = (param) => context.options?.getNumber(param);
+  // Slash commands have no free-text body; expose the option values positionally
+  // so handlers written against the Telegram-style getArg(i) still work.
+  const optionValues = () =>
+    (context.options?.data || []).map((o) =>
+      o.value === undefined ? undefined : String(o.value)
+    );
+  const getContent = () => optionValues().join(" ");
+  const getArg = (index) =>
+    index === 0 ? context.commandName : optionValues()[index - 1];
+  const getString = (param) => context.options?.getString(param) ?? undefined;
+  const getNumber = (param) => context.options?.getNumber(param) ?? undefined;
 
   return {
     platform: "discord",
@@ -197,7 +209,6 @@ module.exports = (token, commands) =>
         const wrapper = WrapperDiscord(ctx, client);
         await Promise.resolve(command.handler(wrapper));
         await trackCommand("discord");
-        await trackMessage();
       } catch (error) {
         if (error.code === 10062) {
           console.warn("Interaction expired:", error.message);
@@ -214,15 +225,18 @@ module.exports = (token, commands) =>
         }
       }
     });
-    // Broadcast a message to the first available text channel in each guild
+    // Broadcast a message to the first text channel the bot can post in, per guild
     const broadcast = (form) => {
       try {
         client.guilds.cache.forEach((guild) => {
           const chan = guild.channels.cache
             .filter(
               (channel) =>
-                channel.permissionsFor(client.user).has("SEND_MESSAGES") &&
-                channel.isText()
+                channel.isTextBased?.() &&
+                !channel.isThread?.() &&
+                channel
+                  .permissionsFor(client.user)
+                  ?.has(PermissionFlagsBits.SendMessages)
             )
             .first();
           if (chan) {

@@ -15,4 +15,4 @@ secrets.*
 # .k8s
 .config
 .vscode
-.yarn
+.yarnscratch/

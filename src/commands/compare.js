@@ -13,6 +13,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require("discord.js");
+const { arg } = require("../libs/utils");
 
 module.exports = () => ({
   name: "compare",
@@ -30,16 +31,16 @@ module.exports = () => ({
     },
   },
   handler: async (ctx) => {
-    let username1, username2;
+    const username1 = arg(ctx, "username1", 1);
+    const username2 = arg(ctx, "username2", 2);
+    if (!username1 || !username2) {
+      return ctx.sendText(
+        "Please provide both usernames. Usage: /compare username1 username2"
+      );
+    }
 
     // Non-Discord platforms: send the comparison banner URL directly
     if (ctx.platform !== "discord") {
-      username1 = ctx?.getArg(1);
-      username2 = ctx?.getArg(2);
-      if (!username1 || !username2) {
-        return ctx.sendText("Please provide both usernames to compare");
-      }
-
       return ctx.sendForm({
         emoji: "🔄",
         title: `Comparing ${username1} vs ${username2}`,
@@ -47,13 +48,6 @@ module.exports = () => ({
         buttonLabel: "View Profiles",
         url: `https://chips.gg/user/${username1}`,
       });
-    }
-
-    // Discord: extract usernames from slash command options
-    username1 = ctx?.getString("username1");
-    username2 = ctx?.getString("username2");
-    if (!username1 || !username2) {
-      return ctx.sendText("Please provide both usernames to compare");
     }
 
     // Build profile link buttons for both users

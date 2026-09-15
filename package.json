@@ -1,13 +1,18 @@
 {
   "name": "@chipsgg/telegram-bot",
-  "version": "3.4.0",
-  "description": "A community supported project built for chips.gg",
+  "version": "3.5.0",
+  "description": "Chips.gg community bot for Discord and Telegram",
   "main": "index.js",
   "repository": "git@github.com:chipsgg/chips-telegram-bot.git",
   "author": "Chips.gg <admin@chips.gg>",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node index.js",
-    "lint": "biome check --write",
+    "test": "node --test test/",
+    "lint": "biome check src test",
+    "lint:fix": "biome check --write src test",
     "deploy": "node src/libs/deploy.js"
   },
   "devDependencies": {
@@ -17,18 +22,13 @@
     "@chipsgg/openservice-ws-client": "^1.0.34",
     "@coingecko/cryptoformat": "^0.4.4",
     "big.js": "^6.2.2",
-    "dayjs": "^1.10.7",
     "discord.js": "^14.18.0",
     "dotenv": "^10.0.0",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
     "humanize-plus": "^1.8.2",
-    "hyperid": "^2.3.1",
-    "ioredis": "^4.27.9",
     "lodash": "^4.17.21",
-    "markdown-it": "^14.1.0",
     "marked": "^4.0.10",
-    "node-twitch": "^0.4.5",
     "pg": "^8.17.2",
     "telegraf": "^4.16.3",
     "ws": "^8.18.0"

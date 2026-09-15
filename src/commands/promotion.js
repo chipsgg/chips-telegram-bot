@@ -5,6 +5,7 @@
  * banner from stats.chips.gg with a link to the promotion page.
  */
 const { ApplicationCommandOptionType } = require("discord.js");
+const { arg } = require("../libs/utils");
 
 module.exports = (api) => ({
   name: "promotion",
@@ -17,18 +18,11 @@ module.exports = (api) => ({
     },
   },
   handler: async (ctx) => {
-    // Extract promotion ID based on platform
-    let promotionId = null;
-    if (ctx.platform === "discord") {
-      promotionId = ctx?.getString("promotionid");
-      if (!promotionId) {
-        return ctx.sendText("Please provide a promotion ID");
-      }
-    } else {
-      promotionId = ctx?.getArg(1);
-      if (!promotionId) {
-        return ctx.sendText("Please provide a promotion ID");
-      }
+    const promotionId = arg(ctx, "promotionid", 1);
+    if (!promotionId) {
+      return ctx.sendText(
+        "Please provide a promotion ID. Usage: /promotion promotionid"
+      );
     }
 
     try {

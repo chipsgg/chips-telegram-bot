@@ -4,6 +4,7 @@
  * Returns up to 5 matching games with their title, provider, and ID.
  */
 const { ApplicationCommandOptionType } = require("discord.js");
+const { arg } = require("../libs/utils");
 
 module.exports = (api) => ({
   name: "search",
@@ -16,13 +17,15 @@ module.exports = (api) => ({
     },
   },
   handler: async (ctx) => {
-    // Extract search query based on platform
-    let query = null;
-    if (ctx.platform === "discord" || ctx.platform === "api") {
-      query = ctx?.getString("query");
-    } else {
-      query = ctx?.getArg(1);
-    }
+    // Telegram: everything after the command is the query (multi-word titles)
+    const query =
+      ctx.platform === "telegram"
+        ? ctx.getContent?.() ||
+          [1, 2, 3, 4, 5]
+            .map((i) => ctx.getArg(i))
+            .filter(Boolean)
+            .join(" ")
+        : arg(ctx, "query", 1);
 
     if (!query) {
       return ctx.sendText(
@@ -48,11 +51,11 @@ module.exports = (api) => ({
         });
       }
 
-      // Format each game result with title, provider, and ID
+      // Title links to the play page; provider shown for disambiguation
       const gameList = games
         .map(
           (game, index) =>
-            `${index + 1}. ${game.title} (${game.provider})\n   ID: ${game.id}`
+            `${index + 1}. **[${game.title}](https://chips.gg/play/${game.slug || game.id})** — ${game.provider}`
         )
         .join("\n");
 
