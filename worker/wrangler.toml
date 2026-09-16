@@ -17,7 +17,10 @@ binding = "ASSETS"
 not_found_handling = "404-page"
 
 [vars]
-VERSION = "4.0.0"
+# VERSION / COMMIT / BUILT_AT are stamped at deploy time by scripts/deploy.js (--var); these are fallbacks
+VERSION = "unstamped"
+COMMIT = "unknown"
+BUILT_AT = ""
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "production"
 
@@ -57,7 +60,9 @@ routes = [
 ]
 
 [env.dev.vars]
-VERSION = "4.0.0-dev"
+VERSION = "unstamped-dev"
+COMMIT = "unknown"
+BUILT_AT = ""
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "dev"
 

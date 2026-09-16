@@ -1,0 +1,62 @@
+name: Release
+
+# A `vX.Y.Z` tag = a production release. `npm run release -- <patch|minor|major>` cuts one.
+# Deploys with the tag stamped into /health (version, commit, builtAt), then verifies the
+# edge is serving that exact version. Needs repo secret CLOUDFLARE_API_TOKEN
+# (Workers Scripts:Edit + D1:Edit + Account Settings:Read, scoped to the REDPKT account)
+# and variable CLOUDFLARE_ACCOUNT_ID. Without them the job stops after tests and the
+# release is deployed by hand: `cd worker && npm run deploy`.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+      - name: resolve version
+        id: v
+        run: |
+          node scripts/version.js
+          echo "version=$(node -e 'import("./scripts/version.js").then(m=>console.log(m.resolveVersion().version))')" >> "$GITHUB_OUTPUT"
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            --verify-tag || echo "release already exists"
+
+      - name: deploy production
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler d1 migrations apply chips-bot-metrics --remote
+          node scripts/deploy.js
+
+      - name: no deploy credentials
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' }}
+        run: echo "::warning::CLOUDFLARE_API_TOKEN not set; deploy ${{ steps.v.outputs.version }} by hand with 'cd worker && npm run deploy'"

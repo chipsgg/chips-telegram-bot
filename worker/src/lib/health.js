@@ -132,6 +132,8 @@ export async function buildHealth({ env, feed, host, fresh = false }) {
     problems,
     environment: env.ENVIRONMENT || "unknown",
     version: env.VERSION || "dev",
+    commit: env.COMMIT || "unknown",
+    builtAt: env.BUILT_AT || null,
     host,
     feed: feedRest,
     discord,

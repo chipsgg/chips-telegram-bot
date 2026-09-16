@@ -62,15 +62,31 @@ Set per environment: `wrangler secret put <NAME>` (prod) / `wrangler secret put 
 
 Local dev: `.dev.vars` (gitignored) with the dev values; `npm run dev`; `npm run smoke`.
 
-## Deploy
+## Versioning + deploy
+
+One source of truth: **git tags `vX.Y.Z`**. `wrangler.toml` carries no version; `scripts/deploy.js`
+stamps `VERSION` / `COMMIT` / `BUILT_AT` from `git describe` at deploy time and `/health` reports them.
+
+| build | `/health.version` |
+|---|---|
+| exactly on tag `v4.1.0`, clean tree | `4.1.0` (release) |
+| 3 commits past `v4.1.0` | `4.1.0-3+g403bb4e` (dev build) |
+| uncommitted changes | `...dirty` |
 
 ```
-cd worker
-npm test && npm run lint
-npx wrangler deploy --env dev && node scripts/smoke.js https://bot-cf.chips.gg
-npx wrangler deploy                      # production, after dev is green
-curl https://bot.chips.gg/health         # read-only prod check
+npm run deploy:dev                 # any commit -> bot-cf.chips.gg, then verifies /health.version matches
+npm run release -- patch|minor|major   # on master, clean tree: bumps package.json, commits, tags, pushes
+npm run deploy                     # production; REFUSES unless HEAD is exactly on a v* tag (--force = hotfix)
+npm run version:show               # what would be stamped
 ```
+
+The tag push runs `.github/workflows/release.yml`: lint + tests, GitHub Release with generated notes,
+and (when repo secret `CLOUDFLARE_API_TOKEN` + variable `CLOUDFLARE_ACCOUNT_ID` exist) the production
+deploy. Without those secrets the workflow stops after tests and you deploy by hand with `npm run deploy`;
+either way the edge is verified to report the tag. `.github/workflows/ci.yml` runs lint, tests and a
+`wrangler --dry-run` compile on every PR.
+
+The old `docker-publish.yml` (ghcr image of the Node bot, nightly) was removed; nothing consumes it.
 
 ## Cutover (done 2026-09-16)
 

@@ -6,10 +6,13 @@
   "description": "Chips.gg community bot on Cloudflare Workers (Discord interactions + Telegram webhook)",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
     "test": "node --test test/",
     "lint": "biome check src test scripts",
     "lint:fix": "biome check --write src test scripts",
+    "version:show": "node scripts/version.js",
+    "deploy": "node scripts/deploy.js",
+    "deploy:dev": "node scripts/deploy.js --env dev",
+    "release": "node scripts/release.js",
     "register:discord": "node scripts/register-discord.js",
     "register:telegram": "node scripts/register-telegram.js",
     "smoke": "node scripts/smoke.js"
