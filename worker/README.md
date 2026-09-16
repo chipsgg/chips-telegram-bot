@@ -81,9 +81,10 @@ npm run version:show               # what would be stamped
 ```
 
 The tag push runs `.github/workflows/release.yml`: lint + tests, GitHub Release with generated notes,
-and (when repo secret `CLOUDFLARE_API_TOKEN` + variable `CLOUDFLARE_ACCOUNT_ID` exist) the production
-deploy. Without those secrets the workflow stops after tests and you deploy by hand with `npm run deploy`;
-either way the edge is verified to report the tag. `.github/workflows/ci.yml` runs lint, tests and a
+then the production deploy using repo secret `CLOUDFLARE_API_TOKEN` (account token scoped to REDPKT,
+set Sep 16 2026) + variable `CLOUDFLARE_ACCOUNT_ID`, and finally verifies the edge reports the tag.
+The job runs in the GitHub `production` environment, so a required-reviewer gate can be added there
+later without touching the workflow. Manual fallback: `npm run deploy`. `.github/workflows/ci.yml` runs lint, tests and a
 `wrangler --dry-run` compile on every PR.
 
 The old `docker-publish.yml` (ghcr image of the Node bot, nightly) was removed; nothing consumes it.

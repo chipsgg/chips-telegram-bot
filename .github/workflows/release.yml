@@ -1,11 +1,13 @@
 name: Release
 
 # A `vX.Y.Z` tag = a production release. `npm run release -- <patch|minor|major>` cuts one.
-# Deploys with the tag stamped into /health (version, commit, builtAt), then verifies the
-# edge is serving that exact version. Needs repo secret CLOUDFLARE_API_TOKEN
-# (Workers Scripts:Edit + D1:Edit + Account Settings:Read, scoped to the REDPKT account)
-# and variable CLOUDFLARE_ACCOUNT_ID. Without them the job stops after tests and the
-# release is deployed by hand: `cd worker && npm run deploy`.
+# Lint + tests, GitHub Release with generated notes, then deploys production with the tag
+# stamped into /health (version, commit, builtAt) and verifies the edge serves that version.
+#
+# Credentials: repo secret CLOUDFLARE_API_TOKEN (account token scoped to REDPKT:
+# Workers Scripts:Edit, D1:Edit, Account Settings:Read) + repo variable CLOUDFLARE_ACCOUNT_ID.
+# Set Sep 16 2026. If the secret is ever removed the deploy step fails loudly; deploy by hand
+# with `cd worker && npm run deploy`.
 
 on:
   push:
@@ -14,9 +16,16 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-production
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://bot.chips.gg/health
     defaults:
       run:
         working-directory: worker
@@ -48,8 +57,17 @@ jobs:
             --generate-notes \
             --verify-tag || echo "release already exists"
 
+      - name: check deploy credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN secret / CLOUDFLARE_ACCOUNT_ID variable missing; deploy ${{ steps.v.outputs.version }} by hand: cd worker && npm run deploy"
+            exit 1
+          fi
+
       - name: deploy production
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -57,6 +75,13 @@ jobs:
           npx wrangler d1 migrations apply chips-bot-metrics --remote
           node scripts/deploy.js
 
-      - name: no deploy credentials
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' }}
-        run: echo "::warning::CLOUDFLARE_API_TOKEN not set; deploy ${{ steps.v.outputs.version }} by hand with 'cd worker && npm run deploy'"
+      - name: summary
+        run: |
+          {
+            echo "## Released ${{ steps.v.outputs.version }}"
+            echo
+            echo '```json'
+            curl -s "https://bot.chips.gg/health?fresh"
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
