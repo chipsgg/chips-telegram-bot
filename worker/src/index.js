@@ -75,7 +75,15 @@ export default {
         .status()
         .catch((e) => ({ connected: false, error: e.message }));
       const ok = feed.connected && !feed.stale;
-      return json({ ok, feed, version: env.VERSION || "dev" }, ok ? 200 : 503);
+      return json(
+        {
+          ok,
+          feed,
+          version: env.VERSION || "dev",
+          environment: env.ENVIRONMENT || "unknown",
+        },
+        ok ? 200 : 503
+      );
     }
 
     if (url.pathname === "/api/metrics") return json(await getMetrics(env));

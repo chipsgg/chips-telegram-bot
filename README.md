@@ -4,7 +4,7 @@
 A powerful Discord and Telegram bot for the Chips.gg gaming platform that brings real-time gaming information directly to your community.
 
 ## Installation
-- Telegram: [ADD BOT](http://t.me/chipsgg_dev_bot) 
+- Telegram: [ADD BOT](https://t.me/chipsgg_official_bot) 
 - Discord: [ADD BOT](https://discord.com/oauth2/authorize?client_id=901908108136308757&permissions=0&scope=bot%20applications.commands)
 
 ## ✨ Features

@@ -5,6 +5,18 @@
  * Read-only. Exits non-zero on any failed expectation.
  */
 const base = (process.argv[2] || "http://127.0.0.1:8787").replace(/\/$/, "");
+// Guard: test tooling never targets production. bot.chips.gg / the prod workers.dev host are refused.
+const PROD_HOSTS = ["bot.chips.gg", "chips-bot.chips.workers.dev"];
+const refuseProd = (url) => {
+  const host = new URL(url).hostname;
+  if (PROD_HOSTS.includes(host)) {
+    console.error(
+      `refusing to run against production host ${host}; use https://bot-cf.chips.gg (dev)`
+    );
+    process.exit(3);
+  }
+};
+refuseProd(base);
 let failures = 0;
 const check = (label, ok, detail = "") => {
   console.log(

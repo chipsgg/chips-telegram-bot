@@ -32,49 +32,55 @@ worker/
   test/                     node --test (14 tests, offline)
 ```
 
-## Secrets (wrangler secret put)
+## Environments (never test against production)
+
+| | production | dev |
+|---|---|---|
+| deploy | `npx wrangler deploy` | `npx wrangler deploy --env dev` |
+| worker | `chips-bot` | `chips-bot-dev` |
+| host | **bot.chips.gg** | **bot-cf.chips.gg** |
+| Discord app | `901908108136308757` Chips.gg VIP Assistant (Chips Casino 16.8k + 11 guilds) | `1326290512675606548` devbot (no guilds; DM it) |
+| Telegram | `@chipsgg_official_bot` | `@chipsgg_dev_bot` |
+| D1 | `chips-bot-metrics` | `chips-bot-metrics-dev` |
+| `/health.environment` | `production` | `dev` |
+
+`scripts/smoke.js` and `scripts/e2e_telegram_webhook.js` **exit 3 if pointed at a prod host**.
+Test messages go to Jacob only (`@tacyarg`, TG `147051786`), never to a player or a public channel.
+Prod tokens live only as secrets on the production worker; nothing else on disk or in scripts.
+
+## Secrets
+
+Set per environment: `wrangler secret put <NAME>` (prod) / `wrangler secret put <NAME> --env dev`.
 
 | Name | Purpose |
 |---|---|
-| `CHIPS_TOKEN` | operator token: staff checks + `/affiliate`. Root-tier — reads only. |
-| `DISCORD_APPLICATION_ID` / `DISCORD_PUBLIC_KEY` | from `GET /applications/@me` with the bot token |
+| `CHIPS_TOKEN` | operator token: staff checks + `/affiliate`. Root-tier, reads only. |
+| `DISCORD_APPLICATION_ID` / `DISCORD_PUBLIC_KEY` | from `GET /applications/@me` with the bot token (`verify_key`) |
 | `DISCORD_TOKEN` | role assignment on `/linkaccount`, command registration |
 | `TELEGRAM_TOKEN` | Bot API |
 | `TELEGRAM_WEBHOOK_SECRET` | random; Telegram echoes it as `X-Telegram-Bot-Api-Secret-Token` |
 
-Local dev: `.dev.vars` (gitignored) with the same names; `npm run dev`; `npm run smoke`.
+Local dev: `.dev.vars` (gitignored) with the dev values; `npm run dev`; `npm run smoke`.
 
 ## Deploy
 
 ```
 cd worker
 npm test && npm run lint
-npx wrangler d1 migrations apply chips-bot-metrics --remote   # idempotent
-npx wrangler deploy
-node scripts/smoke.js https://bot-cf.chips.gg
+npx wrangler deploy --env dev && node scripts/smoke.js https://bot-cf.chips.gg
+npx wrangler deploy                      # production, after dev is green
+curl https://bot.chips.gg/health         # read-only prod check
 ```
 
-## Cutover runbook (bot.chips.gg)
+## Cutover (done 2026-09-16)
 
-The Replit bot fights the Worker for Telegram: Telegraf's `launch()` deletes the webhook to poll.
-**Stop the Replit deployment first**, then:
+Replit deployment stopped; `bot.chips.gg` DNS record deleted by hand (wrangler token is zone:read);
+`wrangler deploy` bound the custom domain; Telegram `setWebhook` + Discord `interactions_endpoint_url`
+pointed at `https://bot.chips.gg`. D1 seeded from the Replit counters. Rollback = point both back
+to empty (Discord gateway mode / Telegram polling) and start any long-running copy of the Node bot.
 
-1. **Discord** — set the Interactions Endpoint URL on the production app (`Chips.gg VIP Assistant`,
-   `901908108136308757`) to `https://bot.chips.gg/discord`. Discord PINGs it on save and refuses
-   the URL if the signature check fails, so a successful save is the test. Needs that app's
-   token + public key as the Worker secrets (currently the *devbot* pair is loaded).
-   The bot needs **Manage Roles** in the guild for `/linkaccount` role assignment (permissions
-   `268435456` on the invite URL).
-2. **Telegram** — `TELEGRAM_TOKEN=… TELEGRAM_WEBHOOK_SECRET=… node scripts/register-telegram.js https://bot.chips.gg`
-   then `--info` should show the URL and `pending_update_count: 0`.
-3. **Domain** — add `{ pattern = "bot.chips.gg", custom_domain = true }` to `routes` in
-   `wrangler.toml`, delete the existing `bot.chips.gg` DNS record (points at Replit), `wrangler deploy`.
-   Cert issues in ~1 min. `curl https://bot.chips.gg/health` → `{"ok":true,…}`.
-4. **Rotate** the Discord + Telegram tokens (they were shared in chat). Rotating also kills any
-   stale Replit instance for good. Re-`secret put` the new values.
-
-Rollback: point the Discord endpoint URL back to empty (gateway mode), `register-telegram.js --delete`,
-restart Replit. Minutes.
+Post-cutover TODO: **rotate** the Discord bot token, both Telegram tokens and the Chips operator token
+(they were shared in chat during the migration), then `secret put` the new values.
 
 ## Behaviour notes
 

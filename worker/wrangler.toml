@@ -2,12 +2,13 @@ name = "chips-bot"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 compatibility_flags = ["nodejs_compat"]
-workers_dev = true
+workers_dev = false
 
-# Custom domains: Cloudflare creates DNS + cert. bot-cf.chips.gg = staging alias;
-# bot.chips.gg is added at cutover (see README).
+# PRODUCTION (top level): `wrangler deploy`
+#   bot.chips.gg, prod secrets (Discord app 901908108136308757 "Chips.gg VIP Assistant",
+#   Telegram @chipsgg_official_bot, Chips operator token). Never point test scripts here.
 routes = [
-  { pattern = "bot-cf.chips.gg", custom_domain = true }
+  { pattern = "bot.chips.gg", custom_domain = true }
 ]
 
 [assets]
@@ -18,11 +19,12 @@ not_found_handling = "404-page"
 [vars]
 VERSION = "4.0.0"
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
+ENVIRONMENT = "production"
 
-# Secrets (set with `wrangler secret put <NAME>`):
+# Secrets per environment (`wrangler secret put <NAME>` / `wrangler secret put <NAME> --env dev`):
 #   CHIPS_TOKEN               operator token (staff commands + /affiliate); optional for public-only
-#   DISCORD_PUBLIC_KEY        from the Discord developer portal (General Information)
-#   DISCORD_APPLICATION_ID    901908108136308757
+#   DISCORD_PUBLIC_KEY        from GET /applications/@me (verify_key)
+#   DISCORD_APPLICATION_ID
 #   DISCORD_TOKEN             bot token (role assignment + command registration)
 #   TELEGRAM_TOKEN            bot token
 #   TELEGRAM_WEBHOOK_SECRET   random string, passed to setWebhook as secret_token
@@ -42,4 +44,41 @@ database_id = "6f8f9eb1-f9f7-4678-833a-a8a6aa40be79"
 migrations_dir = "migrations"
 
 [observability]
+enabled = true
+
+# DEV / STAGING: `wrangler deploy --env dev`
+#   bot-cf.chips.gg, dev secrets only (devbot 1326290512675606548, @chipsgg_dev_bot).
+#   Own D1 + own Durable Object namespace. All smoke/e2e runs target THIS.
+[env.dev]
+name = "chips-bot-dev"
+workers_dev = true
+routes = [
+  { pattern = "bot-cf.chips.gg", custom_domain = true }
+]
+
+[env.dev.vars]
+VERSION = "4.0.0-dev"
+CHIPS_API_HOST = "https://api.chips.gg/prod/api"
+ENVIRONMENT = "dev"
+
+[env.dev.assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[env.dev.durable_objects.bindings]]
+name = "CHIPS_FEED"
+class_name = "ChipsFeed"
+
+[[env.dev.migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChipsFeed"]
+
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "chips-bot-metrics-dev"
+database_id = "3c834ab5-355a-487b-8c96-069e03ba5411"
+migrations_dir = "migrations"
+
+[env.dev.observability]
 enabled = true
