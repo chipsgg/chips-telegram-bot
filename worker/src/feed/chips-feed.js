@@ -61,6 +61,14 @@ export class ChipsFeed {
     this.connectedAt = 0;
     this.connecting = null;
     this.reconnects = 0;
+    // last-seen per platform (ms) + handled counts; persisted so they survive DO eviction
+    this.activity = null;
+  }
+
+  async loadActivity() {
+    if (this.activity) return this.activity;
+    this.activity = (await this.state.storage.get("activity")) || {};
+    return this.activity;
   }
 
   // ---- internal HTTP interface (called by the Worker via stub.fetch) ----
@@ -69,7 +77,21 @@ export class ChipsFeed {
     await this.ensureConnected();
 
     if (url.pathname === "/status") {
-      return Response.json(this.status());
+      return Response.json({
+        ...this.status(),
+        activity: await this.loadActivity(),
+      });
+    }
+    if (url.pathname === "/mark") {
+      // record "platform X delivered something we handled just now"
+      const platform = url.searchParams.get("platform");
+      if (platform && /^[a-z]+$/.test(platform)) {
+        const a = await this.loadActivity();
+        a[platform] = Date.now();
+        a[`${platform}_count`] = (a[`${platform}_count`] || 0) + 1;
+        await this.state.storage.put("activity", a);
+      }
+      return new Response("ok");
     }
     if (url.pathname === "/state") {
       const paths = (url.searchParams.get("paths") || "")
@@ -99,8 +121,12 @@ export class ChipsFeed {
     };
   }
 
+  // Stale = no push for STALE_MS. A fresh connection gets a 15s grace window before
+  // the first push counts against it (new DO instance after deploy has updatedAt=0).
   isStale() {
-    return !this.updatedAt || Date.now() - this.updatedAt > STALE_MS;
+    if (this.updatedAt) return Date.now() - this.updatedAt > STALE_MS;
+    if (this.connectedAt) return Date.now() - this.connectedAt > 15_000;
+    return true;
   }
 
   get(dotted) {
@@ -205,6 +231,11 @@ export function feedClient(env) {
       stub()
         .fetch("https://feed/status")
         .then((r) => r.json()),
+    // fire-and-forget liveness mark; never throws
+    mark: (platform) =>
+      stub()
+        .fetch(`https://feed/mark?platform=${encodeURIComponent(platform)}`)
+        .catch(() => undefined),
     // paths: dotted, e.g. "public.currencies", "stats.bets.bigwins"
     get: async (...paths) => {
       const r = await stub().fetch(

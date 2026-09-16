@@ -92,6 +92,7 @@ async function editOriginal(env, interaction, body) {
 async function runCommand(env, deps, interaction, commandName) {
   const command = commands[commandName];
   const ctx = makeCtx(interaction, commandName);
+  await deps.feed?.mark("discord");
   try {
     await command.handler(ctx, deps);
     let body = ctx.result() || { content: "No response." };

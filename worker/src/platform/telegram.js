@@ -184,6 +184,8 @@ export async function handleTelegram(request, env, deps, waitUntil) {
   const ctx = makeCtx(message, send, env);
   waitUntil(
     (async () => {
+      // liveness first: the platform delivered to us, whatever the handler does next
+      await deps.feed?.mark("telegram");
       try {
         await command.handler(ctx, deps);
         await track(env, "telegram");

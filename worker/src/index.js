@@ -5,7 +5,7 @@
  *   GET  /api/command/:name  HTTP demo API (landing page "live demo"); identity commands 404
  *   GET  /api/metrics        usage counters (D1)
  *   GET  /api/ticker         live prices for the landing-page ticker (from the feed DO)
- *   GET  /health             200 when the feed is connected + fresh, else 503
+ *   GET  /health             200 when feed is fresh AND Discord/Telegram point at this host; else 503
  *   GET  /commands.json      command list (for the landing page)
  *   GET  /*                  static assets (ASSETS binding, ./public)
  */
@@ -13,6 +13,7 @@ import { commands } from "./commands/index.js";
 import { feedClient } from "./feed/chips-feed.js";
 import { createApi } from "./lib/chips.js";
 import { formatPrice } from "./lib/format.js";
+import { buildHealth } from "./lib/health.js";
 import { getMetrics, track } from "./lib/metrics.js";
 import { handleDiscord } from "./platform/discord.js";
 import { handleTelegram } from "./platform/telegram.js";
@@ -71,19 +72,12 @@ export default {
       return handleTelegram(request, env, d, (p) => ctx.waitUntil(p));
 
     if (url.pathname === "/health") {
-      const feed = await d.feed
-        .status()
-        .catch((e) => ({ connected: false, error: e.message }));
-      const ok = feed.connected && !feed.stale;
-      return json(
-        {
-          ok,
-          feed,
-          version: env.VERSION || "dev",
-          environment: env.ENVIRONMENT || "unknown",
-        },
-        ok ? 200 : 503
-      );
+      const health = await buildHealth({
+        env,
+        feed: d.feed,
+        host: url.hostname,
+      });
+      return json(health, health.ok ? 200 : 503);
     }
 
     if (url.pathname === "/api/metrics") return json(await getMetrics(env));
@@ -130,6 +124,7 @@ export default {
         const c = apiCtx(url);
         await command.handler(c, d);
         ctx.waitUntil(track(env, "api"));
+        ctx.waitUntil(d.feed.mark("api"));
         return json(c.result() || { error: "No response" });
       } catch (err) {
         console.error(`[api] /${m[1]} failed:`, err.message);

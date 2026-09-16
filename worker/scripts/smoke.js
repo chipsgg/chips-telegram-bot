@@ -40,15 +40,22 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 (async () => {
   // Feed warm-up: first /health boots the DO and opens the socket
   let health;
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 20; i++) {
     health = await get("/health");
-    if (health.status === 200) break;
+    if (health.status === 200 && health.json?.feed?.updatedAt > 0) break;
     await sleep(1000);
   }
   check(
     "/health 200 + feed connected + fresh",
     health.status === 200 && health.json?.ok === true,
     JSON.stringify(health.json)
+  );
+  check(
+    "/health reports discord+telegram wiring",
+    health.json?.discord?.wired === true &&
+      health.json?.telegram?.wired === true &&
+      health.json?.status === "healthy",
+    `discord=${JSON.stringify(health.json?.discord)} telegram=${JSON.stringify(health.json?.telegram)}`
   );
   check(
     "feed has bigwins/luckiest/currencies",
