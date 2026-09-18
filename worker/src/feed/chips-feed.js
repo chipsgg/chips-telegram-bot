@@ -7,6 +7,7 @@
  * upgrade via fetch(), DO storage for activity counters, and the DO alarm.
  */
 import { createApi } from "../lib/chips.js";
+import { runWatchdog } from "../lib/watchdog.js";
 import { ALARM_MS, FEED_HOST, FEED_USER_AGENT, FeedCore } from "./core.js";
 
 export class ChipsFeed {
@@ -37,6 +38,11 @@ export class ChipsFeed {
     if (url.pathname === "/mark") {
       await this.core.mark(url.searchParams.get("platform"));
       return new Response("ok");
+    }
+    if (url.pathname === "/watchdog") {
+      return Response.json(
+        await runWatchdog({ env: this.env, storage: this.state.storage })
+      );
     }
     if (url.pathname === "/ratelimit") {
       return Response.json(
@@ -74,6 +80,10 @@ export function feedClient(env) {
       stub()
         .fetch(`https://feed/mark?platform=${encodeURIComponent(platform)}`)
         .catch(() => undefined),
+    watchdog: () =>
+      stub()
+        .fetch("https://feed/watchdog")
+        .then((r) => r.json()),
     // per-user limiter; fails OPEN (a DO hiccup must not block every command)
     ratelimit: (key) =>
       stub()

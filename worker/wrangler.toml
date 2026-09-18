@@ -11,6 +11,10 @@ routes = [
   { pattern = "bot.chips.gg", custom_domain = true }
 ]
 
+# every minute: scheduled() -> uptime watchdog (src/lib/watchdog.js)
+[triggers]
+crons = ["* * * * *"]
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
@@ -25,6 +29,9 @@ BUILT_AT = ""
 DISCORD_ROLES_GUILD_ID = "541035273547415552"
 # public handle, used to detect @mentions in groups
 TELEGRAM_BOT_USERNAME = "chipsgg_official_bot"
+# uptime watchdog (cron below): probes PUBLIC_HOST/health, one Telegram message per up/down transition
+PUBLIC_HOST = "bot.chips.gg"
+ALERT_TELEGRAM_CHAT = "147051786"
 # proactive big-win posts; empty = off. Set to channel ids / chat ids once marketing picks them.
 BROADCAST_DISCORD_CHANNELS = ""
 BROADCAST_TELEGRAM_CHATS = ""
@@ -68,6 +75,9 @@ routes = [
   { pattern = "bot-cf.chips.gg", custom_domain = true }
 ]
 
+[env.dev.triggers]
+crons = ["* * * * *"]
+
 [env.dev.vars]
 VERSION = "unstamped-dev"
 COMMIT = "unknown"
@@ -75,6 +85,8 @@ BUILT_AT = ""
 # devbot is in no guild; set to a test server id when testing role assignment
 DISCORD_ROLES_GUILD_ID = ""
 TELEGRAM_BOT_USERNAME = "chipsgg_dev_bot"
+PUBLIC_HOST = "bot-cf.chips.gg"
+ALERT_TELEGRAM_CHAT = "147051786"
 BROADCAST_DISCORD_CHANNELS = ""
 BROADCAST_TELEGRAM_CHATS = "147051786"
 BROADCAST_MIN_USD = "300"

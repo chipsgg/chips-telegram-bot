@@ -18,4 +18,9 @@ export default {
     const res = await app(request, (p) => ctx.waitUntil(p));
     return res ?? env.ASSETS.fetch(request);
   },
+
+  // wrangler.toml [triggers] crons: probe our own public /health, alert on transitions
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(feedClient(env).watchdog());
+  },
 };

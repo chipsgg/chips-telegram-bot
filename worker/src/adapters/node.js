@@ -30,6 +30,9 @@ import { createApp } from "../app.js";
 import { FEED_HOST, FEED_USER_AGENT, FeedCore } from "../feed/core.js";
 import { createApi } from "../lib/chips.js";
 import { memoryMetrics, sqliteMetrics } from "../lib/metrics.js";
+import { runWatchdog } from "../lib/watchdog.js";
+
+const noop = () => undefined;
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = resolve(here, "../../public");
@@ -68,6 +71,10 @@ export function envFromProcess(pe = process.env) {
     TELEGRAM_WEBHOOK_SECRET: pe.TELEGRAM_WEBHOOK_SECRET,
     TELEGRAM_BOT_USERNAME: pe.TELEGRAM_BOT_USERNAME,
     PUBLIC_URL: pe.PUBLIC_URL,
+    PUBLIC_HOST:
+      pe.PUBLIC_HOST ||
+      (pe.PUBLIC_URL ? new URL(pe.PUBLIC_URL).host : undefined),
+    ALERT_TELEGRAM_CHAT: pe.ALERT_TELEGRAM_CHAT,
   };
 }
 
@@ -202,7 +209,18 @@ export async function createNodeServer({
     .ensureConnected()
     .catch((err) => console.error("[feed]", err.message));
 
+  // uptime watchdog (same code the Worker cron runs) when configured
+  let watchdogTimer = null;
+  if (env.ALERT_TELEGRAM_CHAT && env.PUBLIC_HOST) {
+    watchdogTimer = setInterval(
+      () => runWatchdog({ env, storage: feed.core.storage }).catch(noop),
+      60_000
+    );
+    watchdogTimer.unref?.();
+  }
+
   const close = async () => {
+    clearInterval(watchdogTimer);
     await new Promise((ok) => server.close(ok));
     feed.close();
     await Promise.allSettled([...pending]);
