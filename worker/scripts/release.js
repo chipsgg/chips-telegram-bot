@@ -67,7 +67,7 @@ const pkgPath = resolve(root, "worker/package.json");
 const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
 pkg.version = next;
 writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
-sh("git add worker/package.json");
+sh(`git add ${JSON.stringify(pkgPath)}`);
 sh(`git commit -q -m "release ${tag}"`);
 sh(`git tag -a ${tag} -m "${tag}"`);
 console.log(
