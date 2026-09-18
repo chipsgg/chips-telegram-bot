@@ -1,0 +1,12 @@
+node_modules
+.wrangler
+dist
+test
+scripts
+migrations
+*.md
+.env*
+!.env.example
+wrangler.toml
+biome.json
+package-lock.json

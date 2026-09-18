@@ -62,6 +62,34 @@ Set per environment: `wrangler secret put <NAME>` (prod) / `wrangler secret put 
 
 Local dev: `.dev.vars` (gitignored) with the dev values; `npm run dev`; `npm run smoke`.
 
+## Two runtimes, one codebase
+
+```
+src/app.js              (Request) -> Response: every route, no runtime imports
+src/commands/*          the 19 commands, platform-agnostic
+src/platform/*          Discord interactions (Ed25519) + Telegram webhook handlers
+src/feed/core.js        FeedCore: the api.chips.gg websocket + pushed state, runtime-agnostic
+src/lib/metrics.js      { track, read } over D1, node:sqlite, or memory
+
+src/index.js            Cloudflare Worker: Durable Object feed, D1 metrics, ASSETS
+src/adapters/node.js    Node >= 22.5: in-process feed, sqlite file, static from ./public
+```
+
+Production is the Worker. The Node adapter exists so the same bot can run anywhere else
+(Docker, a VPS, Fly, local laptop) with zero runtime dependencies. Both entrypoints are
+~40 lines; a fix lands once in the shared code and both runtimes get it.
+
+```
+npm run dev:node                     # local, reads ./.env (copy .env.example), watches for changes
+docker build -t chips-bot . && docker run --rm -p 5000:5000 --env-file .env -v chips-bot-data:/data chips-bot
+node scripts/smoke.js http://localhost:5000
+```
+
+Discord and Telegram need a public HTTPS URL to deliver to a Node instance (reverse proxy, or
+`cloudflared tunnel --url http://localhost:5000` for local testing); set `PUBLIC_URL` to it so
+`/health` can verify the wiring, then run the same `scripts/register-*.js` as for the Worker.
+The dev bot pair (devbot + @chipsgg_dev_bot) is for this; never point prod bots at a laptop.
+
 ## Versioning + deploy
 
 One source of truth: **git tags `vX.Y.Z`**. `wrangler.toml` carries no version; `scripts/deploy.js`
