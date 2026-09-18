@@ -28,6 +28,7 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { createApp } from "../app.js";
 import { FEED_HOST, FEED_USER_AGENT, FeedCore } from "../feed/core.js";
+import { createApi } from "../lib/chips.js";
 import { memoryMetrics, sqliteMetrics } from "../lib/metrics.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
@@ -91,7 +92,12 @@ export function nodeFeed(env = {}) {
     },
     schedule: (ms) => {
       clearTimeout(timer);
-      timer = setTimeout(() => core.alarm(), ms);
+      timer = setTimeout(async () => {
+        await core.alarm();
+        await core.poll(
+          createApi({ host: env.CHIPS_API_HOST, token: env.CHIPS_TOKEN })
+        );
+      }, ms);
       timer.unref?.();
     },
   });

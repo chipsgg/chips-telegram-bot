@@ -6,6 +6,7 @@
  * in ./core.js; this file only supplies the Cloudflare-specific pieces: the websocket
  * upgrade via fetch(), DO storage for activity counters, and the DO alarm.
  */
+import { createApi } from "../lib/chips.js";
 import { ALARM_MS, FEED_HOST, FEED_USER_AGENT, FeedCore } from "./core.js";
 
 export class ChipsFeed {
@@ -51,8 +52,12 @@ export class ChipsFeed {
     return new Response("not found", { status: 404 });
   }
 
-  alarm() {
-    return this.core.alarm();
+  async alarm() {
+    await this.core.alarm();
+    // once a minute is plenty for promotions; runs on the same alarm as the reconnect
+    await this.core.poll(
+      createApi({ host: this.env.CHIPS_API_HOST, token: this.env.CHIPS_TOKEN })
+    );
   }
 }
 

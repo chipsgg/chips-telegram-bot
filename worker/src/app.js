@@ -19,7 +19,12 @@
  *   waitUntil  (promise) => void  keep the runtime alive until background work finishes
  */
 import { commands } from "./commands/index.js";
-import { bigWinForm, broadcastConfig, deliver } from "./lib/broadcast.js";
+import {
+  bigWinForm,
+  broadcastConfig,
+  deliver,
+  promoForm,
+} from "./lib/broadcast.js";
 import { createApi } from "./lib/chips.js";
 import { formatPrice } from "./lib/format.js";
 import { buildHealth } from "./lib/health.js";
@@ -98,19 +103,25 @@ export function createApp({ env, feed, metrics }) {
       url.pathname === "/api/broadcast-test" &&
       env.ENVIRONMENT !== "production"
     ) {
-      const r = await deliver(
-        env,
-        broadcastConfig(env),
-        bigWinForm({
-          username: "test_player",
-          game: "Broadcast Test",
-          gameSlug: null,
-          amountUsd: 12.5,
-          winningsUsd: 4_321,
-          multiplier: 345.7,
-        })
-      );
-      return json({ sent: r });
+      const kind = url.searchParams.get("kind") || "bigwin";
+      const form =
+        kind === "promotion"
+          ? promoForm({
+              promotionid: "TEST",
+              title: "$1,000 Broadcast Test Race",
+              subtitle: "Synthetic promotion card to verify channel wiring.",
+              endTime: Date.now() + 7 * 86_400_000,
+            })
+          : bigWinForm({
+              username: "test_player",
+              game: "Broadcast Test",
+              gameSlug: null,
+              amountUsd: 12.5,
+              winningsUsd: 4_321,
+              multiplier: 345.7,
+            });
+      const r = await deliver(env, broadcastConfig(env), form);
+      return json({ kind, sent: r });
     }
 
     if (url.pathname === "/api/usage") {

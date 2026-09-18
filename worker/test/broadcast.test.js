@@ -5,7 +5,9 @@ import {
   bigWinForm,
   broadcastConfig,
   detectBigWins,
+  detectPromotions,
   isBroadcastEnabled,
+  promoForm,
   trimSeen,
 } from "../src/lib/broadcast.js";
 
@@ -137,4 +139,32 @@ test("bigWinForm renders amounts, multiplier, links", () => {
   );
   assert.equal(f.url, "https://chips.gg/play/pragmatic-gates");
   assert.equal(f.links.player, "https://chips.gg/user/carol");
+});
+
+test("promotions: cold start records silently; then started/ended diffs", () => {
+  const a = { promotionid: "A", title: "Race A", endTime: 1_800_000_000_000 };
+  const b = {
+    promotionid: "B",
+    title: "Race B",
+    subtitle: "Win big",
+    endTime: 1_800_000_000_000,
+  };
+  const cold = detectPromotions([a], null);
+  assert.deepEqual(cold.started, []);
+  assert.deepEqual(cold.known, ["A"]);
+  const next = detectPromotions([a, b], cold.known);
+  assert.deepEqual(
+    next.started.map((p) => p.promotionid),
+    ["B"]
+  );
+  assert.deepEqual(next.ended, []);
+  const later = detectPromotions([b], next.known);
+  assert.deepEqual(later.started, []);
+  assert.deepEqual(later.ended, ["A"]);
+  // junk rows ignored; non-array tolerated
+  assert.deepEqual(detectPromotions({ not: "array" }, ["A"]).ended, ["A"]);
+  assert.deepEqual(detectPromotions([{ title: "no id" }], []).started, []);
+  const f = promoForm(b);
+  assert.match(f.content, /\*\*Race B\*\*\nWin big\nEnds 15 Jan 2027/);
+  assert.equal(f.url, "https://chips.gg/promotions/B");
 });

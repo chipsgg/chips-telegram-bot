@@ -18,7 +18,7 @@
  */
 import { postDiscordChannel } from "../platform/discord-rest.js";
 import { postTelegramChat } from "../platform/telegram.js";
-import { formatNumber, formatPrice, toUsd } from "./format.js";
+import { formatDate, formatNumber, formatPrice, toUsd } from "./format.js";
 
 export const SEEN_CAP = 500;
 
@@ -142,5 +142,76 @@ export async function announceBigWins({ env, storage, rows, currencies }) {
   } catch (err) {
     console.error("[broadcast] failed:", err.message);
     return { events: 0, error: err.message };
+  }
+}
+
+// ---- promotions (polled; not on the websocket feed) ----
+
+/**
+ * Diff the running list against the ids announced before. Cold start (no prior state)
+ * records the current set silently. Returns { started: [promo], ended: [id], known }.
+ */
+export function detectPromotions(running, known) {
+  const list = (Array.isArray(running) ? running : []).filter(
+    (p) => p?.promotionid && p.title
+  );
+  const now = new Set(list.map((p) => p.promotionid));
+  if (known === null || known === undefined) {
+    return { started: [], ended: [], known: [...now] };
+  }
+  const prev = new Set(known);
+  const started = list.filter((p) => !prev.has(p.promotionid));
+  const ended = [...prev].filter((id) => !now.has(id));
+  return { started, ended, known: [...now] };
+}
+
+export function promoForm(p) {
+  const sub = (p.subtitle || "").trim();
+  const desc = sub
+    ? sub
+    : String(p.description || "")
+        .split("\n")
+        .map((l) => l.trim())
+        .find((l) => l && !l.startsWith("#")) || "";
+  const clean = desc.replace(/[*_`#>]/g, "").trim();
+  const lines = [`**${(p.title || "").trim()}**`];
+  if (clean)
+    lines.push(clean.length > 200 ? `${clean.slice(0, 197)}...` : clean);
+  if (p.endTime) lines.push(`Ends ${formatDate(p.endTime)}`);
+  return {
+    emoji: "✨",
+    title: "New Promotion",
+    content: lines.join("\n"),
+    url: `https://chips.gg/promotions/${p.promotionid}`,
+    buttonLabel: "View Promotion",
+  };
+}
+
+/**
+ * Poll + announce. `storage` persists the known id list. Called from the scheduled handler.
+ */
+export async function announcePromotions({ env, api, storage }) {
+  const cfg = broadcastConfig(env);
+  if (!isBroadcastEnabled(cfg)) return { started: 0, ended: 0 };
+  try {
+    const running = await api.public("listRunningPromotions", {});
+    const known = await storage.get("promotions_known");
+    const r = detectPromotions(running, known ?? null);
+    await storage.put("promotions_known", r.known);
+    let sent = { discord: 0, telegram: 0 };
+    for (const p of r.started) {
+      const d = await deliver(env, cfg, promoForm(p));
+      sent = {
+        discord: sent.discord + d.discord,
+        telegram: sent.telegram + d.telegram,
+      };
+      console.log(
+        `[broadcast] promotion started: ${p.title} -> discord ${d.discord} telegram ${d.telegram}`
+      );
+    }
+    return { started: r.started.length, ended: r.ended.length, sent };
+  } catch (err) {
+    console.error("[broadcast] promotions failed:", err.message);
+    return { started: 0, ended: 0, error: err.message };
   }
 }

@@ -22,7 +22,7 @@
  * subscriptions (the server drops idle ones). No auth: all four feeds are public.
  */
 
-import { announceBigWins } from "../lib/broadcast.js";
+import { announceBigWins, announcePromotions } from "../lib/broadcast.js";
 import { RateLimiter } from "../lib/ratelimit.js";
 
 export const FEED_HOST = "wss://api.chips.gg/prod/socket";
@@ -88,6 +88,7 @@ export class FeedCore {
     this.setTimer = setTimer;
     this.announceTimer = null;
     this.lastAnnounce = null; // last announceBigWins result, surfaced in status()
+    this.lastPromoPoll = null;
     this.ws = null;
     this.rid = 0;
     this.data = { public: {}, stats: {}, profitshare: {} };
@@ -142,6 +143,7 @@ export class FeedCore {
       luckiest: Object.keys(this.data.stats?.bets?.luckiest || {}).length,
       currencies: Object.keys(this.data.public?.currencies || {}).length,
       broadcast: this.lastAnnounce,
+      promotions: this.lastPromoPoll,
     };
   }
 
@@ -244,6 +246,18 @@ export class FeedCore {
         this.lastAnnounce = { at: Date.now(), ...r };
       });
     }, 1500);
+  }
+
+  // Periodic work that is not feed-driven (promotion polling). Runs from the alarm.
+  async poll(api) {
+    if (!api) return null;
+    const r = await announcePromotions({
+      env: this.env,
+      api,
+      storage: this.storage,
+    });
+    this.lastPromoPoll = { at: Date.now(), ...r };
+    return r;
   }
 
   async alarm() {
