@@ -36,6 +36,11 @@ export class ChipsFeed {
       await this.core.mark(url.searchParams.get("platform"));
       return new Response("ok");
     }
+    if (url.pathname === "/ratelimit") {
+      return Response.json(
+        this.core.ratelimit(url.searchParams.get("key") || "")
+      );
+    }
     if (url.pathname === "/state") {
       const paths = (url.searchParams.get("paths") || "")
         .split(",")
@@ -63,6 +68,12 @@ export function feedClient(env) {
       stub()
         .fetch(`https://feed/mark?platform=${encodeURIComponent(platform)}`)
         .catch(() => undefined),
+    // per-user limiter; fails OPEN (a DO hiccup must not block every command)
+    ratelimit: (key) =>
+      stub()
+        .fetch(`https://feed/ratelimit?key=${encodeURIComponent(key)}`)
+        .then((r) => r.json())
+        .catch(() => ({ allowed: true, remaining: 0, retryAfterSec: 0 })),
     // paths: dotted, e.g. "public.currencies", "stats.bets.bigwins"
     get: async (...paths) => {
       const r = await stub().fetch(

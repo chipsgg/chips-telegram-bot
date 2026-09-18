@@ -10,6 +10,7 @@
  */
 import { commands } from "../commands/index.js";
 import { tokenGetter, tokenize } from "../lib/format.js";
+import { rateLimitMessage } from "../lib/ratelimit.js";
 
 const esc = (s) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -185,6 +186,11 @@ export async function handleTelegram(request, env, deps, waitUntil) {
     (async () => {
       // liveness first: the platform delivered to us, whatever the handler does next
       await deps.feed?.mark("telegram");
+      const rl = await deps.feed.ratelimit(`telegram:${ctx.userid}`);
+      if (!rl.allowed) {
+        await ctx.sendText(rateLimitMessage(rl.retryAfterSec));
+        return;
+      }
       try {
         await command.handler(ctx, deps);
         await deps.metrics.track("telegram", name, true);

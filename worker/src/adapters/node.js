@@ -91,6 +91,7 @@ export function nodeFeed() {
     core,
     status: () => core.status(),
     mark: (platform) => core.mark(platform).catch(() => undefined),
+    ratelimit: async (key) => core.ratelimit(key),
     get: (...paths) => core.get(...paths),
     close: () => {
       clearTimeout(timer);

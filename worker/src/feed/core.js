@@ -22,6 +22,8 @@
  * subscriptions (the server drops idle ones). No auth: all four feeds are public.
  */
 
+import { RateLimiter } from "../lib/ratelimit.js";
+
 export const FEED_HOST = "wss://api.chips.gg/prod/socket";
 export const FEED_USER_AGENT = "Mozilla/5.0 (compatible; chips-bot-feed/4.0)";
 export const ALARM_MS = 60_000;
@@ -70,7 +72,12 @@ export const memoryStorage = () => {
 };
 
 export class FeedCore {
-  constructor({ openSocket, storage = memoryStorage(), schedule = noop }) {
+  constructor({
+    openSocket,
+    storage = memoryStorage(),
+    schedule = noop,
+    rateLimit = {},
+  }) {
     this.openSocket = openSocket;
     this.storage = storage;
     this.schedule = schedule;
@@ -82,6 +89,12 @@ export class FeedCore {
     this.connecting = null;
     this.reconnects = 0;
     this.activity = null; // last-seen per platform (ms) + handled counts
+    // per-user command limiter lives here because there is exactly one core per deployment
+    this.limiter = new RateLimiter(rateLimit);
+  }
+
+  ratelimit(key) {
+    return this.limiter.hit(key);
   }
 
   async loadActivity() {

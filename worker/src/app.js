@@ -136,6 +136,19 @@ export function createApp({ env, feed, metrics }) {
       const command = commands[m[1]];
       if (!command || command.identity)
         return json({ error: "Command not found" }, 404);
+      const ip =
+        request.headers.get("cf-connecting-ip") ||
+        request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+        "unknown";
+      const rl = await feed.ratelimit(`api:${ip}`);
+      if (!rl.allowed)
+        return json(
+          { error: "Rate limited", retryAfterSec: rl.retryAfterSec },
+          429,
+          {
+            "retry-after": String(rl.retryAfterSec),
+          }
+        );
       try {
         const c = apiCtx(url);
         await command.handler(c, deps);
