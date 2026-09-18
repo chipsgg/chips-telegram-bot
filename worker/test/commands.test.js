@@ -252,6 +252,70 @@ test("/linkaccount: refuses in telegram groups, validates code, never logs it", 
   );
 });
 
+test("/linkaccount: assigns a Discord role only in DISCORD_ROLES_GUILD_ID", async () => {
+  // The role PUT goes to fetch(); capture whether it was attempted
+  const puts = [];
+  const origFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    puts.push(`${init?.method} ${url}`);
+    return { ok: true, status: 204, text: async () => "" };
+  };
+  const a = api({
+    "auth/linkPlatformID": async () => ({ userid: "uid" }),
+    "public/getPlayer": async () => ({
+      username: "bob",
+      vip: { rank: "Flipper I" },
+    }),
+  });
+  const env = {
+    DISCORD_TOKEN: "t",
+    DISCORD_ROLES_GUILD_ID: "541035273547415552",
+  };
+  try {
+    // foreign guild: no PUT, no "role updated" line
+    const foreign = ctx(
+      "discord",
+      { username: "bob", totp: "012345" },
+      { guildId: "999" }
+    );
+    await commands.linkaccount.handler(foreign, { api: a, env });
+    assert.equal(
+      puts.length,
+      0,
+      "must not touch roles outside the Chips guild"
+    );
+    assert.doesNotMatch(foreign.result().content, /role updated/i);
+
+    // the Chips guild: exactly one PUT to the flipper role
+    const home = ctx(
+      "discord",
+      { username: "bob", totp: "012345" },
+      { guildId: "541035273547415552" }
+    );
+    await commands.linkaccount.handler(home, { api: a, env });
+    assert.equal(puts.length, 1);
+    assert.match(
+      puts[0],
+      /^PUT .*\/guilds\/541035273547415552\/members\/u1\/roles\/1106398232382291978$/
+    );
+    assert.match(home.result().content, /role updated/i);
+
+    // unset env: never assigns
+    const noenv = ctx(
+      "discord",
+      { username: "bob", totp: "012345" },
+      { guildId: "541035273547415552" }
+    );
+    await commands.linkaccount.handler(noenv, {
+      api: a,
+      env: { DISCORD_TOKEN: "t" },
+    });
+    assert.equal(puts.length, 1);
+  } finally {
+    globalThis.fetch = origFetch;
+  }
+});
+
 test("/affiliate: staff gate via isAdmin or backoffice role", async () => {
   const a = api({
     "auth/getUserByPlatformID": async (p) =>

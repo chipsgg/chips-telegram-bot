@@ -508,7 +508,12 @@ const linkaccount = {
         `Your ${ctx.platform} account is now linked to **${player.username}**.`,
       ];
       if (player?.vip?.rank) lines.push(`VIP rank: ${player.vip.rank}`);
-      if (ctx.platform === "discord" && ctx.guildId) {
+      // Rank roles exist only in the Chips guild; never PUT roles in other servers the bot sits in
+      if (
+        ctx.platform === "discord" &&
+        ctx.guildId &&
+        ctx.guildId === env.DISCORD_ROLES_GUILD_ID
+      ) {
         const roleId = discordRoleForRank(player?.vip?.rank);
         if (
           roleId &&

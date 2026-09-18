@@ -21,6 +21,8 @@ not_found_handling = "404-page"
 VERSION = "unstamped"
 COMMIT = "unknown"
 BUILT_AT = ""
+# the only guild where /linkaccount may assign VIP rank roles (Chips Casino)
+DISCORD_ROLES_GUILD_ID = "541035273547415552"
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "production"
 
@@ -63,6 +65,8 @@ routes = [
 VERSION = "unstamped-dev"
 COMMIT = "unknown"
 BUILT_AT = ""
+# devbot is in no guild; set to a test server id when testing role assignment
+DISCORD_ROLES_GUILD_ID = ""
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "dev"
 
