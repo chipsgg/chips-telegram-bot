@@ -187,9 +187,10 @@ export async function handleTelegram(request, env, deps, waitUntil) {
       await deps.feed?.mark("telegram");
       try {
         await command.handler(ctx, deps);
-        await deps.metrics.track("telegram");
+        await deps.metrics.track("telegram", name, true);
       } catch (err) {
         console.error(`[telegram] /${name} failed:`, err.message);
+        await deps.metrics.track("telegram", name, false);
         await ctx.sendText("Something went wrong running that command.");
       }
     })()

@@ -5,7 +5,8 @@
  *   POST /discord            Discord Interactions endpoint
  *   POST /telegram           Telegram webhook
  *   GET  /api/command/:name  HTTP demo API (landing page "live demo"); identity commands 404
- *   GET  /api/metrics        usage counters
+ *   GET  /api/metrics        lifetime usage counters (landing page)
+ *   GET  /api/usage?days=30  per-command usage rollup (which commands anyone actually runs)
  *   GET  /api/ticker         live prices for the landing-page ticker (from the feed)
  *   GET  /health             200 when feed is fresh AND Discord/Telegram point at this host; else 503
  *   GET  /commands.json      command list (for the landing page)
@@ -89,6 +90,14 @@ export function createApp({ env, feed, metrics }) {
 
     if (url.pathname === "/api/metrics") return json(await metrics.read());
 
+    if (url.pathname === "/api/usage") {
+      const days = Math.min(
+        365,
+        Math.max(1, Number(url.searchParams.get("days")) || 30)
+      );
+      return json(await metrics.usage({ days }));
+    }
+
     if (url.pathname === "/api/ticker") {
       const { data, updatedAt } = await feed.get("public.currencies");
       const rows = Object.values(data["public.currencies"] || {})
@@ -130,11 +139,12 @@ export function createApp({ env, feed, metrics }) {
       try {
         const c = apiCtx(url);
         await command.handler(c, deps);
-        waitUntil(metrics.track("api"));
+        waitUntil(metrics.track("api", m[1], true));
         waitUntil(feed.mark("api"));
         return json(c.result() || { error: "No response" });
       } catch (err) {
         console.error(`[api] /${m[1]} failed:`, err.message);
+        waitUntil(metrics.track("api", m[1], false));
         return json({ error: "Command failed" }, 500);
       }
     }
