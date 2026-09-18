@@ -23,6 +23,8 @@ COMMIT = "unknown"
 BUILT_AT = ""
 # the only guild where /linkaccount may assign VIP rank roles (Chips Casino)
 DISCORD_ROLES_GUILD_ID = "541035273547415552"
+# public handle, used to detect @mentions in groups
+TELEGRAM_BOT_USERNAME = "chipsgg_official_bot"
 # proactive big-win posts; empty = off. Set to channel ids / chat ids once marketing picks them.
 BROADCAST_DISCORD_CHANNELS = ""
 BROADCAST_TELEGRAM_CHATS = ""
@@ -72,6 +74,7 @@ COMMIT = "unknown"
 BUILT_AT = ""
 # devbot is in no guild; set to a test server id when testing role assignment
 DISCORD_ROLES_GUILD_ID = ""
+TELEGRAM_BOT_USERNAME = "chipsgg_dev_bot"
 BROADCAST_DISCORD_CHANNELS = ""
 BROADCAST_TELEGRAM_CHATS = "147051786"
 BROADCAST_MIN_USD = "300"

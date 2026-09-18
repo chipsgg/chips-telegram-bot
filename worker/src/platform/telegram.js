@@ -189,12 +189,27 @@ export async function handleTelegram(request, env, deps, waitUntil) {
   const message = update?.message;
   if (!message?.text) return new Response("ok");
 
-  const name = commandName(message);
-  const command = name && commands[name];
-  if (!command) return new Response("ok");
-
   const send = tgApi(env);
   const ctx = makeCtx(message, send, env);
+
+  let name = commandName(message);
+  // Not a command: in a private chat any text gets the help card; in a group only an
+  // explicit @mention of the bot does (never answer general chatter).
+  if (!name) {
+    const botUser = (env.TELEGRAM_BOT_USERNAME || "").toLowerCase();
+    const mentioned =
+      botUser &&
+      (message.entities || []).some(
+        (e) =>
+          e.type === "mention" &&
+          message.text.slice(e.offset, e.offset + e.length).toLowerCase() ===
+            `@${botUser}`
+      );
+    if (ctx.isPrivate || mentioned) name = "help";
+    else return new Response("ok");
+  }
+  const command = commands[name];
+  if (!command) return new Response("ok");
   waitUntil(
     (async () => {
       // liveness first: the platform delivered to us, whatever the handler does next
