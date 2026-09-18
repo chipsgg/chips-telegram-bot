@@ -10,6 +10,7 @@
  */
 import { commands } from "../commands/index.js";
 import { tokenGetter, tokenize } from "../lib/format.js";
+import { rateLimitMessage } from "../lib/ratelimit.js";
 
 const esc = (s) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -36,17 +37,70 @@ export function mdToTelegramHtml(md) {
   return s;
 }
 
-export function telegramMakeForm({ emoji = "", title = "", content, footer }) {
-  const head =
-    `${emoji.trim()} <b>${esc(title.trim())}</b> ${emoji.trim()}`.trim();
+/**
+ * Form -> Telegram HTML caption. A form may carry a `telegram` override block for a layout
+ * tuned to a phone screen (Telegram has no embed fields/author/color, so announcements
+ * collapse the receipt into one line instead of stacking labelled rows).
+ */
+export function telegramMakeForm(form) {
+  const f = form.telegram ? { ...form, ...form.telegram } : form;
+  const { emoji = "", title = "", content, footer, fields, plainTitle } = f;
+  const head = plainTitle
+    ? `${emoji.trim()} <b>${esc(title.trim())}</b>`.trim()
+    : `${emoji.trim()} <b>${esc(title.trim())}</b> ${emoji.trim()}`.trim();
   const body = mdToTelegramHtml(content || "");
-  return `${head}\n${body}${footer ? `\n\n${mdToTelegramHtml(footer)}` : ""}`;
+  const rows = (fields || [])
+    .map(
+      (x) =>
+        `<b>${esc(String(x.name))}:</b> ${mdToTelegramHtml(String(x.value))}`
+    )
+    .join("\n");
+  const main = [head, body, rows].filter(Boolean).join("\n");
+  return footer ? `${main}\n\n${mdToTelegramHtml(footer)}` : main;
 }
 
 const linkKeyboard = (url, label) =>
   url && label
     ? { inline_keyboard: [[{ text: label.slice(0, 64), url }]] }
     : undefined;
+
+// Post a form to a chat/channel (proactive announcements). No reply_to, no banner upload.
+export async function postTelegramChat(env, chatId, form) {
+  if (!env.TELEGRAM_TOKEN) return false;
+  const keyboard = multiLinkKeyboard(form);
+  const caption = telegramMakeForm(form);
+  // announcements carry an image (game thumbnail / promo banner): photo + caption
+  const photo = form.photo || form.banner;
+  if (photo) {
+    const r = await sendPhotoBytes(
+      env,
+      chatId,
+      photo,
+      caption.slice(0, 1024),
+      keyboard
+    );
+    if (r?.ok) return true;
+  }
+  const r = await tgApi(env)("sendMessage", {
+    chat_id: chatId,
+    text: caption.slice(0, 4096),
+    parse_mode: "HTML",
+    reply_markup: keyboard,
+    link_preview_options: { is_disabled: true },
+  });
+  return Boolean(r?.ok);
+}
+
+// primary button + any extra link buttons on one row
+const multiLinkKeyboard = (form) => {
+  const row = [];
+  if (form.url && form.buttonLabel)
+    row.push({ text: form.buttonLabel.slice(0, 64), url: form.url });
+  for (const b of form.buttons || [])
+    if (b?.url && b?.label)
+      row.push({ text: b.label.slice(0, 64), url: b.url });
+  return row.length ? { inline_keyboard: [row] } : undefined;
+};
 
 export function tgApi(env) {
   const base = `https://api.telegram.org/bot${env.TELEGRAM_TOKEN}`;
@@ -175,21 +229,42 @@ export async function handleTelegram(request, env, deps, waitUntil) {
   const message = update?.message;
   if (!message?.text) return new Response("ok");
 
-  const name = commandName(message);
-  const command = name && commands[name];
-  if (!command) return new Response("ok");
-
   const send = tgApi(env);
   const ctx = makeCtx(message, send, env);
+
+  let name = commandName(message);
+  // Not a command: in a private chat any text gets the help card; in a group only an
+  // explicit @mention of the bot does (never answer general chatter).
+  if (!name) {
+    const botUser = (env.TELEGRAM_BOT_USERNAME || "").toLowerCase();
+    const mentioned =
+      botUser &&
+      (message.entities || []).some(
+        (e) =>
+          e.type === "mention" &&
+          message.text.slice(e.offset, e.offset + e.length).toLowerCase() ===
+            `@${botUser}`
+      );
+    if (ctx.isPrivate || mentioned) name = "help";
+    else return new Response("ok");
+  }
+  const command = commands[name];
+  if (!command) return new Response("ok");
   waitUntil(
     (async () => {
       // liveness first: the platform delivered to us, whatever the handler does next
       await deps.feed?.mark("telegram");
+      const rl = await deps.feed.ratelimit(`telegram:${ctx.userid}`);
+      if (!rl.allowed) {
+        await ctx.sendText(rateLimitMessage(rl.retryAfterSec));
+        return;
+      }
       try {
         await command.handler(ctx, deps);
-        await deps.metrics.track("telegram");
+        await deps.metrics.track("telegram", name, true);
       } catch (err) {
         console.error(`[telegram] /${name} failed:`, err.message);
+        await deps.metrics.track("telegram", name, false);
         await ctx.sendText("Something went wrong running that command.");
       }
     })()

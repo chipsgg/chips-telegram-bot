@@ -7,6 +7,19 @@ const FAVICON =
   "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png";
 
 // Bot form -> Discord message payload (embed + optional link/reroll buttons)
+// Brand colors (chips-brand-system): blue = structure, gold = money and winnings only.
+export const COLOR = { blue: 0x0065f2, gold: 0xf9c334, green: 0x2ecc71 };
+
+/**
+ * Bot form -> Discord embed. Optional richer fields used by announcements:
+ *   color       int, left accent bar (COLOR.blue / COLOR.gold)
+ *   fields      [{ name, value, inline }]
+ *   thumbnail   small image, right side
+ *   author      { name, url, icon_url }  (player line for big wins)
+ *   timestamp   ms epoch -> embed timestamp
+ *   buttons     extra link buttons [{ label, url }] beside the primary one
+ *   plainTitle  skip the emoji-wrapped title style
+ */
 export function discordMakeForm(form) {
   const {
     emoji = "",
@@ -18,19 +31,46 @@ export function discordMakeForm(form) {
     buttonLabel,
     reroll,
     ephemeral,
+    color,
+    fields,
+    thumbnail,
+    author,
+    timestamp,
+    buttons: extraButtons,
+    plainTitle,
   } = form;
   const embed = {
-    title: `${emoji.trim()} ${title.trim()} ${emoji.trim()}`.trim(),
+    title: plainTitle
+      ? title.trim().slice(0, 256)
+      : `${emoji.trim()} ${title.trim()} ${emoji.trim()}`.trim(),
   };
   const desc = (content || "").trim();
   if (desc) embed.description = desc.slice(0, 4096);
   if (footer) embed.footer = { text: footer.trim(), icon_url: FAVICON };
   if (banner) embed.image = { url: banner };
   if (url) embed.url = url;
+  if (color != null) embed.color = color;
+  if (Array.isArray(fields) && fields.length)
+    embed.fields = fields.slice(0, 25).map((f) => ({
+      name: String(f.name).slice(0, 256),
+      value: String(f.value).slice(0, 1024),
+      inline: Boolean(f.inline),
+    }));
+  if (thumbnail) embed.thumbnail = { url: thumbnail };
+  if (author?.name) embed.author = author;
+  if (timestamp) embed.timestamp = new Date(timestamp).toISOString();
 
   const buttons = [];
   if (url && buttonLabel)
     buttons.push({ type: 2, style: 5, label: buttonLabel.slice(0, 80), url });
+  for (const b of extraButtons || [])
+    if (b?.url && b?.label)
+      buttons.push({
+        type: 2,
+        style: 5,
+        label: b.label.slice(0, 80),
+        url: b.url,
+      });
   if (reroll)
     buttons.push({
       type: 2,
@@ -86,6 +126,55 @@ export async function assignDiscordRole(env, guildId, userId, roleId) {
     return res.ok;
   } catch (err) {
     console.warn("[discord] role assign error:", err.message);
+    return false;
+  }
+}
+
+// DELETE /guilds/{guild}/members/{user}/roles/{role}
+export async function removeDiscordRole(env, guildId, userId, roleId) {
+  if (!env.DISCORD_TOKEN) return false;
+  try {
+    const res = await fetch(
+      `${DISCORD_API}/guilds/${guildId}/members/${userId}/roles/${roleId}`,
+      {
+        method: "DELETE",
+        headers: {
+          authorization: `Bot ${env.DISCORD_TOKEN}`,
+          "x-audit-log-reason": "chips.gg rank changed",
+        },
+      }
+    );
+    // 404 = member left or role already gone; treat as done
+    if (!res.ok && res.status !== 404)
+      console.warn("[discord] role remove failed:", res.status);
+    return res.ok || res.status === 404;
+  } catch (err) {
+    console.warn("[discord] role remove error:", err.message);
+    return false;
+  }
+}
+
+// POST a form to a channel (proactive announcements). Needs Send Messages + Embed Links.
+export async function postDiscordChannel(env, channelId, form) {
+  if (!env.DISCORD_TOKEN) return false;
+  try {
+    const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
+      method: "POST",
+      headers: {
+        authorization: `Bot ${env.DISCORD_TOKEN}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(discordMakeForm(form)),
+    });
+    if (!res.ok)
+      console.warn(
+        `[discord] channel post ${channelId} failed:`,
+        res.status,
+        (await res.text()).slice(0, 200)
+      );
+    return res.ok;
+  } catch (err) {
+    console.warn("[discord] channel post error:", err.message);
     return false;
   }
 }

@@ -252,6 +252,70 @@ test("/linkaccount: refuses in telegram groups, validates code, never logs it", 
   );
 });
 
+test("/linkaccount: assigns a Discord role only in DISCORD_ROLES_GUILD_ID", async () => {
+  // The role PUT goes to fetch(); capture whether it was attempted
+  const puts = [];
+  const origFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    puts.push(`${init?.method} ${url}`);
+    return { ok: true, status: 204, text: async () => "" };
+  };
+  const a = api({
+    "auth/linkPlatformID": async () => ({ userid: "uid" }),
+    "public/getPlayer": async () => ({
+      username: "bob",
+      vip: { rank: "Flipper I" },
+    }),
+  });
+  const env = {
+    DISCORD_TOKEN: "t",
+    DISCORD_ROLES_GUILD_ID: "541035273547415552",
+  };
+  try {
+    // foreign guild: no PUT, no "role updated" line
+    const foreign = ctx(
+      "discord",
+      { username: "bob", totp: "012345" },
+      { guildId: "999" }
+    );
+    await commands.linkaccount.handler(foreign, { api: a, env });
+    assert.equal(
+      puts.length,
+      0,
+      "must not touch roles outside the Chips guild"
+    );
+    assert.doesNotMatch(foreign.result().content, /role updated/i);
+
+    // the Chips guild: exactly one PUT to the flipper role
+    const home = ctx(
+      "discord",
+      { username: "bob", totp: "012345" },
+      { guildId: "541035273547415552" }
+    );
+    await commands.linkaccount.handler(home, { api: a, env });
+    assert.equal(puts.length, 1);
+    assert.match(
+      puts[0],
+      /^PUT .*\/guilds\/541035273547415552\/members\/u1\/roles\/1106398232382291978$/
+    );
+    assert.match(home.result().content, /role updated/i);
+
+    // unset env: never assigns
+    const noenv = ctx(
+      "discord",
+      { username: "bob", totp: "012345" },
+      { guildId: "541035273547415552" }
+    );
+    await commands.linkaccount.handler(noenv, {
+      api: a,
+      env: { DISCORD_TOKEN: "t" },
+    });
+    assert.equal(puts.length, 1);
+  } finally {
+    globalThis.fetch = origFetch;
+  }
+});
+
 test("/affiliate: staff gate via isAdmin or backoffice role", async () => {
   const a = api({
     "auth/getUserByPlatformID": async (p) =>
@@ -340,6 +404,52 @@ test("discord form: embed, link button, reroll button, ephemeral flag", () => {
   assert.equal(discordMakeForm({ title: "x", ephemeral: true }).flags & 64, 64);
   assert.equal(discordRoleForRank("Collector III"), "1106398500020834405");
   assert.equal(discordRoleForRank("Unranked"), null);
+});
+
+test("discord form: rich fields (color, author, thumbnail, fields, timestamp, extra buttons, plain title)", () => {
+  const p = discordMakeForm({
+    plainTitle: true,
+    title: "960x on Gates",
+    content: "c",
+    color: 0xf9c334,
+    author: {
+      name: "carol",
+      url: "https://chips.gg/user/carol",
+      icon_url: "https://a/b.png",
+    },
+    thumbnail: "https://t/x.jpg",
+    fields: [{ name: "Bet", value: "$1", inline: true }],
+    timestamp: 1_700_000_000_000,
+    url: "https://chips.gg/play/g",
+    buttonLabel: "Play it",
+    buttons: [{ label: "Player", url: "https://chips.gg/user/carol" }],
+  });
+  const e = p.embeds[0];
+  assert.equal(e.title, "960x on Gates", "no emoji wrap");
+  assert.equal(e.color, 0xf9c334);
+  assert.equal(e.author.name, "carol");
+  assert.equal(e.thumbnail.url, "https://t/x.jpg");
+  assert.deepEqual(e.fields, [{ name: "Bet", value: "$1", inline: true }]);
+  assert.equal(e.timestamp, "2023-11-14T22:13:20.000Z");
+  assert.deepEqual(
+    p.components[0].components.map((b) => [b.label, b.url]),
+    [
+      ["Play it", "https://chips.gg/play/g"],
+      ["Player", "https://chips.gg/user/carol"],
+    ]
+  );
+});
+
+test("telegram form: `telegram` override block wins over embed fields", () => {
+  const html = telegramMakeForm({
+    plainTitle: true,
+    title: "T",
+    content: "embed body",
+    fields: [{ name: "Bet", value: "$1" }],
+    footer: "embed footer",
+    telegram: { content: "phone body", fields: [], footer: undefined },
+  });
+  assert.equal(html, "<b>T</b>\nphone body");
 });
 
 test("telegram html: bold/link/escape, form layout", () => {

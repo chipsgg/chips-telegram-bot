@@ -28,7 +28,16 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { createApp } from "../app.js";
 import { FEED_HOST, FEED_USER_AGENT, FeedCore } from "../feed/core.js";
+import { createApi } from "../lib/chips.js";
 import { memoryMetrics, sqliteMetrics } from "../lib/metrics.js";
+import {
+  memoryRegistry,
+  runRoleSync,
+  sqliteRegistry,
+} from "../lib/rolesync.js";
+import { runWatchdog } from "../lib/watchdog.js";
+
+const noop = () => undefined;
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = resolve(here, "../../public");
@@ -57,16 +66,30 @@ export function envFromProcess(pe = process.env) {
     DISCORD_TOKEN: pe.DISCORD_TOKEN,
     DISCORD_APPLICATION_ID: pe.DISCORD_APPLICATION_ID,
     DISCORD_PUBLIC_KEY: pe.DISCORD_PUBLIC_KEY,
+    DISCORD_ROLES_GUILD_ID: pe.DISCORD_ROLES_GUILD_ID,
+    BROADCAST_DISCORD_CHANNELS: pe.BROADCAST_DISCORD_CHANNELS,
+    BROADCAST_TELEGRAM_CHATS: pe.BROADCAST_TELEGRAM_CHATS,
+    PROMO_DISCORD_CHANNELS: pe.PROMO_DISCORD_CHANNELS,
+    PROMO_TELEGRAM_CHATS: pe.PROMO_TELEGRAM_CHATS,
+    BROADCAST_MIN_USD: pe.BROADCAST_MIN_USD,
+    BROADCAST_MIN_MULTIPLIER: pe.BROADCAST_MIN_MULTIPLIER,
+    BROADCAST_MAX_PER_FLUSH: pe.BROADCAST_MAX_PER_FLUSH,
     TELEGRAM_TOKEN: pe.TELEGRAM_TOKEN,
     TELEGRAM_WEBHOOK_SECRET: pe.TELEGRAM_WEBHOOK_SECRET,
+    TELEGRAM_BOT_USERNAME: pe.TELEGRAM_BOT_USERNAME,
     PUBLIC_URL: pe.PUBLIC_URL,
+    PUBLIC_HOST:
+      pe.PUBLIC_HOST ||
+      (pe.PUBLIC_URL ? new URL(pe.PUBLIC_URL).host : undefined),
+    ALERT_TELEGRAM_CHAT: pe.ALERT_TELEGRAM_CHAT,
   };
 }
 
 // ---- services ----
-export function nodeFeed() {
+export function nodeFeed(env = {}) {
   let timer = null;
   const core = new FeedCore({
+    env,
     openSocket: async () => {
       const ws = new WebSocket(FEED_HOST, {
         headers: { "User-Agent": FEED_USER_AGENT },
@@ -83,7 +106,12 @@ export function nodeFeed() {
     },
     schedule: (ms) => {
       clearTimeout(timer);
-      timer = setTimeout(() => core.alarm(), ms);
+      timer = setTimeout(async () => {
+        await core.alarm();
+        await core.poll(
+          createApi({ host: env.CHIPS_API_HOST, token: env.CHIPS_TOKEN })
+        );
+      }, ms);
       timer.unref?.();
     },
   });
@@ -91,6 +119,7 @@ export function nodeFeed() {
     core,
     status: () => core.status(),
     mark: (platform) => core.mark(platform).catch(() => undefined),
+    ratelimit: async (key, tier) => core.ratelimit(key, tier),
     get: (...paths) => core.get(...paths),
     close: () => {
       clearTimeout(timer);
@@ -99,11 +128,12 @@ export function nodeFeed() {
   };
 }
 
-export async function nodeMetrics(dataDir) {
-  if (!dataDir) return memoryMetrics();
+export async function nodeStores(dataDir) {
+  if (!dataDir) return { metrics: memoryMetrics(), registry: memoryRegistry() };
   const { DatabaseSync } = await import("node:sqlite");
   mkdirSync(dataDir, { recursive: true });
-  return sqliteMetrics(new DatabaseSync(join(dataDir, "metrics.sqlite")));
+  const db = new DatabaseSync(join(dataDir, "metrics.sqlite"));
+  return { metrics: sqliteMetrics(db), registry: sqliteRegistry(db) };
 }
 
 // ---- static files ----
@@ -156,9 +186,9 @@ export async function createNodeServer({
   env = envFromProcess(),
   dataDir = process.env.DATA_DIR,
 } = {}) {
-  const feed = nodeFeed();
-  const metrics = await nodeMetrics(dataDir);
-  const app = createApp({ env, feed, metrics });
+  const feed = nodeFeed(env);
+  const { metrics, registry } = await nodeStores(dataDir);
+  const app = createApp({ env, feed, metrics, registry });
   const pending = new Set();
   const waitUntil = (p) => {
     const t = Promise.resolve(p).catch((err) =>
@@ -187,7 +217,31 @@ export async function createNodeServer({
     .ensureConnected()
     .catch((err) => console.error("[feed]", err.message));
 
+  // daily VIP rank -> Discord role sync (same code the Worker cron runs)
+  const roleSyncTimer = setInterval(
+    () =>
+      runRoleSync({
+        env,
+        api: createApi({ host: env.CHIPS_API_HOST, token: env.CHIPS_TOKEN }),
+        registry,
+      }).catch(noop),
+    24 * 60 * 60_000
+  );
+  roleSyncTimer.unref?.();
+
+  // uptime watchdog (same code the Worker cron runs) when configured
+  let watchdogTimer = null;
+  if (env.ALERT_TELEGRAM_CHAT && env.PUBLIC_HOST) {
+    watchdogTimer = setInterval(
+      () => runWatchdog({ env, storage: feed.core.storage }).catch(noop),
+      60_000
+    );
+    watchdogTimer.unref?.();
+  }
+
   const close = async () => {
+    clearInterval(watchdogTimer);
+    clearInterval(roleSyncTimer);
     await new Promise((ok) => server.close(ok));
     feed.close();
     await Promise.allSettled([...pending]);

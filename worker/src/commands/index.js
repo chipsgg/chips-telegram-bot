@@ -477,7 +477,7 @@ const linkaccount = {
   },
   identity: true,
   ephemeral: true,
-  handler: async (ctx, { api, env }) => {
+  handler: async (ctx, { api, env, registry }) => {
     if (ctx.platform === "telegram" && !ctx.isPrivate) {
       await ctx.deleteMessage?.();
       return ctx.sendText(
@@ -508,13 +508,25 @@ const linkaccount = {
         `Your ${ctx.platform} account is now linked to **${player.username}**.`,
       ];
       if (player?.vip?.rank) lines.push(`VIP rank: ${player.vip.rank}`);
-      if (ctx.platform === "discord" && ctx.guildId) {
+      // Rank roles exist only in the Chips guild; never PUT roles in other servers the bot sits in
+      if (
+        ctx.platform === "discord" &&
+        ctx.guildId &&
+        ctx.guildId === env.DISCORD_ROLES_GUILD_ID
+      ) {
         const roleId = discordRoleForRank(player?.vip?.rank);
-        if (
+        const assigned =
           roleId &&
-          (await assignDiscordRole(env, ctx.guildId, ctx.userid, roleId))
-        )
-          lines.push("Discord role updated.");
+          (await assignDiscordRole(env, ctx.guildId, ctx.userid, roleId));
+        if (assigned) lines.push("Discord role updated.");
+        // remember the link so the daily rank->role sync can keep it current
+        await registry?.upsert({
+          discordId: String(ctx.userid),
+          chipsUserid: account.userid,
+          username: player.username,
+          rank: player?.vip?.rank || null,
+          roleId: assigned ? roleId : null,
+        });
       }
       return ctx.sendForm({
         emoji: "🔐",
@@ -547,7 +559,7 @@ const checkaccount = {
   description: "Check your linked Chips.gg account.",
   identity: true,
   ephemeral: true,
-  handler: async (ctx, { api }) => {
+  handler: async (ctx, { api, env, registry }) => {
     const p = await linkedAccount(api, ctx);
     if (!p) return ctx.sendForm(notLinked());
     const lines = [
@@ -556,6 +568,15 @@ const checkaccount = {
     ];
     if (p.nickname && p.nickname !== p.username)
       lines.push(`**Nickname:** ${p.nickname}`);
+    // accounts linked before the registry existed get picked up here for the daily role sync
+    if (ctx.platform === "discord" && p.id && env?.DISCORD_ROLES_GUILD_ID)
+      await registry?.upsert({
+        discordId: String(ctx.userid),
+        chipsUserid: p.id,
+        username: p.username,
+        rank: null,
+        roleId: null,
+      });
     return ctx.sendForm({
       emoji: "✅",
       title: "Linked Account",

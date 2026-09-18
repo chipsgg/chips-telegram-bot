@@ -6,6 +6,8 @@
  * in ./core.js; this file only supplies the Cloudflare-specific pieces: the websocket
  * upgrade via fetch(), DO storage for activity counters, and the DO alarm.
  */
+import { createApi } from "../lib/chips.js";
+import { runWatchdog } from "../lib/watchdog.js";
 import { ALARM_MS, FEED_HOST, FEED_USER_AGENT, FeedCore } from "./core.js";
 
 export class ChipsFeed {
@@ -25,6 +27,7 @@ export class ChipsFeed {
       },
       storage: state.storage,
       schedule: (ms) => state.storage.setAlarm(Date.now() + ms),
+      env,
     });
   }
 
@@ -36,6 +39,19 @@ export class ChipsFeed {
       await this.core.mark(url.searchParams.get("platform"));
       return new Response("ok");
     }
+    if (url.pathname === "/watchdog") {
+      return Response.json(
+        await runWatchdog({ env: this.env, storage: this.state.storage })
+      );
+    }
+    if (url.pathname === "/ratelimit") {
+      return Response.json(
+        this.core.ratelimit(
+          url.searchParams.get("key") || "",
+          url.searchParams.get("tier") || "user"
+        )
+      );
+    }
     if (url.pathname === "/state") {
       const paths = (url.searchParams.get("paths") || "")
         .split(",")
@@ -45,8 +61,12 @@ export class ChipsFeed {
     return new Response("not found", { status: 404 });
   }
 
-  alarm() {
-    return this.core.alarm();
+  async alarm() {
+    await this.core.alarm();
+    // once a minute is plenty for promotions; runs on the same alarm as the reconnect
+    await this.core.poll(
+      createApi({ host: this.env.CHIPS_API_HOST, token: this.env.CHIPS_TOKEN })
+    );
   }
 }
 
@@ -63,6 +83,18 @@ export function feedClient(env) {
       stub()
         .fetch(`https://feed/mark?platform=${encodeURIComponent(platform)}`)
         .catch(() => undefined),
+    watchdog: () =>
+      stub()
+        .fetch("https://feed/watchdog")
+        .then((r) => r.json()),
+    // per-user limiter; fails OPEN (a DO hiccup must not block every command)
+    ratelimit: (key, tier = "user") =>
+      stub()
+        .fetch(
+          `https://feed/ratelimit?key=${encodeURIComponent(key)}&tier=${encodeURIComponent(tier)}`
+        )
+        .then((r) => r.json())
+        .catch(() => ({ allowed: true, remaining: 0, retryAfterSec: 0 })),
     // paths: dotted, e.g. "public.currencies", "stats.bets.bigwins"
     get: async (...paths) => {
       const r = await stub().fetch(

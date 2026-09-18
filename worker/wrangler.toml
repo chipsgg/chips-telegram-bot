@@ -11,6 +11,10 @@ routes = [
   { pattern = "bot.chips.gg", custom_domain = true }
 ]
 
+# scheduled(): every minute -> uptime watchdog; 04:17 UTC daily -> VIP rank/role sync
+[triggers]
+crons = ["* * * * *", "17 4 * * *"]
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
@@ -21,6 +25,21 @@ not_found_handling = "404-page"
 VERSION = "unstamped"
 COMMIT = "unknown"
 BUILT_AT = ""
+# the only guild where /linkaccount may assign VIP rank roles (Chips Casino)
+DISCORD_ROLES_GUILD_ID = "541035273547415552"
+# public handle, used to detect @mentions in groups
+TELEGRAM_BOT_USERNAME = "chipsgg_official_bot"
+# uptime watchdog (cron below): probes PUBLIC_HOST/health, one Telegram message per up/down transition
+PUBLIC_HOST = "bot.chips.gg"
+ALERT_TELEGRAM_CHAT = "147051786"
+# big-win posts: Chips Casino #big-wins (Jacob, Sep 18 2026). Empty = off.
+BROADCAST_DISCORD_CHANNELS = "1251613676750897192"
+BROADCAST_TELEGRAM_CHATS = ""
+BROADCAST_MIN_USD = "1000"
+BROADCAST_MIN_MULTIPLIER = "500"
+# new-promotion posts: separate targets, off until a channel is chosen
+PROMO_DISCORD_CHANNELS = ""
+PROMO_TELEGRAM_CHATS = ""
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "production"
 
@@ -59,10 +78,24 @@ routes = [
   { pattern = "bot-cf.chips.gg", custom_domain = true }
 ]
 
+[env.dev.triggers]
+crons = ["* * * * *", "17 4 * * *"]
+
 [env.dev.vars]
 VERSION = "unstamped-dev"
 COMMIT = "unknown"
 BUILT_AT = ""
+# devbot is in no guild; set to a test server id when testing role assignment
+DISCORD_ROLES_GUILD_ID = ""
+TELEGRAM_BOT_USERNAME = "chipsgg_dev_bot"
+PUBLIC_HOST = "bot-cf.chips.gg"
+ALERT_TELEGRAM_CHAT = "147051786"
+BROADCAST_DISCORD_CHANNELS = "1550642665006170153"
+BROADCAST_TELEGRAM_CHATS = "147051786"
+BROADCAST_MIN_USD = "300"
+BROADCAST_MIN_MULTIPLIER = "500"
+PROMO_DISCORD_CHANNELS = "1550642665006170153"
+PROMO_TELEGRAM_CHATS = "147051786"
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "dev"
 

@@ -119,17 +119,17 @@ test("setPath is non-mutating", () => {
   assert.deepEqual(b, { x: { y: 1, z: 2 } });
 });
 
-test("metrics: memory and sqlite backends agree", async () => {
+test("metrics: memory and sqlite backends agree on totals and per-command usage", async () => {
   const { DatabaseSync } = await import("node:sqlite");
   const backends = {
     memory: memoryMetrics(),
     sqlite: sqliteMetrics(new DatabaseSync(":memory:")),
   };
   for (const [name, m] of Object.entries(backends)) {
-    await m.track("discord");
-    await m.track("discord");
-    await m.track("telegram");
-    await m.track("api");
+    await m.track("discord", "prices");
+    await m.track("discord", "prices");
+    await m.track("telegram", "prices");
+    await m.track("api", "compare", false);
     const r = await m.read();
     assert.deepEqual(
       r,
@@ -140,6 +140,23 @@ test("metrics: memory and sqlite backends agree", async () => {
         telegram_commands: 1,
         api_commands: 1,
       },
+      name
+    );
+    const u = await m.usage({ days: 7 });
+    assert.equal(u.days, 7, name);
+    assert.deepEqual(
+      Object.keys(u.commands),
+      ["prices", "compare"],
+      `${name}: sorted by total`
+    );
+    assert.deepEqual(
+      u.commands.prices,
+      { total: 3, ok: 3, failed: 0, byPlatform: { discord: 2, telegram: 1 } },
+      name
+    );
+    assert.deepEqual(
+      u.commands.compare,
+      { total: 1, ok: 0, failed: 1, byPlatform: { api: 1 } },
       name
     );
   }

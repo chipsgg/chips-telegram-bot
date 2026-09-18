@@ -7,6 +7,7 @@
  * and updates the message in place (type 7 is not usable after a webhook edit, so we PATCH).
  */
 import { commands } from "../commands/index.js";
+import { rateLimitMessage } from "../lib/ratelimit.js";
 import { applyEphemeral, discordMakeForm } from "./discord-rest.js";
 
 const DISCORD_API = "https://discord.com/api/v10";
@@ -92,14 +93,24 @@ async function runCommand(env, deps, interaction, commandName) {
   const command = commands[commandName];
   const ctx = makeCtx(interaction, commandName);
   await deps.feed?.mark("discord");
+  const rl = await deps.feed.ratelimit(`discord:${ctx.userid}`);
+  if (!rl.allowed) {
+    await editOriginal(
+      env,
+      interaction,
+      applyEphemeral({ content: rateLimitMessage(rl.retryAfterSec) })
+    );
+    return;
+  }
   try {
     await command.handler(ctx, deps);
     let body = ctx.result() || { content: "No response." };
     if (command.ephemeral) body = applyEphemeral(body);
     await editOriginal(env, interaction, body);
-    await deps.metrics.track("discord");
+    await deps.metrics.track("discord", commandName, true);
   } catch (err) {
     console.error(`[discord] /${commandName} failed:`, err.message);
+    await deps.metrics.track("discord", commandName, false);
     await editOriginal(env, interaction, {
       content: "Something went wrong running that command.",
     });

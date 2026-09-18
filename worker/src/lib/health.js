@@ -63,10 +63,40 @@ async function discordWiring(env, host) {
       endpoint: app.interactions_endpoint_url || null,
       wired: app.interactions_endpoint_url === expected,
       guilds: Array.isArray(guilds) ? guilds.length : null,
+      broadcast: await discordChannelAccess(env, H),
     };
   } catch (err) {
     return { configured: true, wired: false, error: err.message };
   }
+}
+
+// Can the bot see + post in each configured announcement channel? GET /channels/{id} needs
+// View Channel; a 403/404 here means the first real big win would fail silently.
+async function discordChannelAccess(env, H) {
+  const ids = [
+    ...new Set(
+      `${env.BROADCAST_DISCORD_CHANNELS || ""},${env.PROMO_DISCORD_CHANNELS || ""}`
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean)
+    ),
+  ];
+  if (!ids.length) return null;
+  const out = {};
+  for (const id of ids) {
+    try {
+      const r = await fetch(`https://discord.com/api/v10/channels/${id}`, {
+        headers: H,
+      });
+      const j = await r.json().catch(() => ({}));
+      out[id] = r.ok
+        ? { ok: true, name: j.name || null, guild: j.guild_id || null }
+        : { ok: false, status: r.status, error: j.message || null };
+    } catch (err) {
+      out[id] = { ok: false, error: err.message };
+    }
+  }
+  return out;
 }
 
 // Platform-API checks, memoised per host for CACHE_TTL_MS
@@ -120,6 +150,11 @@ export async function buildHealth({ env, feed, host, fresh = false }) {
     problems.push(
       `telegram: last delivery error "${telegram.lastError.message}"`
     );
+  for (const [id, c] of Object.entries(discord.broadcast || {}))
+    if (!c.ok)
+      problems.push(
+        `discord: cannot access announcement channel ${id} (${c.status || c.error || "unknown"})`
+      );
   if (discord.configured && !discord.wired)
     problems.push(
       `discord: interactions endpoint is ${discord.endpoint || "unset"}, expected https://${host}/discord`

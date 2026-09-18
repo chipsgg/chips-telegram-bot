@@ -90,6 +90,25 @@ Discord and Telegram need a public HTTPS URL to deliver to a Node instance (reve
 `/health` can verify the wiring, then run the same `scripts/register-*.js` as for the Worker.
 The dev bot pair (devbot + @chipsgg_dev_bot) is for this; never point prod bots at a laptop.
 
+## Proactive features (v4.2)
+
+All off by default in production until the target ids are set in `wrangler.toml [vars]`.
+
+| feature | trigger | config | status surface |
+|---|---|---|---|
+| Big-win posts | feed pushes to `stats.bets.bigwins` (coalesced 1.5s) | `BROADCAST_DISCORD_CHANNELS`, `BROADCAST_TELEGRAM_CHATS`, `BROADCAST_MIN_USD` (1000), `BROADCAST_MIN_MULTIPLIER` (500), `BROADCAST_MAX_PER_FLUSH` (3) | `/health.feed.broadcast` |
+| New-promotion posts | polled on the feed alarm (60s) | same targets | `/health.feed.promotions` |
+| Uptime watchdog | cron `* * * * *` | `PUBLIC_HOST`, `ALERT_TELEGRAM_CHAT` | one Telegram message per up/down transition; 2 consecutive fails to alarm |
+| VIP rank -> Discord role sync | cron `17 4 * * *` | `DISCORD_ROLES_GUILD_ID` | registry `linked_discord` (D1), filled by `/linkaccount` + `/checkaccount`; 150 members/run, least-recently-synced first |
+| Rate limit | every command | tiers in `src/lib/ratelimit.js`: 10/min per user (Discord, Telegram), 60/min per IP (API) | 429 + `Retry-After` on the API; "Easy there" reply in chat |
+| Per-command usage | every command | | `GET /api/usage?days=30` |
+| Help on bare text | Telegram DM text, or `@bot` mention in a group | `TELEGRAM_BOT_USERNAME` | |
+
+Cold-start rule for both announcers: the first observation records the current board / promo
+list silently, so a deploy never re-posts history. On non-production, `POST /api/broadcast-test`
+(`?kind=promotion`) sends a synthetic card to the configured targets, and `x-smoke-bypass: 1`
+lifts the API rate limit for `scripts/smoke.js`; production ignores both.
+
 ## Versioning + deploy
 
 One source of truth: **git tags `vX.Y.Z`**. `wrangler.toml` carries no version; `scripts/deploy.js`

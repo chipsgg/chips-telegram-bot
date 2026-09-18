@@ -51,13 +51,15 @@ while (Date.now() < deadline) {
   try {
     const h = await fetch(`https://${host}/health?fresh`).then((x) => x.json());
     seen = h.version;
-    if (h.version === v.version) {
+    // right version AND healthy; a cold Durable Object reports degraded for its first second
+    if (h.version === v.version && h.ok) {
       console.log(
         `verified: ${host} reports version ${h.version} commit ${h.commit} (${h.status})`
       );
-      if (h.problems?.length) console.log("problems:", h.problems.join(" | "));
-      process.exit(h.ok ? 0 : 1);
+      process.exit(0);
     }
+    if (h.version === v.version)
+      seen = `${h.version} (${h.status}: ${(h.problems || []).join(" | ")})`;
   } catch {
     seen = seen ?? "unreachable";
   }
