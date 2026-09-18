@@ -49,6 +49,19 @@ const linkKeyboard = (url, label) =>
     ? { inline_keyboard: [[{ text: label.slice(0, 64), url }]] }
     : undefined;
 
+// Post a form to a chat/channel (proactive announcements). No reply_to, no banner upload.
+export async function postTelegramChat(env, chatId, form) {
+  if (!env.TELEGRAM_TOKEN) return false;
+  const r = await tgApi(env)("sendMessage", {
+    chat_id: chatId,
+    text: telegramMakeForm(form).slice(0, 4096),
+    parse_mode: "HTML",
+    reply_markup: linkKeyboard(form.url, form.buttonLabel),
+    link_preview_options: { is_disabled: true },
+  });
+  return Boolean(r?.ok);
+}
+
 export function tgApi(env) {
   const base = `https://api.telegram.org/bot${env.TELEGRAM_TOKEN}`;
   return async (method, body) => {

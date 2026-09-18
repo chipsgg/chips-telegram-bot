@@ -25,6 +25,7 @@ export class ChipsFeed {
       },
       storage: state.storage,
       schedule: (ms) => state.storage.setAlarm(Date.now() + ms),
+      env,
     });
   }
 

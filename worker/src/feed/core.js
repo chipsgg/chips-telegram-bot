@@ -22,6 +22,7 @@
  * subscriptions (the server drops idle ones). No auth: all four feeds are public.
  */
 
+import { announceBigWins } from "../lib/broadcast.js";
 import { RateLimiter } from "../lib/ratelimit.js";
 
 export const FEED_HOST = "wss://api.chips.gg/prod/socket";
@@ -77,10 +78,16 @@ export class FeedCore {
     storage = memoryStorage(),
     schedule = noop,
     rateLimit = {},
+    env = {},
+    setTimer = (fn, ms) => setTimeout(fn, ms),
   }) {
     this.openSocket = openSocket;
     this.storage = storage;
     this.schedule = schedule;
+    this.env = env;
+    this.setTimer = setTimer;
+    this.announceTimer = null;
+    this.lastAnnounce = null; // last announceBigWins result, surfaced in status()
     this.ws = null;
     this.rid = 0;
     this.data = { public: {}, stats: {}, profitshare: {} };
@@ -134,6 +141,7 @@ export class FeedCore {
       bigwins: Object.keys(this.data.stats?.bets?.bigwins || {}).length,
       luckiest: Object.keys(this.data.stats?.bets?.luckiest || {}).length,
       currencies: Object.keys(this.data.public?.currencies || {}).length,
+      broadcast: this.lastAnnounce,
     };
   }
 
@@ -194,12 +202,15 @@ export class FeedCore {
     }
     if (!Array.isArray(frames)) return;
     let changed = false;
+    let bigwinsChanged = false;
     for (const msg of frames) {
       if (!Array.isArray(msg) || msg[1] != null) continue; // rpc replies: ignore
       const [channel, , payload] = msg;
       if (!(channel in this.data) || !Array.isArray(payload)) continue;
       const [path = [], value] = payload;
       const keep = KEEP[channel];
+      if (channel === "stats" && (path.length === 0 || path[1] === "bigwins"))
+        bigwinsChanged = true;
       if (path.length === 0) {
         // Root replace: filter to kept branches for `public` (34KB blob, we need 2 keys)
         this.data[channel] =
@@ -216,6 +227,23 @@ export class FeedCore {
       }
     }
     if (changed) this.updatedAt = Date.now();
+    if (bigwinsChanged) this.scheduleAnnounce();
+  }
+
+  // Bigwins pushes arrive in bursts (root replace + per-row updates); coalesce to one pass.
+  scheduleAnnounce() {
+    if (this.announceTimer) return;
+    this.announceTimer = this.setTimer(() => {
+      this.announceTimer = null;
+      announceBigWins({
+        env: this.env,
+        storage: this.storage,
+        rows: this.data.stats?.bets?.bigwins,
+        currencies: this.data.public?.currencies,
+      }).then((r) => {
+        this.lastAnnounce = { at: Date.now(), ...r };
+      });
+    }, 1500);
   }
 
   async alarm() {

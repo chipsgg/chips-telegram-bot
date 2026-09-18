@@ -19,6 +19,7 @@
  *   waitUntil  (promise) => void  keep the runtime alive until background work finishes
  */
 import { commands } from "./commands/index.js";
+import { bigWinForm, broadcastConfig, deliver } from "./lib/broadcast.js";
 import { createApi } from "./lib/chips.js";
 import { formatPrice } from "./lib/format.js";
 import { buildHealth } from "./lib/health.js";
@@ -89,6 +90,28 @@ export function createApp({ env, feed, metrics }) {
     }
 
     if (url.pathname === "/api/metrics") return json(await metrics.read());
+
+    // Non-production only: post a synthetic big-win to the configured broadcast targets so
+    // channel wiring can be verified without waiting for the casino floor.
+    if (
+      request.method === "POST" &&
+      url.pathname === "/api/broadcast-test" &&
+      env.ENVIRONMENT !== "production"
+    ) {
+      const r = await deliver(
+        env,
+        broadcastConfig(env),
+        bigWinForm({
+          username: "test_player",
+          game: "Broadcast Test",
+          gameSlug: null,
+          amountUsd: 12.5,
+          winningsUsd: 4_321,
+          multiplier: 345.7,
+        })
+      );
+      return json({ sent: r });
+    }
 
     if (url.pathname === "/api/usage") {
       const days = Math.min(

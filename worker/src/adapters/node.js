@@ -58,6 +58,11 @@ export function envFromProcess(pe = process.env) {
     DISCORD_APPLICATION_ID: pe.DISCORD_APPLICATION_ID,
     DISCORD_PUBLIC_KEY: pe.DISCORD_PUBLIC_KEY,
     DISCORD_ROLES_GUILD_ID: pe.DISCORD_ROLES_GUILD_ID,
+    BROADCAST_DISCORD_CHANNELS: pe.BROADCAST_DISCORD_CHANNELS,
+    BROADCAST_TELEGRAM_CHATS: pe.BROADCAST_TELEGRAM_CHATS,
+    BROADCAST_MIN_USD: pe.BROADCAST_MIN_USD,
+    BROADCAST_MIN_MULTIPLIER: pe.BROADCAST_MIN_MULTIPLIER,
+    BROADCAST_MAX_PER_FLUSH: pe.BROADCAST_MAX_PER_FLUSH,
     TELEGRAM_TOKEN: pe.TELEGRAM_TOKEN,
     TELEGRAM_WEBHOOK_SECRET: pe.TELEGRAM_WEBHOOK_SECRET,
     PUBLIC_URL: pe.PUBLIC_URL,
@@ -65,9 +70,10 @@ export function envFromProcess(pe = process.env) {
 }
 
 // ---- services ----
-export function nodeFeed() {
+export function nodeFeed(env = {}) {
   let timer = null;
   const core = new FeedCore({
+    env,
     openSocket: async () => {
       const ws = new WebSocket(FEED_HOST, {
         headers: { "User-Agent": FEED_USER_AGENT },
@@ -158,7 +164,7 @@ export async function createNodeServer({
   env = envFromProcess(),
   dataDir = process.env.DATA_DIR,
 } = {}) {
-  const feed = nodeFeed();
+  const feed = nodeFeed(env);
   const metrics = await nodeMetrics(dataDir);
   const app = createApp({ env, feed, metrics });
   const pending = new Set();

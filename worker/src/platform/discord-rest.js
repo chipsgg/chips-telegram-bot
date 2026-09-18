@@ -90,6 +90,31 @@ export async function assignDiscordRole(env, guildId, userId, roleId) {
   }
 }
 
+// POST a form to a channel (proactive announcements). Needs Send Messages + Embed Links.
+export async function postDiscordChannel(env, channelId, form) {
+  if (!env.DISCORD_TOKEN) return false;
+  try {
+    const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
+      method: "POST",
+      headers: {
+        authorization: `Bot ${env.DISCORD_TOKEN}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(discordMakeForm(form)),
+    });
+    if (!res.ok)
+      console.warn(
+        `[discord] channel post ${channelId} failed:`,
+        res.status,
+        (await res.text()).slice(0, 200)
+      );
+    return res.ok;
+  } catch (err) {
+    console.warn("[discord] channel post error:", err.message);
+    return false;
+  }
+}
+
 // Bulk-overwrite global application commands (used by scripts/register-discord.js)
 export async function registerCommands(env, payload) {
   const res = await fetch(
