@@ -8,7 +8,7 @@
     "dev": "wrangler dev",
     "start:node": "node src/adapters/node.js",
     "dev:node": "node --watch --env-file=.env src/adapters/node.js",
-    "test": "node --test test/",
+    "test": "node --test 'test/**/*.test.js'",
     "lint": "biome check src test scripts",
     "lint:fix": "biome check --write src test scripts",
     "version:show": "node scripts/version.js",
