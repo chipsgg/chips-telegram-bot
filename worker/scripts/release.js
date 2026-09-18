@@ -62,14 +62,12 @@ if (sh(`git tag -l ${tag}`)) {
   process.exit(2);
 }
 
-// keep package.json versions honest
-for (const rel of ["package.json", "worker/package.json"]) {
-  const p = resolve(root, rel);
-  const pkg = JSON.parse(readFileSync(p, "utf8"));
-  pkg.version = next;
-  writeFileSync(p, `${JSON.stringify(pkg, null, 2)}\n`);
-}
-sh("git add package.json worker/package.json");
+// keep package.json version honest (worker/ is the only package since the legacy bot was removed)
+const pkgPath = resolve(root, "worker/package.json");
+const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+pkg.version = next;
+writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+sh("git add worker/package.json");
 sh(`git commit -q -m "release ${tag}"`);
 sh(`git tag -a ${tag} -m "${tag}"`);
 console.log(
