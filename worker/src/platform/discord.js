@@ -7,7 +7,6 @@
  * and updates the message in place (type 7 is not usable after a webhook edit, so we PATCH).
  */
 import { commands } from "../commands/index.js";
-import { track } from "../lib/metrics.js";
 import { applyEphemeral, discordMakeForm } from "./discord-rest.js";
 
 const DISCORD_API = "https://discord.com/api/v10";
@@ -98,7 +97,7 @@ async function runCommand(env, deps, interaction, commandName) {
     let body = ctx.result() || { content: "No response." };
     if (command.ephemeral) body = applyEphemeral(body);
     await editOriginal(env, interaction, body);
-    await track(env, "discord");
+    await deps.metrics.track("discord");
   } catch (err) {
     console.error(`[discord] /${commandName} failed:`, err.message);
     await editOriginal(env, interaction, {

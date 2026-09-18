@@ -28,3 +28,26 @@ jobs:
         run: node scripts/version.js
       - name: wrangler dry-run (compiles the worker, no upload)
         run: npx wrangler deploy --dry-run --outdir dist
+
+  node-runtime:
+    name: node runtime boots + smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+      - run: npm ci
+      - name: start the Node adapter without platform tokens (feed + api + static)
+        run: |
+          PORT=5000 ENVIRONMENT=ci VERSION=ci DATA_DIR=/tmp/chips-bot node src/adapters/node.js > /tmp/node.log 2>&1 &
+          for i in $(seq 1 20); do curl -sf http://localhost:5000/health >/dev/null && break; sleep 1; done
+          cat /tmp/node.log
+      - run: node scripts/smoke.js http://localhost:5000
+      - name: docker image builds
+        run: docker build -q -t chips-bot:ci .
