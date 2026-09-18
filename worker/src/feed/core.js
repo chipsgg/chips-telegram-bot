@@ -101,8 +101,8 @@ export class FeedCore {
     this.limiter = new RateLimiter(rateLimit);
   }
 
-  ratelimit(key) {
-    return this.limiter.hit(key);
+  ratelimit(key, tier = "user") {
+    return this.limiter.hit(key, tier);
   }
 
   async loadActivity() {

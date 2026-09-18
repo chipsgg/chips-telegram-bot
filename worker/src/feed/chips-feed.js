@@ -46,7 +46,10 @@ export class ChipsFeed {
     }
     if (url.pathname === "/ratelimit") {
       return Response.json(
-        this.core.ratelimit(url.searchParams.get("key") || "")
+        this.core.ratelimit(
+          url.searchParams.get("key") || "",
+          url.searchParams.get("tier") || "user"
+        )
       );
     }
     if (url.pathname === "/state") {
@@ -85,9 +88,11 @@ export function feedClient(env) {
         .fetch("https://feed/watchdog")
         .then((r) => r.json()),
     // per-user limiter; fails OPEN (a DO hiccup must not block every command)
-    ratelimit: (key) =>
+    ratelimit: (key, tier = "user") =>
       stub()
-        .fetch(`https://feed/ratelimit?key=${encodeURIComponent(key)}`)
+        .fetch(
+          `https://feed/ratelimit?key=${encodeURIComponent(key)}&tier=${encodeURIComponent(tier)}`
+        )
         .then((r) => r.json())
         .catch(() => ({ allowed: true, remaining: 0, retryAfterSec: 0 })),
     // paths: dotted, e.g. "public.currencies", "stats.bets.bigwins"

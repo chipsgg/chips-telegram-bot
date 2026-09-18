@@ -117,7 +117,7 @@ export function nodeFeed(env = {}) {
     core,
     status: () => core.status(),
     mark: (platform) => core.mark(platform).catch(() => undefined),
-    ratelimit: async (key) => core.ratelimit(key),
+    ratelimit: async (key, tier) => core.ratelimit(key, tier),
     get: (...paths) => core.get(...paths),
     close: () => {
       clearTimeout(timer);

@@ -176,7 +176,14 @@ export function createApp({ env, feed, metrics, registry }) {
         request.headers.get("cf-connecting-ip") ||
         request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
         "unknown";
-      const rl = await feed.ratelimit(`api:${ip}`);
+      // API tier is per IP, so it is looser than the per-user chat tiers (shared NATs, the
+      // landing page demo). Non-production honours x-smoke-bypass so the smoke suite can run.
+      const bypass =
+        env.ENVIRONMENT !== "production" &&
+        request.headers.get("x-smoke-bypass") === "1";
+      const rl = bypass
+        ? { allowed: true }
+        : await feed.ratelimit(`api:${ip}`, "api");
       if (!rl.allowed)
         return json(
           { error: "Rate limited", retryAfterSec: rl.retryAfterSec },

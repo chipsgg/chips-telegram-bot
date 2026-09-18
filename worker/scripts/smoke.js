@@ -24,8 +24,9 @@ const check = (label, ok, detail = "") => {
   );
   if (!ok) failures++;
 };
+// x-smoke-bypass lifts the per-IP API rate limit on non-production hosts (prod ignores it)
 const get = async (path) => {
-  const res = await fetch(base + path);
+  const res = await fetch(base + path, { headers: { "x-smoke-bypass": "1" } });
   const text = await res.text();
   let json = null;
   try {

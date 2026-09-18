@@ -53,3 +53,25 @@ test("ratelimit: window slides; sweep drops idle keys", () => {
 test("ratelimit: message is human", () => {
   assert.match(rateLimitMessage(37), /37s/);
 });
+
+test("ratelimit: tiers use their own limit; unknown tier falls back to defaults", () => {
+  const rl = new RateLimiter({
+    limit: 2,
+    windowMs: 60_000,
+    tiers: {
+      user: { limit: 2, windowMs: 60_000 },
+      api: { limit: 5, windowMs: 60_000 },
+    },
+  });
+  rl.hit("k", "api");
+  rl.hit("k", "api");
+  assert.equal(rl.hit("k", "api").allowed, true, "api tier allows 5");
+  rl.hit("u");
+  rl.hit("u");
+  assert.equal(rl.hit("u").allowed, false, "user tier stops at 2");
+  assert.equal(
+    rl.hit("z", "nope").remaining,
+    1,
+    "unknown tier -> ctor defaults"
+  );
+});
