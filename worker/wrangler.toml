@@ -11,9 +11,9 @@ routes = [
   { pattern = "bot.chips.gg", custom_domain = true }
 ]
 
-# every minute: scheduled() -> uptime watchdog (src/lib/watchdog.js)
+# scheduled(): every minute -> uptime watchdog; 04:17 UTC daily -> VIP rank/role sync
 [triggers]
-crons = ["* * * * *"]
+crons = ["* * * * *", "17 4 * * *"]
 
 [assets]
 directory = "./public"
@@ -76,7 +76,7 @@ routes = [
 ]
 
 [env.dev.triggers]
-crons = ["* * * * *"]
+crons = ["* * * * *", "17 4 * * *"]
 
 [env.dev.vars]
 VERSION = "unstamped-dev"

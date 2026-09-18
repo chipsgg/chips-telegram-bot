@@ -15,7 +15,8 @@
  * Runtime services are injected:
  *   env        config + secrets (VERSION, CHIPS_TOKEN, DISCORD_*, TELEGRAM_*, ...)
  *   feed       { status(), mark(platform), get(...paths) }   (DO stub or in-process FeedCore)
- *   metrics    { track(platform), read() }
+ *   metrics    { track(platform, command, ok), read(), usage() }
+ *   registry   { upsert, list, count }  linked Discord users, for the daily role sync
  *   waitUntil  (promise) => void  keep the runtime alive until background work finishes
  */
 import { commands } from "./commands/index.js";
@@ -68,11 +69,12 @@ function apiCtx(url) {
 
 const swallow = (p) => Promise.resolve(p).catch(() => undefined);
 
-export function createApp({ env, feed, metrics }) {
+export function createApp({ env, feed, metrics, registry }) {
   const deps = {
     env,
     feed,
     metrics,
+    registry,
     api: createApi({ host: env.CHIPS_API_HOST, token: env.CHIPS_TOKEN }),
   };
 

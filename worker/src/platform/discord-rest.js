@@ -90,6 +90,30 @@ export async function assignDiscordRole(env, guildId, userId, roleId) {
   }
 }
 
+// DELETE /guilds/{guild}/members/{user}/roles/{role}
+export async function removeDiscordRole(env, guildId, userId, roleId) {
+  if (!env.DISCORD_TOKEN) return false;
+  try {
+    const res = await fetch(
+      `${DISCORD_API}/guilds/${guildId}/members/${userId}/roles/${roleId}`,
+      {
+        method: "DELETE",
+        headers: {
+          authorization: `Bot ${env.DISCORD_TOKEN}`,
+          "x-audit-log-reason": "chips.gg rank changed",
+        },
+      }
+    );
+    // 404 = member left or role already gone; treat as done
+    if (!res.ok && res.status !== 404)
+      console.warn("[discord] role remove failed:", res.status);
+    return res.ok || res.status === 404;
+  } catch (err) {
+    console.warn("[discord] role remove error:", err.message);
+    return false;
+  }
+}
+
 // POST a form to a channel (proactive announcements). Needs Send Messages + Embed Links.
 export async function postDiscordChannel(env, channelId, form) {
   if (!env.DISCORD_TOKEN) return false;

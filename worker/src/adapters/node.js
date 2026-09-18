@@ -30,6 +30,11 @@ import { createApp } from "../app.js";
 import { FEED_HOST, FEED_USER_AGENT, FeedCore } from "../feed/core.js";
 import { createApi } from "../lib/chips.js";
 import { memoryMetrics, sqliteMetrics } from "../lib/metrics.js";
+import {
+  memoryRegistry,
+  runRoleSync,
+  sqliteRegistry,
+} from "../lib/rolesync.js";
 import { runWatchdog } from "../lib/watchdog.js";
 
 const noop = () => undefined;
@@ -121,11 +126,12 @@ export function nodeFeed(env = {}) {
   };
 }
 
-export async function nodeMetrics(dataDir) {
-  if (!dataDir) return memoryMetrics();
+export async function nodeStores(dataDir) {
+  if (!dataDir) return { metrics: memoryMetrics(), registry: memoryRegistry() };
   const { DatabaseSync } = await import("node:sqlite");
   mkdirSync(dataDir, { recursive: true });
-  return sqliteMetrics(new DatabaseSync(join(dataDir, "metrics.sqlite")));
+  const db = new DatabaseSync(join(dataDir, "metrics.sqlite"));
+  return { metrics: sqliteMetrics(db), registry: sqliteRegistry(db) };
 }
 
 // ---- static files ----
@@ -179,8 +185,8 @@ export async function createNodeServer({
   dataDir = process.env.DATA_DIR,
 } = {}) {
   const feed = nodeFeed(env);
-  const metrics = await nodeMetrics(dataDir);
-  const app = createApp({ env, feed, metrics });
+  const { metrics, registry } = await nodeStores(dataDir);
+  const app = createApp({ env, feed, metrics, registry });
   const pending = new Set();
   const waitUntil = (p) => {
     const t = Promise.resolve(p).catch((err) =>
@@ -209,6 +215,18 @@ export async function createNodeServer({
     .ensureConnected()
     .catch((err) => console.error("[feed]", err.message));
 
+  // daily VIP rank -> Discord role sync (same code the Worker cron runs)
+  const roleSyncTimer = setInterval(
+    () =>
+      runRoleSync({
+        env,
+        api: createApi({ host: env.CHIPS_API_HOST, token: env.CHIPS_TOKEN }),
+        registry,
+      }).catch(noop),
+    24 * 60 * 60_000
+  );
+  roleSyncTimer.unref?.();
+
   // uptime watchdog (same code the Worker cron runs) when configured
   let watchdogTimer = null;
   if (env.ALERT_TELEGRAM_CHAT && env.PUBLIC_HOST) {
@@ -221,6 +239,7 @@ export async function createNodeServer({
 
   const close = async () => {
     clearInterval(watchdogTimer);
+    clearInterval(roleSyncTimer);
     await new Promise((ok) => server.close(ok));
     feed.close();
     await Promise.allSettled([...pending]);
