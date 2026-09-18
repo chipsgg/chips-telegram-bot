@@ -1,90 +1,62 @@
+# Chips.gg community bot
 
-# Chips.gg Chat Bot 🎮
+Discord slash commands + Telegram bot for [Chips.gg](https://chips.gg): live prices, big wins,
+luckiest bets, KOTH, promotions, slot picks, player stats, account linking, affiliate stats.
 
-A powerful Discord and Telegram bot for the Chips.gg gaming platform that brings real-time gaming information directly to your community.
+- Telegram: [@chipsgg_official_bot](https://t.me/chipsgg_official_bot)
+- Discord: [add to a server](https://discord.com/oauth2/authorize?client_id=901908108136308757&permissions=268435456&scope=bot%20applications.commands)
+- Landing page, HTTP demo API and health: https://bot.chips.gg
 
-## Installation
-- Telegram: [ADD BOT](https://t.me/chipsgg_official_bot) 
-- Discord: [ADD BOT](https://discord.com/oauth2/authorize?client_id=901908108136308757&permissions=0&scope=bot%20applications.commands)
+## Layout
 
-## ✨ Features
+Everything lives in [`worker/`](worker/). One codebase, two runtimes:
 
-### Real-time Gaming Information
-- 🎲 Random slot recommendations with `/slotcall`
-- 🎮 Most played games tracking with `/mostplayed`
-- 👑 King of the Hill status with `/koth`
+| runtime | entry | where |
+|---|---|---|
+| Cloudflare Workers (production) | `worker/src/index.js` | `bot.chips.gg` (prod), `bot-cf.chips.gg` (dev) |
+| Node >= 22.5 / Docker | `worker/src/adapters/node.js` | anywhere else, zero runtime deps |
 
-### Player Stats & Rankings
-- 🏆 Top player rankings with `/bigwins`
-- 🍀 Luckiest players list with `/luckiest`
-- 👤 Detailed user information via `/user`
+Commands, platform handlers, the realtime feed and metrics are shared; each entrypoint is
+~40 lines of wiring. See [`worker/README.md`](worker/README.md) for architecture, environments,
+secrets, versioning/releases and the cutover record.
 
-### Platform Updates
-- 🎉 Live promotions and events with `/promotions`
-- 💰 Real-time cryptocurrency prices using `/prices`
-- 🏦 Vault statistics tracking with `/vault`
-- 🔎 Search game catalog with `/search game_name`
+## Quick start
 
-### Community Tools
-- 💬 Access community links with `/chat`
-- 🔗 Link your account using `/auth`
-- ❓ View all commands with `/help`
-
-## 🔐 Authentication
-
-Link your platform account:
-
-1. Enable 2FA/TOTP on your Chips.gg account
-2. Use: `/auth username:YOUR_USERNAME totp:YOUR_CODE`
-3. Wait for confirmation of successful linking
-
-## 🌐 HTTP API
-
-Access bot features via HTTP endpoints:
-
-### Main Endpoints
-
-#### `GET /`
-Home page with documentation
-
-#### `GET /commands`
-List all bot commands
-
-#### `GET /api/command/:name`
-Execute bot commands via HTTP
-
-**Parameters:**
-- `name` (path) - Command to execute
-- `username` (query) - For user-specific commands
-
-**Example Response:**
-```javascript
-{
-  "emoji": "💰",
-  "title": "Cryptocurrency Prices",
-  "content": "BTC: $50,000\nETH: $3,000\nTRX: $0.08",
-  "buttonLabel": "Trade Now",
-  "url": "https://chips.gg/exchange"
-}
+```
+cd worker
+npm ci
+npm test                     # unit tests
+npm run dev                  # Cloudflare runtime locally (wrangler dev, :8787)
+npm run dev:node             # Node runtime locally, reads ./.env (copy .env.example)
+node scripts/smoke.js http://localhost:8787
 ```
 
-### API Usage Examples
+## Commands
 
-Using cURL:
-```bash
-curl http://0.0.0.0:3000/api/command/prices
-curl http://0.0.0.0:3000/api/command/user?username=chips
+`/prices` `/bigwins` `/luckiest` `/koth` `/promotions` `/promotion` `/slotcall` `/mostplayed`
+`/search` `/stats` `/compare` `/bet` `/banner` `/chat` `/help` and, on Discord/Telegram only,
+`/linkaccount` (TOTP, DM only) `/checkaccount` `/myaffiliates` `/affiliate` (staff).
+
+## HTTP API
+
+Read-only, used by the landing page's live demo. Identity commands are not exposed.
+
+```
+GET /api/command/prices
+GET /api/command/stats?args=tacyarg
+GET /api/command/search?args=sweet+bonanza
+GET /commands.json
+GET /api/metrics
+GET /health                  # feed + Discord/Telegram wiring + last activity; 503 when degraded
 ```
 
-Using JavaScript:
-```javascript
-fetch('http://0.0.0.0:3000/api/command/slotcall')
-  .then(response => response.json())
-  .then(data => console.log(data));
-```
+## Releases
 
-## 💬 Support
+`vX.Y.Z` git tags are releases. `npm run release -- patch|minor|major` from `master` tags and
+pushes; GitHub Actions tests, publishes the release notes and deploys production, then verifies
+`bot.chips.gg/health` reports the tag. Details in `worker/README.md`.
 
-Join our communities:
+## Support
+
 - Discord: https://discord.gg/chips
 - Telegram: https://t.me/chipsgg

@@ -3,9 +3,11 @@
   "version": "4.0.0",
   "private": true,
   "type": "module",
-  "description": "Chips.gg community bot on Cloudflare Workers (Discord interactions + Telegram webhook)",
+  "description": "Chips.gg community bot: Discord interactions + Telegram webhook. Runs on Cloudflare Workers (src/index.js) or plain Node 22 (src/adapters/node.js)",
   "scripts": {
     "dev": "wrangler dev",
+    "start:node": "node src/adapters/node.js",
+    "dev:node": "node --watch --env-file=.env src/adapters/node.js",
     "test": "node --test test/",
     "lint": "biome check src test scripts",
     "lint:fix": "biome check --write src test scripts",
@@ -20,5 +22,8 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "wrangler": "^4"
+  },
+  "engines": {
+    "node": ">=22.5"
   }
 }

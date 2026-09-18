@@ -1,18 +1,18 @@
 node_modules
-*.env
-*.env.*
-*.env.*.*
-log
+.wrangler
+dist
 *.log
+.DS_Store
+.vscode
+# secrets: env files never enter git (Worker uses `wrangler secret put`, Node uses .env)
+*.env
+.env*
+!.env.example
 env.json
 secrets.json
 prod.json
 dev.json
-/env
-secrets.*
-*.secrets.*
-.DS_Store
-# .k8s
-.config
-.vscode
-.yarnscratch/
+# local probe scripts
+scratch/
+# node runtime sqlite metrics
+worker/data/

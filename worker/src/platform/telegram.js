@@ -10,7 +10,6 @@
  */
 import { commands } from "../commands/index.js";
 import { tokenGetter, tokenize } from "../lib/format.js";
-import { track } from "../lib/metrics.js";
 
 const esc = (s) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -188,7 +187,7 @@ export async function handleTelegram(request, env, deps, waitUntil) {
       await deps.feed?.mark("telegram");
       try {
         await command.handler(ctx, deps);
-        await track(env, "telegram");
+        await deps.metrics.track("telegram");
       } catch (err) {
         console.error(`[telegram] /${name} failed:`, err.message);
         await ctx.sendText("Something went wrong running that command.");
