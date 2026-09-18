@@ -21,11 +21,13 @@
  */
 import { commands } from "./commands/index.js";
 import {
+  THUMB_BASE,
   bigWinForm,
   broadcastConfig,
   deliver,
   detectBigWins,
   promoForm,
+  resolveGameImage,
 } from "./lib/broadcast.js";
 import { createApi } from "./lib/chips.js";
 import { formatPrice } from "./lib/format.js";
@@ -140,16 +142,19 @@ export function createApp({ env, feed, metrics, registry }) {
           Math.min(3, Number(url.searchParams.get("n")) || 1)
         );
         const sent = [];
-        for (const e of pick)
+        for (const e of pick) {
+          e.gameImage = await resolveGameImage(e.gameSlug, e.gameImage);
           sent.push({
             who: e.username,
             win: e.winningsUsd,
             x: e.multiplier,
             game: e.game,
             img: Boolean(e.gameImage),
+            customThumb: Boolean(e.gameImage?.startsWith(THUMB_BASE)),
             avatar: Boolean(e.avatar),
             ...(await deliver(env, cfg, bigWinForm(e))),
           });
+        }
         return json({ kind, real: true, sent });
       }
       const form =

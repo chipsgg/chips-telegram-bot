@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   SEEN_CAP,
+  THUMB_BASE,
   bigWinForm,
   broadcastConfig,
   detectBigWins,
   detectPromotions,
   isBroadcastEnabled,
   promoForm,
+  resolveGameImage,
   trimSeen,
 } from "../src/lib/broadcast.js";
 
@@ -237,4 +239,36 @@ test("promotions: cold start records silently; then started/ended diffs", () => 
   );
   assert.equal(f.fields[2].value, "Casino");
   assert.equal(f.url, "https://chips.gg/promotions/B");
+});
+
+test("resolveGameImage: custom Chips thumb when the CDN has it, provider art otherwise, cached", async () => {
+  const calls = [];
+  const fetchImpl = async (url) => {
+    calls.push(url);
+    const ok = url.includes("/has-thumb.webp");
+    return {
+      ok,
+      headers: { get: () => (ok ? "image/webp" : "application/xml") },
+    };
+  };
+  const a = await resolveGameImage(
+    "has-thumb",
+    "https://prov/a.jpg",
+    fetchImpl
+  );
+  assert.equal(a, `${THUMB_BASE}/has-thumb.webp`);
+  const b = await resolveGameImage("no-thumb", "https://prov/b.jpg", fetchImpl);
+  assert.equal(b, "https://prov/b.jpg", "falls back to provider art");
+  await resolveGameImage("has-thumb", "https://prov/a.jpg", fetchImpl);
+  await resolveGameImage("no-thumb", "https://prov/b.jpg", fetchImpl);
+  assert.equal(calls.length, 2, "second lookups served from cache");
+  assert.equal(
+    await resolveGameImage(null, "https://prov/c.jpg", fetchImpl),
+    "https://prov/c.jpg"
+  );
+  assert.equal(
+    await resolveGameImage("Bad Slug!", null, fetchImpl),
+    null,
+    "unsafe slug never probed"
+  );
 });

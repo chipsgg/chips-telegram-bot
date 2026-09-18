@@ -67,6 +67,36 @@ const PROVIDERS = {
 export const providerName = (p) =>
   PROVIDERS[String(p || "").toLowerCase()] || null;
 
+// Chips' own illustrated game thumbnails, keyed by the API's game.slug. Not every game has
+// one yet, so callers probe (HEAD) and fall back to the provider's art. Results are cached
+// per slug in-process (the feed core is one instance per deployment).
+export const THUMB_BASE =
+  "https://cdn.redpkt.com/chips/public/images/thumbnails/final_webp";
+export const chipsThumbUrl = (slug) =>
+  slug && /^[a-z0-9-]+$/.test(slug) ? `${THUMB_BASE}/${slug}.webp` : null;
+
+const thumbCache = new Map(); // slug -> url | null
+const THUMB_CACHE_MAX = 2000;
+export async function resolveGameImage(slug, fallback, fetchImpl = fetch) {
+  const custom = chipsThumbUrl(slug);
+  if (!custom) return fallback || null;
+  if (thumbCache.has(slug)) return thumbCache.get(slug) || fallback || null;
+  let ok = false;
+  try {
+    const r = await fetchImpl(custom, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(4000),
+    });
+    ok =
+      r.ok && String(r.headers.get("content-type") || "").startsWith("image/");
+  } catch {
+    ok = false;
+  }
+  if (thumbCache.size >= THUMB_CACHE_MAX) thumbCache.clear();
+  thumbCache.set(slug, ok ? custom : null);
+  return ok ? custom : fallback || null;
+}
+
 /**
  * Pick rows worth announcing. `seen` is a Set of bet ids already announced; on a cold start
  * (empty set) the current board is swallowed silently so a deploy never re-posts history.
@@ -200,6 +230,7 @@ export async function announceBigWins({ env, storage, rows, currencies }) {
     await storage.put("bigwins_seen", [...next]);
     let sent = { discord: 0, telegram: 0 };
     for (const e of events) {
+      e.gameImage = await resolveGameImage(e.gameSlug, e.gameImage);
       const r = await deliver(env, cfg, bigWinForm(e));
       sent = {
         discord: sent.discord + r.discord,
