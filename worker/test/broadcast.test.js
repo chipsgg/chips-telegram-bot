@@ -123,24 +123,81 @@ test("detect: incomplete rows ignored; seen set stays bounded", () => {
   assert.ok(!trimmed.has("id0"), "oldest dropped");
 });
 
-test("bigWinForm renders amounts, multiplier, links", () => {
+test("bigWinForm: gold receipt card with author, thumbnail, fields, two buttons", () => {
   const f = bigWinForm({
     username: "carol",
+    avatar: "http://img.example/a.jpg",
+    rank: "Collector IV",
     game: "Gates of Olympus",
     gameSlug: "pragmatic-gates",
+    gameImage: "https://cdn.hub88.io/pragmatic/gates.jpg",
+    provider: "pragmaticplay",
+    currency: "eth",
     amountUsd: 12.5,
     winningsUsd: 12_000,
     multiplier: 960,
+    at: 1_700_000_000_000,
   });
-  assert.equal(f.title, "Big Win");
+  assert.equal(f.plainTitle, true);
+  assert.equal(f.title, "960x on Gates of Olympus");
   assert.match(
     f.content,
-    /\*\*carol\*\* just turned \$12\.50 into \*\*\$12,000\.00\*\* \(960x\) on Gates of Olympus\./
+    /\*\*carol\*\* just hit \*\*\$12,000\.00\*\* on Pragmatic Play\./
   );
+  assert.equal(f.color, 0xf9c334, "gold: it is money");
+  assert.equal(f.author.name, "carol");
+  assert.equal(f.author.url, "https://chips.gg/user/carol");
+  assert.equal(f.thumbnail, "https://cdn.hub88.io/pragmatic/gates.jpg");
+  assert.deepEqual(
+    f.fields.map((x) => [x.name, x.value]),
+    [
+      ["Bet", "$12.50"],
+      ["Win", "$12,000.00"],
+      ["Multiplier", "960x"],
+    ]
+  );
+  assert.equal(f.footer, "Collector IV  ·  ETH");
+  assert.equal(f.timestamp, 1_700_000_000_000);
   assert.equal(f.url, "https://chips.gg/play/pragmatic-gates");
-  assert.equal(f.links.player, "https://chips.gg/user/carol");
+  assert.deepEqual(f.buttons, [
+    { label: "Player", url: "https://chips.gg/user/carol" },
+  ]);
+  assert.doesNotMatch(
+    JSON.stringify(f),
+    /—/,
+    "no em-dashes on a player surface"
+  );
+  // telegram override: one receipt line, link on the name, no stacked fields
+  assert.deepEqual(f.telegram.fields, []);
+  assert.match(
+    f.telegram.content,
+    /\[carol\]\(https:\/\/chips\.gg\/user\/carol\) hit \*\*\$12,000\.00\*\* on Pragmatic Play/
+  );
+  assert.match(f.telegram.content, /\$12\.50 → \*\*\$12,000\.00\*\* · 960x/);
+  assert.equal(f.telegram.footer, "Collector IV · ETH");
 });
 
+test("detect carries avatar/game image through and upgrades http to https", () => {
+  const cfg = broadcastConfig({ BROADCAST_DISCORD_CHANNELS: "1" });
+  const r = row("x", { usd: 5_000 });
+  r.player.avatar = "http://pics.example/me.jpg";
+  r.game.images = {
+    s1: "http://cdn.hub88.io/g/s1.jpg",
+    s2: "http://cdn.hub88.io/g/s2.jpg",
+  };
+  r.game.provider = "hacksaw";
+  r.vip = { rank: "Flipper II" };
+  const { events } = detectBigWins({ x: r }, cur, new Set(["seed"]), cfg);
+  assert.equal(events[0].avatar, "https://pics.example/me.jpg");
+  assert.equal(
+    events[0].gameImage,
+    "https://cdn.hub88.io/g/s2.jpg",
+    "prefers s2"
+  );
+  assert.equal(events[0].provider, "hacksaw");
+  assert.equal(events[0].rank, "Flipper II");
+  assert.equal(events[0].currency, "eth");
+});
 test("promotions: cold start records silently; then started/ended diffs", () => {
   const a = { promotionid: "A", title: "Race A", endTime: 1_800_000_000_000 };
   const b = {
@@ -164,7 +221,20 @@ test("promotions: cold start records silently; then started/ended diffs", () => 
   // junk rows ignored; non-array tolerated
   assert.deepEqual(detectPromotions({ not: "array" }, ["A"]).ended, ["A"]);
   assert.deepEqual(detectPromotions([{ title: "no id" }], []).started, []);
-  const f = promoForm(b);
-  assert.match(f.content, /\*\*Race B\*\*\nWin big\nEnds 15 Jan 2027/);
+  const f = promoForm({
+    ...b,
+    bannerImage: "http://cdn.redpkt.com/chips/b.webp",
+    category: "casino",
+    startTime: 1_799_000_000_000,
+  });
+  assert.equal(f.title, "Race B");
+  assert.equal(f.content, "Win big");
+  assert.equal(f.color, 0x0065f2, "blue: structure, not money");
+  assert.equal(f.banner, "https://cdn.redpkt.com/chips/b.webp");
+  assert.deepEqual(
+    f.fields.map((x) => x.name),
+    ["Starts", "Ends", "Type"]
+  );
+  assert.equal(f.fields[2].value, "Casino");
   assert.equal(f.url, "https://chips.gg/promotions/B");
 });

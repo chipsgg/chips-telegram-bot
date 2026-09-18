@@ -406,6 +406,52 @@ test("discord form: embed, link button, reroll button, ephemeral flag", () => {
   assert.equal(discordRoleForRank("Unranked"), null);
 });
 
+test("discord form: rich fields (color, author, thumbnail, fields, timestamp, extra buttons, plain title)", () => {
+  const p = discordMakeForm({
+    plainTitle: true,
+    title: "960x on Gates",
+    content: "c",
+    color: 0xf9c334,
+    author: {
+      name: "carol",
+      url: "https://chips.gg/user/carol",
+      icon_url: "https://a/b.png",
+    },
+    thumbnail: "https://t/x.jpg",
+    fields: [{ name: "Bet", value: "$1", inline: true }],
+    timestamp: 1_700_000_000_000,
+    url: "https://chips.gg/play/g",
+    buttonLabel: "Play it",
+    buttons: [{ label: "Player", url: "https://chips.gg/user/carol" }],
+  });
+  const e = p.embeds[0];
+  assert.equal(e.title, "960x on Gates", "no emoji wrap");
+  assert.equal(e.color, 0xf9c334);
+  assert.equal(e.author.name, "carol");
+  assert.equal(e.thumbnail.url, "https://t/x.jpg");
+  assert.deepEqual(e.fields, [{ name: "Bet", value: "$1", inline: true }]);
+  assert.equal(e.timestamp, "2023-11-14T22:13:20.000Z");
+  assert.deepEqual(
+    p.components[0].components.map((b) => [b.label, b.url]),
+    [
+      ["Play it", "https://chips.gg/play/g"],
+      ["Player", "https://chips.gg/user/carol"],
+    ]
+  );
+});
+
+test("telegram form: `telegram` override block wins over embed fields", () => {
+  const html = telegramMakeForm({
+    plainTitle: true,
+    title: "T",
+    content: "embed body",
+    fields: [{ name: "Bet", value: "$1" }],
+    footer: "embed footer",
+    telegram: { content: "phone body", fields: [], footer: undefined },
+  });
+  assert.equal(html, "<b>T</b>\nphone body");
+});
+
 test("telegram html: bold/link/escape, form layout", () => {
   assert.equal(
     mdToTelegramHtml("**b** & [l](https://x.y/z?a=1&b=2) <t>"),

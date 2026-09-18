@@ -24,6 +24,7 @@ import {
   bigWinForm,
   broadcastConfig,
   deliver,
+  detectBigWins,
   promoForm,
 } from "./lib/broadcast.js";
 import { createApi } from "./lib/chips.js";
@@ -106,21 +107,79 @@ export function createApp({ env, feed, metrics, registry }) {
       env.ENVIRONMENT !== "production"
     ) {
       const kind = url.searchParams.get("kind") || "bigwin";
+      // ?real=1: use the live board / running promotions instead of synthetic values
+      if (url.searchParams.has("real")) {
+        const cfg = broadcastConfig(env);
+        if (kind === "promotion") {
+          const running = await deps.api.public("listRunningPromotions", {});
+          const list = (Array.isArray(running) ? running : []).slice(
+            0,
+            Math.min(3, Number(url.searchParams.get("n")) || 1)
+          );
+          const sent = [];
+          for (const p of list)
+            sent.push({
+              title: p.title,
+              ...(await deliver(env, cfg, promoForm(p))),
+            });
+          return json({ kind, real: true, sent });
+        }
+        const { data } = await feed.get(
+          "stats.bets.bigwins",
+          "public.currencies"
+        );
+        // run the same detection with an empty seen set, then take the top N regardless of threshold
+        const all = detectBigWins(
+          data["stats.bets.bigwins"],
+          data["public.currencies"],
+          new Set(["_"]),
+          { ...cfg, minUsd: 0, minMultiplier: 0, maxPerFlush: 25 }
+        ).events;
+        const pick = all.slice(
+          0,
+          Math.min(3, Number(url.searchParams.get("n")) || 1)
+        );
+        const sent = [];
+        for (const e of pick)
+          sent.push({
+            who: e.username,
+            win: e.winningsUsd,
+            x: e.multiplier,
+            game: e.game,
+            img: Boolean(e.gameImage),
+            avatar: Boolean(e.avatar),
+            ...(await deliver(env, cfg, bigWinForm(e))),
+          });
+        return json({ kind, real: true, sent });
+      }
       const form =
         kind === "promotion"
           ? promoForm({
               promotionid: "TEST",
               title: "$1,000 Broadcast Test Race",
-              subtitle: "Synthetic promotion card to verify channel wiring.",
+              subtitle:
+                "Synthetic promotion card to verify channel wiring. Wager on any slot to climb the board.",
+              category: "casino",
+              startTime: Date.now(),
               endTime: Date.now() + 7 * 86_400_000,
+              bannerImage:
+                "https://cdn.redpkt.com/chips/banners/elpasso_banner.webp",
             })
           : bigWinForm({
               username: "test_player",
-              game: "Broadcast Test",
-              gameSlug: null,
+              avatar:
+                "https://cdn.chips.gg/public/images/assets/favicon/favicon-32x32.png",
+              rank: "Collector IV",
+              game: "Sweet Bonanza 2500",
+              gameSlug: "pragmaticplay-sweet-bonanza-2500",
+              gameImage:
+                "https://cdn.hub88.io/pragmatic/pgp_sweetbonanza2500.jpg",
+              provider: "pragmaticplay",
+              currency: "eth",
               amountUsd: 12.5,
               winningsUsd: 4_321,
               multiplier: 345.7,
+              at: Date.now(),
             });
       const r = await deliver(env, broadcastConfig(env), form);
       return json({ kind, sent: r });
