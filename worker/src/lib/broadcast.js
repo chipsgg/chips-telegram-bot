@@ -13,8 +13,10 @@
  * structure (promotions); no hype words, no em-dashes; numbers read like a receipt.
  *
  * Config (env):
- *   BROADCAST_DISCORD_CHANNELS   comma-separated channel ids     (bot needs Send Messages + Embed Links)
- *   BROADCAST_TELEGRAM_CHATS     comma-separated chat ids        (bot must be a member / admin in channels)
+ *   BROADCAST_DISCORD_CHANNELS   big wins: comma-separated channel ids  (bot needs Send Messages + Embed Links)
+ *   BROADCAST_TELEGRAM_CHATS     big wins: comma-separated chat ids     (bot must be a member / admin in channels)
+ *   PROMO_DISCORD_CHANNELS       promotions: same shape, separate targets
+ *   PROMO_TELEGRAM_CHATS
  *   BROADCAST_MIN_USD            default 1000
  *   BROADCAST_MIN_MULTIPLIER     default 500
  *   BROADCAST_MAX_PER_FLUSH      default 3   (never spam a channel after a reconnect)
@@ -25,15 +27,28 @@ import { formatDate, formatNumber, formatPrice, toUsd } from "./format.js";
 
 export const SEEN_CAP = 500;
 
-export function broadcastConfig(env = {}) {
-  const list = (v) =>
-    String(v || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+const list = (v) =>
+  String(v || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+/**
+ * Targets per announcement kind. Big wins and promotions usually belong in different
+ * channels, so each has its own lists; either empty = that kind is off.
+ *   kind "bigwin"     BROADCAST_DISCORD_CHANNELS / BROADCAST_TELEGRAM_CHATS
+ *   kind "promotion"  PROMO_DISCORD_CHANNELS     / PROMO_TELEGRAM_CHATS
+ */
+export function broadcastConfig(env = {}, kind = "bigwin") {
+  const promo = kind === "promotion";
   return {
-    discordChannels: list(env.BROADCAST_DISCORD_CHANNELS),
-    telegramChats: list(env.BROADCAST_TELEGRAM_CHATS),
+    kind,
+    discordChannels: list(
+      promo ? env.PROMO_DISCORD_CHANNELS : env.BROADCAST_DISCORD_CHANNELS
+    ),
+    telegramChats: list(
+      promo ? env.PROMO_TELEGRAM_CHATS : env.BROADCAST_TELEGRAM_CHATS
+    ),
     minUsd: Number(env.BROADCAST_MIN_USD) || 1000,
     minMultiplier: Number(env.BROADCAST_MIN_MULTIPLIER) || 500,
     maxPerFlush: Number(env.BROADCAST_MAX_PER_FLUSH) || 3,
@@ -333,7 +348,7 @@ export function promoForm(p) {
  * Poll + announce. `storage` persists the known id list. Called from the scheduled handler.
  */
 export async function announcePromotions({ env, api, storage }) {
-  const cfg = broadcastConfig(env);
+  const cfg = broadcastConfig(env, "promotion");
   if (!isBroadcastEnabled(cfg)) return { started: 0, ended: 0 };
   try {
     const running = await api.public("listRunningPromotions", {});

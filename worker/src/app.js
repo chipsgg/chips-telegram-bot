@@ -111,7 +111,7 @@ export function createApp({ env, feed, metrics, registry }) {
       const kind = url.searchParams.get("kind") || "bigwin";
       // ?real=1: use the live board / running promotions instead of synthetic values
       if (url.searchParams.has("real")) {
-        const cfg = broadcastConfig(env);
+        const cfg = broadcastConfig(env, kind);
         if (kind === "promotion") {
           const running = await deps.api.public("listRunningPromotions", {});
           const list = (Array.isArray(running) ? running : []).slice(
@@ -186,7 +186,7 @@ export function createApp({ env, feed, metrics, registry }) {
               multiplier: 345.7,
               at: Date.now(),
             });
-      const r = await deliver(env, broadcastConfig(env), form);
+      const r = await deliver(env, broadcastConfig(env, kind), form);
       return json({ kind, sent: r });
     }
 

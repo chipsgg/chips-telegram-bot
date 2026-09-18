@@ -50,6 +50,25 @@ const row = (
   };
 };
 
+test("broadcast config: kinds have separate targets", () => {
+  const env = {
+    BROADCAST_DISCORD_CHANNELS: "111",
+    PROMO_DISCORD_CHANNELS: "",
+    PROMO_TELEGRAM_CHATS: "-5",
+  };
+  const bw = broadcastConfig(env, "bigwin");
+  const pr = broadcastConfig(env, "promotion");
+  assert.deepEqual([bw.discordChannels, bw.telegramChats], [["111"], []]);
+  assert.deepEqual([pr.discordChannels, pr.telegramChats], [[], ["-5"]]);
+  assert.equal(
+    isBroadcastEnabled(
+      broadcastConfig({ BROADCAST_DISCORD_CHANNELS: "1" }, "promotion")
+    ),
+    false,
+    "promo off unless its own list is set"
+  );
+});
+
 test("broadcast config: empty = disabled, lists parsed, defaults applied", () => {
   const off = broadcastConfig({});
   assert.equal(isBroadcastEnabled(off), false);

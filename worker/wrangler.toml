@@ -32,11 +32,14 @@ TELEGRAM_BOT_USERNAME = "chipsgg_official_bot"
 # uptime watchdog (cron below): probes PUBLIC_HOST/health, one Telegram message per up/down transition
 PUBLIC_HOST = "bot.chips.gg"
 ALERT_TELEGRAM_CHAT = "147051786"
-# proactive big-win posts; empty = off. Set to channel ids / chat ids once marketing picks them.
-BROADCAST_DISCORD_CHANNELS = ""
+# big-win posts: Chips Casino #big-wins (Jacob, Sep 18 2026). Empty = off.
+BROADCAST_DISCORD_CHANNELS = "1251613676750897192"
 BROADCAST_TELEGRAM_CHATS = ""
 BROADCAST_MIN_USD = "1000"
 BROADCAST_MIN_MULTIPLIER = "500"
+# new-promotion posts: separate targets, off until a channel is chosen
+PROMO_DISCORD_CHANNELS = ""
+PROMO_TELEGRAM_CHATS = ""
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "production"
 
@@ -91,6 +94,8 @@ BROADCAST_DISCORD_CHANNELS = "1550642665006170153"
 BROADCAST_TELEGRAM_CHATS = "147051786"
 BROADCAST_MIN_USD = "300"
 BROADCAST_MIN_MULTIPLIER = "500"
+PROMO_DISCORD_CHANNELS = "1550642665006170153"
+PROMO_TELEGRAM_CHATS = "147051786"
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "dev"
 
