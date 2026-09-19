@@ -90,6 +90,19 @@ Discord and Telegram need a public HTTPS URL to deliver to a Node instance (reve
 `/health` can verify the wiring, then run the same `scripts/register-*.js` as for the Worker.
 The dev bot pair (devbot + @chipsgg_dev_bot) is for this; never point prod bots at a laptop.
 
+## Changelog on the landing page
+
+`bot.chips.gg` renders the last six GitHub Releases under `/// CHANGELOG`, with the running
+version marked `HEAD`. Source is `GET /api/changelog`, which reads
+`api.github.com/repos/chipsgg/chips-telegram-bot/releases` and memoises the result for 10
+minutes in the feed Durable Object's storage (GitHub allows 60 unauthenticated calls an hour;
+a failed refresh keeps serving the last good copy). Dependabot/renovate bullets are dropped.
+
+Release notes are the product changelog, so write them for players: a one-line story under the
+heading, then bullets. `release.yml` publishes GitHub's generated notes; edit them after the tag
+with `gh release edit vX.Y.Z --title "..." --notes-file notes.md` and the page picks it up on the
+next refresh.
+
 ## Proactive features (v4.2)
 
 All off by default in production until the target ids are set in `wrangler.toml [vars]`.

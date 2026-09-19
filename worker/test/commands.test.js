@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import * as affiliate from "../src/commands/affiliate.js";
 import { commands, discordCommandPayload } from "../src/commands/index.js";
+import { changelogLines, changelogSummary } from "../src/lib/changelog.js";
 import {
   discordMakeForm,
   discordRoleForRank,
@@ -495,5 +496,38 @@ test("discord signature verify (real Ed25519 round-trip)", async () => {
   assert.equal(
     await verifyDiscordRequest(req("00" + sig.slice(2)), pubHex, body),
     false
+  );
+});
+
+test("changelogLines: GitHub generated notes -> {text, pr}, headings/footer dropped", () => {
+  const body = [
+    "## What's Changed",
+    "* v4.2: broadcasts, promo push by @tacyarg in https://github.com/chipsgg/chips-telegram-bot/pull/112",
+    "- Plain bullet with no PR",
+    "* Bump send and express by @dependabot[bot] in https://github.com/chipsgg/chips-telegram-bot/pull/62",
+    "* chore(deps): update dependency ws by @renovate[bot] in https://github.com/x/y/pull/9",
+    "",
+    "**Full Changelog**: https://github.com/chipsgg/chips-telegram-bot/compare/v4.1.0...v4.2.0",
+  ].join("\n");
+  assert.deepEqual(changelogLines(body), [
+    {
+      text: "v4.2: broadcasts, promo push",
+      pr: 112,
+      prUrl: "https://github.com/chipsgg/chips-telegram-bot/pull/112",
+    },
+    { text: "Plain bullet with no PR", pr: null, prUrl: null },
+  ]);
+});
+
+test("changelogSummary: first prose line under the heading, code ticks stripped, none -> null", () => {
+  assert.equal(
+    changelogSummary("## Title\n\nThe bot moved to `Workers`.\n\n* a bullet"),
+    "The bot moved to Workers."
+  );
+  assert.equal(
+    changelogSummary(
+      "## What's Changed\n* only bullets\n\n**Full Changelog**: x"
+    ),
+    null
   );
 });

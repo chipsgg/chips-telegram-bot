@@ -28,6 +28,7 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { createApp } from "../app.js";
 import { FEED_HOST, FEED_USER_AGENT, FeedCore } from "../feed/core.js";
+import { fetchChangelog } from "../lib/changelog.js";
 import { createApi } from "../lib/chips.js";
 import { memoryMetrics, sqliteMetrics } from "../lib/metrics.js";
 import {
@@ -120,6 +121,9 @@ export function nodeFeed(env = {}) {
     status: () => core.status(),
     mark: (platform) => core.mark(platform).catch(() => undefined),
     ratelimit: async (key, tier) => core.ratelimit(key, tier),
+    changelog: async () =>
+      (await core.memo("changelog", 10 * 60_000, () => fetchChangelog(env))) ||
+      [],
     get: (...paths) => core.get(...paths),
     close: () => {
       clearTimeout(timer);

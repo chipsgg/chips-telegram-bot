@@ -117,6 +117,25 @@ export class FeedCore {
     return { ...this.snapshot(), activity: await this.loadActivity() };
   }
 
+  // Durable memo for slow/rate-limited upstreams (GitHub releases). Serves the stored value
+  // while fresh; on miss calls `produce` and stores it; on produce failure keeps serving the
+  // stale value rather than nothing.
+  async memo(key, ttlMs, produce) {
+    const k = `memo:${key}`;
+    const hit = await this.storage.get(k);
+    if (hit && Date.now() - hit.at < ttlMs) return hit.value;
+    try {
+      const value = await produce();
+      if (value !== undefined) {
+        await this.storage.put(k, { at: Date.now(), value });
+        return value;
+      }
+    } catch (err) {
+      console.warn(`[feed] memo ${key} produce failed:`, err.message);
+    }
+    return hit ? hit.value : undefined;
+  }
+
   async mark(platform) {
     if (!platform || !/^[a-z]+$/.test(platform)) return;
     const a = await this.loadActivity();
