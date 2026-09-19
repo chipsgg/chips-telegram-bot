@@ -224,8 +224,9 @@ export function createApp({ env, feed, metrics, registry }) {
 
     if (url.pathname === "/api/changelog") {
       // memoised in the feed's durable storage (GitHub unauthenticated = 60 req/h)
-      const releases = await feed.changelog();
-      return json({ current: env.VERSION || null, releases }, 200, {
+      const { releases, error } = await feed.changelog();
+      // `error` is the last refresh failure (if any); releases may still be a stale copy
+      return json({ current: env.VERSION || null, releases, error }, 200, {
         "cache-control": "public, max-age=300",
       });
     }

@@ -121,9 +121,16 @@ export function nodeFeed(env = {}) {
     status: () => core.status(),
     mark: (platform) => core.mark(platform).catch(() => undefined),
     ratelimit: async (key, tier) => core.ratelimit(key, tier),
-    changelog: async () =>
-      (await core.memo("changelog", 10 * 60_000, () => fetchChangelog(env))) ||
-      [],
+    changelog: async () => {
+      let error = null;
+      const releases = await core.memo("changelog", 10 * 60_000, () =>
+        fetchChangelog(env).catch((err) => {
+          error = err.message;
+          throw err;
+        })
+      );
+      return { releases: releases || [], error };
+    },
     get: (...paths) => core.get(...paths),
     close: () => {
       clearTimeout(timer);

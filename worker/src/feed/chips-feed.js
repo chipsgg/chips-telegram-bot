@@ -54,12 +54,17 @@ export class ChipsFeed {
       );
     }
     if (url.pathname === "/changelog") {
+      let error = null;
       const releases = await this.core.memo(
         "changelog",
         Number(url.searchParams.get("ttl")) || 10 * 60_000,
-        () => fetchChangelog(this.env)
+        () =>
+          fetchChangelog(this.env).catch((err) => {
+            error = err.message;
+            throw err;
+          })
       );
-      return Response.json(releases || []);
+      return Response.json({ releases: releases || [], error });
     }
     if (url.pathname === "/state") {
       const paths = (url.searchParams.get("paths") || "")
@@ -108,10 +113,7 @@ export function feedClient(env) {
       stub()
         .fetch("https://feed/changelog")
         .then((r) => r.json())
-        .catch((err) => {
-          console.warn("[feed] changelog:", err.message);
-          return [];
-        }),
+        .catch((err) => ({ releases: [], error: err.message })),
     // paths: dotted, e.g. "public.currencies", "stats.bets.bigwins"
     get: async (...paths) => {
       const r = await stub().fetch(
