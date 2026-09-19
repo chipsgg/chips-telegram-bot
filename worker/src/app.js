@@ -226,8 +226,10 @@ export function createApp({ env, feed, metrics, registry }) {
       // memoised in the feed's durable storage (GitHub unauthenticated = 60 req/h)
       const { releases, error } = await feed.changelog();
       // `error` is the last refresh failure (if any); releases may still be a stale copy
+      // no browser/edge caching: the DO memo already shields GitHub, and a cached copy
+      // makes every deploy look stale (wrong version in the footer) for max-age seconds
       return json({ current: env.VERSION || null, releases, error }, 200, {
-        "cache-control": "public, max-age=300",
+        "cache-control": "no-store",
       });
     }
 
