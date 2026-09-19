@@ -1,6 +1,6 @@
 {
   "name": "@chipsgg/bot-worker",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "private": true,
   "type": "module",
   "description": "Chips.gg community bot: Discord interactions + Telegram webhook. Runs on Cloudflare Workers (src/index.js) or plain Node 22 (src/adapters/node.js)",
