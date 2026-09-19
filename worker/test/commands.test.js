@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import * as affiliate from "../src/commands/affiliate.js";
 import { commands, discordCommandPayload } from "../src/commands/index.js";
-import { changelogLines, changelogSummary } from "../src/lib/changelog.js";
+import {
+  changelogLines,
+  changelogSummary,
+  fetchChangelog,
+  parseAtom,
+} from "../src/lib/changelog.js";
 import {
   discordMakeForm,
   discordRoleForRank,
@@ -530,4 +535,49 @@ test("changelogSummary: first prose line under the heading, code ticks stripped,
     ),
     null
   );
+});
+
+const ATOM = `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Release notes</title>
+<entry><id>tag:github.com,2008:Repository/1/v4.2.1</id><updated>2026-09-19T00:25:20Z</updated>
+<link rel="alternate" type="text/html" href="https://github.com/chipsgg/chips-telegram-bot/releases/tag/v4.2.1"/>
+<title>v4.2.1: changelog on the landing page</title>
+<content type="html">&lt;h2&gt;The changelog you are reading&lt;/h2&gt;
+&lt;p&gt;Release notes now show up on &lt;code&gt;bot.chips.gg&lt;/code&gt;.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Section on the landing page by &lt;a href="https://github.com/tacyarg"&gt;@tacyarg&lt;/a&gt; in &lt;a href="https://github.com/chipsgg/chips-telegram-bot/pull/113"&gt;#113&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Bump ws by &lt;a href="https://github.com/apps/dependabot"&gt;@dependabot&lt;/a&gt; in &lt;a href="https://github.com/x/y/pull/9"&gt;#9&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Footer shows the running version&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Full Changelog&lt;/strong&gt;: &lt;a href="https://github.com/chipsgg/chips-telegram-bot/compare/v4.2.0...v4.2.1"&gt;v4.2.0...v4.2.1&lt;/a&gt;&lt;/p&gt;</content>
+</entry></feed>`;
+
+test("changelog atom fallback: same shape as the API path, PR links kept, bot bumps dropped", () => {
+  const [r] = parseAtom(ATOM);
+  assert.equal(r.tag, "v4.2.1");
+  assert.equal(r.name, "v4.2.1: changelog on the landing page");
+  assert.equal(r.date, "2026-09-19T00:25:20Z");
+  assert.equal(r.summary, "Release notes now show up on bot.chips.gg.");
+  assert.deepEqual(r.notes, [
+    {
+      text: "Section on the landing page",
+      pr: 113,
+      prUrl: "https://github.com/chipsgg/chips-telegram-bot/pull/113",
+    },
+    { text: "Footer shows the running version", pr: null, prUrl: null },
+  ]);
+});
+
+test("fetchChangelog: API 403 falls through to the atom feed", async () => {
+  const calls = [];
+  const fake = async (url) => {
+    calls.push(url);
+    if (/api\.github/.test(url))
+      return new Response("rate limited", { status: 403 });
+    return new Response(ATOM, { status: 200 });
+  };
+  const rel = await fetchChangelog({ VERSION: "t" }, fake);
+  assert.equal(rel.length, 1);
+  assert.equal(rel[0].tag, "v4.2.1");
+  assert.ok(calls[1].endsWith("/releases.atom"));
 });
