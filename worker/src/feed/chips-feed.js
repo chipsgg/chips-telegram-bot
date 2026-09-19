@@ -1,3 +1,4 @@
+import { fetchChangelog } from "../lib/changelog.js";
 /**
  * ChipsFeed — Durable Object wrapper around FeedCore.
  *
@@ -52,6 +53,14 @@ export class ChipsFeed {
         )
       );
     }
+    if (url.pathname === "/changelog") {
+      const releases = await this.core.memo(
+        "changelog",
+        Number(url.searchParams.get("ttl")) || 10 * 60_000,
+        () => fetchChangelog(this.env)
+      );
+      return Response.json(releases || []);
+    }
     if (url.pathname === "/state") {
       const paths = (url.searchParams.get("paths") || "")
         .split(",")
@@ -95,6 +104,14 @@ export function feedClient(env) {
         )
         .then((r) => r.json())
         .catch(() => ({ allowed: true, remaining: 0, retryAfterSec: 0 })),
+    changelog: () =>
+      stub()
+        .fetch("https://feed/changelog")
+        .then((r) => r.json())
+        .catch((err) => {
+          console.warn("[feed] changelog:", err.message);
+          return [];
+        }),
     // paths: dotted, e.g. "public.currencies", "stats.bets.bigwins"
     get: async (...paths) => {
       const r = await stub().fetch(

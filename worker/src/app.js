@@ -10,6 +10,7 @@
  *   GET  /api/ticker         live prices for the landing-page ticker (from the feed)
  *   GET  /health             200 when feed is fresh AND Discord/Telegram point at this host; else 503
  *   GET  /commands.json      command list (for the landing page)
+ *   GET  /api/changelog      GitHub Releases for the landing page (memoised 10 min in feed storage)
  *   anything else            -> null (caller serves static assets / 404)
  *
  * Runtime services are injected:
@@ -218,6 +219,14 @@ export function createApp({ env, feed, metrics, registry }) {
         }));
       return json({ updatedAt, rows }, 200, {
         "cache-control": "public, max-age=15",
+      });
+    }
+
+    if (url.pathname === "/api/changelog") {
+      // memoised in the feed's durable storage (GitHub unauthenticated = 60 req/h)
+      const releases = await feed.changelog();
+      return json({ current: env.VERSION || null, releases }, 200, {
+        "cache-control": "public, max-age=300",
       });
     }
 

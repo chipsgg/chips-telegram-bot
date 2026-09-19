@@ -230,6 +230,18 @@
       </div>
     </section>
 
+    <!-- CHANGELOG -->
+    <section id="changelog">
+      <div class="section-head">
+        <h2>/// CHANGELOG</h2>
+        <div class="rule"></div>
+        <a class="changelog-all" href="https://github.com/chipsgg/chips-telegram-bot/releases" target="_blank" rel="noopener noreferrer">git log --oneline &rarr;</a>
+      </div>
+      <div class="changelog" id="changelog-list">
+        <div class="changelog-loading">$ git log --tags<span class="cursor">_</span></div>
+      </div>
+    </section>
+
     <!-- CTA -->
     <section class="cta-section">
       <a href="/commands.json" class="cta-button">&gt; EXPLORE_ALL_COMMANDS</a>
@@ -239,7 +251,7 @@
   <!-- FOOTER -->
   <footer class="footer">
     <div class="footer-inner">
-      <div class="footer-status"><span class="dot"></span>SYSTEM OPERATIONAL</div>
+      <div class="footer-status"><span class="dot"></span>SYSTEM OPERATIONAL <span class="footer-version" id="footer-version"></span></div>
       <div class="footer-credit">
         <span>Developed by</span>
         <a href="https://redpkt.com" target="_blank" rel="noopener noreferrer">
@@ -343,6 +355,38 @@
     (function () {
       function fmt(n) { return Number(n || 0).toLocaleString('en-US'); }
       function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+      // Changelog from GitHub Releases (via /api/changelog)
+      fetch('/api/changelog').then(function (r) { return r.json(); }).then(function (c) {
+        var box = document.getElementById('changelog-list');
+        if (!box) return;
+        var fv = document.getElementById('footer-version');
+        if (fv && c.current) fv.textContent = '· v' + c.current;
+        if (!c.releases || !c.releases.length) {
+          box.innerHTML = '<div class="changelog-loading">no releases published yet</div>';
+          return;
+        }
+        var esc = function (t) { return String(t).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
+        box.innerHTML = c.releases.slice(0, 6).map(function (rel, i) {
+          var isCurrent = c.current && rel.tag === 'v' + String(c.current).split(/[-+]/)[0];
+          var date = rel.date ? new Date(rel.date).toISOString().slice(0, 10) : '';
+          var notes = rel.notes.map(function (n) {
+            var pr = n.pr ? ' <a href="' + esc(n.prUrl) + '" target="_blank" rel="noopener noreferrer" class="changelog-pr">#' + n.pr + '</a>' : '';
+            return '<li>' + esc(n.text.replace(/`/g, '')) + pr + '</li>';
+          }).join('');
+          var title = rel.name && rel.name !== rel.tag ? rel.name.replace(/^v?[\d.]+:?\s*/, '') : '';
+          return '<article class="changelog-entry' + (isCurrent ? ' current' : '') + '">' +
+            '<div class="changelog-meta">' +
+              '<a href="' + esc(rel.url) + '" target="_blank" rel="noopener noreferrer" class="changelog-tag">' + esc(rel.tag) + '</a>' +
+              (title ? '<span class="changelog-title">' + esc(title) + '</span>' : '') +
+              (isCurrent ? '<span class="changelog-badge">HEAD</span>' : '') +
+              '<span class="changelog-date">' + esc(date) + '</span>' +
+            '</div>' +
+            (rel.summary ? '<p class="changelog-summary">' + esc(rel.summary) + '</p>' : '') +
+            (notes ? '<ul class="changelog-notes">' + notes + '</ul>' : '') +
+          '</article>';
+        }).join('');
+      }).catch(function () {});
+
       fetch('/api/metrics').then(function (r) { return r.json(); }).then(function (m) {
         setText('commands-count', fmt(m.commands_executed));
         setText('messages-count', fmt(m.messages_sent));

@@ -161,3 +161,34 @@ test("metrics: memory and sqlite backends agree on totals and per-command usage"
     );
   }
 });
+
+test("memo: serves stored value while fresh, refreshes after ttl, keeps stale on failure", async () => {
+  const store = new Map();
+  const storage = {
+    get: async (k) => store.get(k),
+    put: async (k, v) => void store.set(k, v),
+  };
+  const core = new FeedCore({ storage, openSocket: async () => fakeSocket() });
+  let calls = 0;
+  const produce = async () => `v${++calls}`;
+  assert.equal(await core.memo("x", 1000, produce), "v1");
+  assert.equal(
+    await core.memo("x", 1000, produce),
+    "v1",
+    "fresh -> no second call"
+  );
+  store.set("memo:x", { at: Date.now() - 5000, value: "v1" });
+  assert.equal(
+    await core.memo("x", 1000, produce),
+    "v2",
+    "expired -> refreshed"
+  );
+  store.set("memo:x", { at: Date.now() - 5000, value: "v2" });
+  assert.equal(
+    await core.memo("x", 1000, async () => {
+      throw new Error("github 403");
+    }),
+    "v2",
+    "produce failed -> stale value, not nothing"
+  );
+});
