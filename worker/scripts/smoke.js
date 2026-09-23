@@ -4,6 +4,8 @@
  *   node scripts/smoke.js http://127.0.0.1:8787
  * Read-only. Exits non-zero on any failed expectation.
  */
+import { commands } from "../src/commands/index.js";
+
 const base = (process.argv[2] || "http://127.0.0.1:8787").replace(/\/$/, "");
 // Guard: test tooling never targets production. bot.chips.gg / the prod workers.dev host are refused.
 const PROD_HOSTS = ["bot.chips.gg", "chips-bot.chips.workers.dev"];
@@ -195,12 +197,16 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   check("unknown command 404", (await get("/api/command/nope")).status === 404);
 
   const cj = await get("/commands.json");
+  // count comes from the registry, not a literal: a new command must not break the smoke
+  const publicCount = Object.values(commands).filter(
+    (c) => !c.staffOnly
+  ).length;
   check(
     "/commands.json hides staff cmds",
     Array.isArray(cj.json) &&
-      cj.json.length === 18 &&
+      cj.json.length === publicCount &&
       !cj.json.some((c) => c.name === "affiliate"),
-    `${cj.json?.length} cmds`
+    `${cj.json?.length} cmds (expected ${publicCount})`
   );
 
   const badSig = await fetch(`${base}/discord`, {
