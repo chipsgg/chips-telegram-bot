@@ -129,8 +129,11 @@ const leaderboardLines = (rows, ctx) =>
     .map((r, i) => {
       const line = `${i + 1}. ${formatPrice(r.amountUsd)} ➜ **${formatPrice(r.winningsUsd)}** (${formatNumber(r.bet.multiplier)}x)`;
       const who = `${r.player.username} in ${r.game?.title || r.bet.slotname || "a game"}`;
+      const name = r.player.isPrivate
+        ? r.player.username
+        : `[${r.player.username}](https://chips.gg/user/${r.player.username})`;
       return ctx.platform === "discord"
-        ? `${line}\n-# Won by [${r.player.username}](https://chips.gg/user/${r.player.username}) in [${r.game?.title || r.bet.slotname}](https://chips.gg/play/${r.game?.slug || r.bet.gamecode})`
+        ? `${line}\n-# Won by ${name} in [${r.game?.title || r.bet.slotname}](https://chips.gg/play/${r.game?.slug || r.bet.gamecode})`
         : `${line}\n    ${who}`;
     })
     .join("\n");

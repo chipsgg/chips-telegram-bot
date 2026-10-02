@@ -45,6 +45,28 @@ const KEEP = {
   profitshare: null,
 };
 
+// Players who set their chips.gg profile private arrive with `isPrivate: true` (same flag
+// the site uses to show "Hidden" on its leaderboards). Strip identity at ingest so no
+// command, broadcast or API route downstream can leak it.
+export const anonymize = (value) => {
+  if (!value || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(anonymize);
+  if (value.player?.isPrivate)
+    return {
+      ...value,
+      player: { id: value.player.id, username: "Hidden", isPrivate: true },
+    };
+  let out = value;
+  for (const [k, v] of Object.entries(value)) {
+    const a = anonymize(v);
+    if (a !== v) {
+      if (out === value) out = { ...value };
+      out[k] = a;
+    }
+  }
+  return out;
+};
+
 export const setPath = (root, path, value) => {
   if (!path.length) return value;
   const out = { ...(root && typeof root === "object" ? root : {}) };
@@ -228,7 +250,8 @@ export class FeedCore {
       if (!Array.isArray(msg) || msg[1] != null) continue; // rpc replies: ignore
       const [channel, , payload] = msg;
       if (!(channel in this.data) || !Array.isArray(payload)) continue;
-      const [path = [], value] = payload;
+      const [path = [], raw] = payload;
+      const value = channel === "stats" ? anonymize(raw) : raw;
       const keep = KEEP[channel];
       if (channel === "stats" && (path.length === 0 || path[1] === "bigwins"))
         bigwinsChanged = true;

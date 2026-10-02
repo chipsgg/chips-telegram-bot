@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { FeedCore, memoryStorage, setPath } from "../src/feed/core.js";
+import {
+  FeedCore,
+  anonymize,
+  memoryStorage,
+  setPath,
+} from "../src/feed/core.js";
 import { memoryMetrics, sqliteMetrics } from "../src/lib/metrics.js";
 
 // A fake websocket the core can drive: we push frames in, capture what it sends.
@@ -190,5 +195,36 @@ test("memo: serves stored value while fresh, refreshes after ttl, keeps stale on
     }),
     "v2",
     "produce failed -> stale value, not nothing"
+  );
+});
+
+test("private players are anonymized at ingest: name, avatar, nickname gone; public untouched", () => {
+  const board = {
+    a: {
+      bet: { id: 1 },
+      player: {
+        id: "u1",
+        username: "yuksell",
+        nickname: "buzzerr",
+        avatar: "https://x/a.png",
+        isPrivate: true,
+      },
+    },
+    b: {
+      bet: { id: 2 },
+      player: { id: "u2", username: "ReUpHD", avatar: "https://x/b.png" },
+    },
+  };
+  const out = anonymize({ bets: { bigwins: board } });
+  assert.deepEqual(out.bets.bigwins.a.player, {
+    id: "u1",
+    username: "Hidden",
+    isPrivate: true,
+  });
+  assert.deepEqual(out.bets.bigwins.b.player, board.b.player);
+  assert.equal(
+    anonymize(board.b),
+    board.b,
+    "no private players -> same reference"
   );
 });

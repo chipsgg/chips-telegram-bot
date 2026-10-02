@@ -291,3 +291,21 @@ test("resolveGameImage: custom Chips thumb when the CDN has it, provider art oth
     "unsafe slug never probed"
   );
 });
+
+test("big win card for a hidden player: no profile link, no avatar, no Player button", () => {
+  const f = bigWinForm({
+    username: "Hidden",
+    isPrivate: true,
+    amountUsd: 10,
+    winningsUsd: 5000,
+    multiplier: 500,
+    game: "Mental 2",
+    gameSlug: "nolimitcity-mental-2",
+    currency: "btc",
+  });
+  assert.equal(f.author.url, undefined);
+  assert.equal(f.author.icon_url, undefined);
+  assert.deepEqual(f.buttons, []);
+  assert.doesNotMatch(f.telegram.content, /chips\.gg\/user/);
+  assert.match(f.content, /\*\*Hidden\*\*/);
+});

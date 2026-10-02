@@ -134,6 +134,7 @@ export function detectBigWins(rows, currencies, seen, cfg) {
         kind: "bigwin",
         betId: r.bet.id,
         username: r.player.username,
+        isPrivate: Boolean(r.player.isPrivate),
         avatar: httpsOnly(r.player.avatar),
         rank: r.vip?.rank || null,
         game: String(
@@ -170,7 +171,9 @@ export function trimSeen(set) {
  * currency in the footer. Two buttons: the game, the player.
  */
 export function bigWinForm(e) {
-  const playerUrl = `https://chips.gg/user/${encodeURIComponent(e.username)}`;
+  const playerUrl = e.isPrivate
+    ? null
+    : `https://chips.gg/user/${encodeURIComponent(e.username)}`;
   const gameUrl = e.gameSlug
     ? `https://chips.gg/play/${e.gameSlug}`
     : "https://chips.gg/casino";
@@ -187,7 +190,7 @@ export function bigWinForm(e) {
     color: COLOR.gold,
     author: {
       name: e.username,
-      url: playerUrl,
+      ...(playerUrl ? { url: playerUrl } : {}),
       ...(e.avatar ? { icon_url: e.avatar } : {}),
     },
     thumbnail: e.gameImage || undefined,
@@ -204,13 +207,13 @@ export function bigWinForm(e) {
     timestamp: e.at,
     url: gameUrl,
     buttonLabel: "Play it",
-    buttons: [{ label: "Player", url: playerUrl }],
+    buttons: playerUrl ? [{ label: "Player", url: playerUrl }] : [],
     photo: e.gameImage || undefined,
     links: { player: playerUrl, game: gameUrl },
     // phone layout: one receipt line, no repeated numbers
     telegram: {
       content: [
-        `[${e.username}](${playerUrl}) hit **${formatPrice(e.winningsUsd)}**${prov ? ` on ${prov}` : ""}`,
+        `${playerUrl ? `[${e.username}](${playerUrl})` : `**${e.username}**`} hit **${formatPrice(e.winningsUsd)}**${prov ? ` on ${prov}` : ""}`,
         `${formatPrice(e.amountUsd)} → **${formatPrice(e.winningsUsd)}** · ${formatNumber(e.multiplier)}x`,
       ].join("\n"),
       fields: [],
