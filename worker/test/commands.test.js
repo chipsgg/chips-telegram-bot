@@ -15,6 +15,7 @@ import {
 import { verifyDiscordRequest } from "../src/platform/discord.js";
 import {
   mdToTelegramHtml,
+  resolveTelegramCommand,
   telegramMakeForm,
 } from "../src/platform/telegram.js";
 
@@ -62,13 +63,19 @@ const api = (routes) => {
   };
 };
 
-test("registry: 19 commands, identity ones flagged, discord payload valid", () => {
-  assert.equal(Object.keys(commands).length, 19);
-  for (const n of ["linkaccount", "checkaccount", "myaffiliates", "affiliate"])
+test("registry: 20 commands, identity ones flagged, discord payload valid", () => {
+  assert.equal(Object.keys(commands).length, 20);
+  for (const n of [
+    "linkaccount",
+    "checkaccount",
+    "myaffiliates",
+    "affiliate",
+    "start",
+  ])
     assert.equal(commands[n].identity, true, n);
   assert.equal(commands.affiliate.staffOnly, true);
   const payload = discordCommandPayload();
-  assert.equal(payload.length, 19);
+  assert.equal(payload.length, 20);
   for (const c of payload) {
     assert.match(c.name, /^[a-z]{1,32}$/);
     assert.ok(c.description.length <= 100);
@@ -256,6 +263,167 @@ test("/linkaccount: refuses in telegram groups, validates code, never logs it", 
     logs.every((l) => !l.includes("012345")),
     "TOTP leaked to logs"
   );
+});
+
+test("/start: unlinked -> link flow with the host as the reason, per-platform usage", async () => {
+  const notFound = api({
+    "auth/getUserByPlatformID": async () => {
+      throw new Error("user not found");
+    },
+  });
+  const tg = ctx("telegram");
+  await commands.start.handler(tg, { api: notFound, env: {} });
+  const f = tg.result();
+  assert.match(f.title, /Link your Chips.gg account/);
+  assert.match(f.content, /Your host wants to reach you here/);
+  assert.match(f.content, /this Telegram account isn't linked/);
+  assert.match(f.content, /\/linkaccount <username> <6-digit code>/);
+  assert.match(f.content, /never ask for a password/);
+  assert.equal(f.ephemeral, true);
+
+  const dc = ctx("discord", {}, { userid: "d1", guildId: "g1" });
+  await commands.start.handler(dc, { api: notFound, env: {} });
+  assert.match(dc.result().content, /this Discord account isn't linked/);
+  assert.match(
+    dc.result().content,
+    /\/linkaccount username:<name> totp:<code>/
+  );
+});
+
+test("/start: linked -> welcome with rank, registry pickup only on Discord in the roles guild", async () => {
+  const upserts = [];
+  const registry = { upsert: async (r) => upserts.push(r) };
+  const linked = api({
+    "auth/getUserByPlatformID": async ({ platform, platformid }) => ({
+      id: "uid-1",
+      username: "bob",
+      platform,
+      platformid,
+    }),
+    "public/getPlayer": async ({ userid }) => {
+      assert.equal(userid, "uid-1");
+      return { username: "bob", vip: { rank: "Collector III" } };
+    },
+  });
+  const tg = ctx("telegram");
+  await commands.start.handler(tg, { api: linked, env: {}, registry });
+  const f = tg.result();
+  assert.match(f.title, /linked/);
+  assert.match(f.content, /Welcome back, \*\*bob\*\*/);
+  assert.match(f.content, /VIP rank: Collector III/);
+  assert.match(f.content, /Your host can reach you here/);
+  assert.equal(f.url, "https://chips.gg/user/bob");
+  assert.equal(
+    upserts.length,
+    0,
+    "telegram never touches the discord registry"
+  );
+
+  const dc = ctx("discord", {}, { userid: "d1" });
+  await commands.start.handler(dc, {
+    api: linked,
+    env: { DISCORD_ROLES_GUILD_ID: "g1" },
+    registry,
+  });
+  assert.equal(upserts.length, 1);
+  assert.deepEqual(upserts[0], {
+    discordId: "d1",
+    chipsUserid: "uid-1",
+    username: "bob",
+    rank: "Collector III",
+    roleId: null,
+  });
+
+  // getPlayer failing must not break the greeting: rank line just disappears
+  const flaky = api({
+    "auth/getUserByPlatformID": async () => ({ id: "uid-1", username: "bob" }),
+    "public/getPlayer": async () => {
+      throw new Error("upstream 503");
+    },
+  });
+  const orig = console.warn;
+  console.warn = () => undefined;
+  try {
+    const c = ctx("telegram");
+    await commands.start.handler(c, { api: flaky, env: {} });
+    assert.match(c.result().content, /Welcome back, \*\*bob\*\*/);
+    assert.doesNotMatch(c.result().content, /VIP rank/);
+  } finally {
+    console.warn = orig;
+  }
+});
+
+test("/start: in a telegram group points to the DM without any lookup", async () => {
+  let lookups = 0;
+  const a = api({
+    "auth/getUserByPlatformID": async () => {
+      lookups += 1;
+      return { id: "x", username: "bob" };
+    },
+  });
+  const c = ctx("telegram", {}, { isPrivate: false });
+  await commands.start.handler(c, { api: a, env: {} });
+  assert.match(c.result().text, /privately/);
+  assert.equal(lookups, 0);
+});
+
+test("telegram routing: /cmd anywhere; bare DM text -> start; group needs @bot -> help; chatter silent", () => {
+  const msg = (text, type, entities = []) => ({
+    text,
+    entities,
+    chat: { id: 1, type },
+  });
+  const cmd = (text) => [
+    { type: "bot_command", offset: 0, length: text.split(" ")[0].length },
+  ];
+  assert.equal(
+    resolveTelegramCommand(
+      msg("/stats bob", "private", cmd("/stats bob")),
+      "b"
+    ),
+    "stats"
+  );
+  assert.equal(
+    resolveTelegramCommand(
+      msg("/help@chipsgg_dev_bot", "supergroup", cmd("/help@chipsgg_dev_bot")),
+      "chipsgg_dev_bot"
+    ),
+    "help"
+  );
+  assert.equal(
+    resolveTelegramCommand(msg("/start", "private", cmd("/start")), "b"),
+    "start"
+  );
+  // the case this exists for: a player just typing at the bot in a DM
+  assert.equal(
+    resolveTelegramCommand(msg("hello?", "private"), "chipsgg_dev_bot"),
+    "start"
+  );
+  assert.equal(
+    resolveTelegramCommand(
+      msg("hey @chipsgg_dev_bot", "supergroup", [
+        { type: "mention", offset: 4, length: 16 },
+      ]),
+      "chipsgg_dev_bot"
+    ),
+    "help"
+  );
+  assert.equal(
+    resolveTelegramCommand(
+      msg("hey @someone_else", "supergroup", [
+        { type: "mention", offset: 4, length: 13 },
+      ]),
+      "chipsgg_dev_bot"
+    ),
+    null
+  );
+  assert.equal(
+    resolveTelegramCommand(msg("general chatter", "supergroup"), "b"),
+    null
+  );
+  // no bot username configured: groups stay silent, DMs still greet
+  assert.equal(resolveTelegramCommand(msg("hi", "private"), ""), "start");
+  assert.equal(resolveTelegramCommand(msg("hi", "group"), ""), null);
 });
 
 test("/linkaccount: assigns a Discord role only in DISCORD_ROLES_GUILD_ID", async () => {

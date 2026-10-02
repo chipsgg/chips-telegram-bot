@@ -17,7 +17,7 @@ metrics  ───────────────────────�
 ```
 worker/
   src/index.js              router: /discord /telegram /api/command/:name /api/metrics /api/ticker /health /commands.json
-  src/commands/index.js     the 19 commands (same form contract as the Node bot)
+  src/commands/index.js     the 20 commands (same form contract as the Node bot)
   src/commands/affiliate.js identity.js
   src/platform/discord.js   Ed25519 verify, defer + PATCH @original, reroll buttons
   src/platform/discord-rest.js  embed builder, role assign, command registration
@@ -66,7 +66,7 @@ Local dev: `.dev.vars` (gitignored) with the dev values; `npm run dev`; `npm run
 
 ```
 src/app.js              (Request) -> Response: every route, no runtime imports
-src/commands/*          the 19 commands, platform-agnostic
+src/commands/*          the 20 commands, platform-agnostic
 src/platform/*          Discord interactions (Ed25519) + Telegram webhook handlers
 src/feed/core.js        FeedCore: the api.chips.gg websocket + pushed state, runtime-agnostic
 src/lib/metrics.js      { track, read } over D1, node:sqlite, or memory
@@ -115,7 +115,8 @@ All off by default in production until the target ids are set in `wrangler.toml 
 | VIP rank -> Discord role sync | cron `17 4 * * *` | `DISCORD_ROLES_GUILD_ID` | registry `linked_discord` (D1), filled by `/linkaccount` + `/checkaccount`; 150 members/run, least-recently-synced first |
 | Rate limit | every command | tiers in `src/lib/ratelimit.js`: 10/min per user (Discord, Telegram), 60/min per IP (API) | 429 + `Retry-After` on the API; "Easy there" reply in chat |
 | Per-command usage | every command | | `GET /api/usage?days=30` |
-| Help on bare text | Telegram DM text, or `@bot` mention in a group | `TELEGRAM_BOT_USERNAME` | |
+| DM greeting (`/start`) | Telegram `/start` or any bare DM text; Discord `/start` (ephemeral) | | linked: welcome + rank, "your host can reach you here"; unlinked: the `/linkaccount` flow with the host as the reason |
+| Help on `@bot` mention | bare text mentioning `@bot` in a Telegram group | `TELEGRAM_BOT_USERNAME` | |
 
 Cold-start rule for both announcers: the first observation records the current board / promo
 list silently, so a deploy never re-posts history. On non-production, `POST /api/broadcast-test`
