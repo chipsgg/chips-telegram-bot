@@ -33,6 +33,7 @@ import {
 import { createApi } from "./lib/chips.js";
 import { formatPrice } from "./lib/format.js";
 import { buildHealth } from "./lib/health.js";
+import { listGuildMembers, listGuildRoles } from "./platform/discord-rest.js";
 import { handleDiscord } from "./platform/discord.js";
 import { handleTelegram } from "./platform/telegram.js";
 
@@ -220,6 +221,61 @@ export function createApp({ env, feed, metrics, registry }) {
       return json({ updatedAt, rows }, 200, {
         "cache-control": "public, max-age=15",
       });
+    }
+
+    // Member export (CSV) for a guild the bot is in, joined with the linked-account registry.
+    // Needs the GUILD_MEMBERS privileged intent enabled on the app; guarded by the webhook secret.
+    if (url.pathname === "/admin/members.csv") {
+      const secret = env.TELEGRAM_WEBHOOK_SECRET;
+      if (!secret || request.headers.get("x-admin-secret") !== secret)
+        return new Response("forbidden", { status: 403 });
+      const guild = url.searchParams.get("guild") || env.DISCORD_ROLES_GUILD_ID;
+      if (!guild) return new Response("guild required", { status: 400 });
+      try {
+        const [members, roles, linked] = await Promise.all([
+          listGuildMembers(env, guild),
+          listGuildRoles(env, guild),
+          env.DB
+            ? env.DB.prepare(
+                "SELECT discord_id, chips_userid, username, rank FROM linked_discord"
+              )
+                .all()
+                .then((r) => r.results || [])
+            : [],
+        ]);
+        const roleName = new Map(roles.map((r) => [r.id, r.name]));
+        const link = new Map(linked.map((l) => [l.discord_id, l]));
+        const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+        const rows = [
+          "discord_id,username,global_name,nick,bot,joined_at,roles,chips_userid,chips_username,chips_rank",
+          ...members.map((m) => {
+            const l = link.get(m.user.id) || {};
+            return [
+              m.user.id,
+              m.user.username,
+              m.user.global_name,
+              m.nick,
+              m.user.bot ? 1 : 0,
+              m.joined_at,
+              (m.roles || []).map((r) => roleName.get(r) || r).join("|"),
+              l.chips_userid,
+              l.username,
+              l.rank,
+            ]
+              .map(q)
+              .join(",");
+          }),
+        ];
+        return new Response(`${rows.join("\n")}\n`, {
+          headers: {
+            "content-type": "text/csv; charset=utf-8",
+            "content-disposition": `attachment; filename="discord-members-${guild}.csv"`,
+            "cache-control": "no-store",
+          },
+        });
+      } catch (err) {
+        return json({ error: err.message }, 502);
+      }
     }
 
     if (url.pathname === "/api/changelog") {

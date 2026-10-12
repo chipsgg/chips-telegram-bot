@@ -194,3 +194,33 @@ export async function registerCommands(env, payload) {
   );
   return { ok: res.ok, status: res.status, body: await res.text() };
 }
+
+// GET /guilds/{id}/members, 1000 per page. Discord gates this REST call on the GUILD_MEMBERS
+// privileged intent being enabled for the app (no gateway needed). Returns [] when it isn't.
+export async function listGuildMembers(env, guildId) {
+  const headers = { authorization: `Bot ${env.DISCORD_TOKEN}` };
+  const out = [];
+  let after = "0";
+  for (let page = 0; page < 200; page++) {
+    const res = await fetch(
+      `${DISCORD_API}/guilds/${guildId}/members?limit=1000&after=${after}`,
+      { headers }
+    );
+    if (!res.ok)
+      throw new Error(
+        `members ${res.status}: ${(await res.text()).slice(0, 200)}`
+      );
+    const batch = await res.json();
+    out.push(...batch);
+    if (batch.length < 1000) break;
+    after = batch[batch.length - 1].user.id;
+  }
+  return out;
+}
+
+export async function listGuildRoles(env, guildId) {
+  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/roles`, {
+    headers: { authorization: `Bot ${env.DISCORD_TOKEN}` },
+  });
+  return res.ok ? res.json() : [];
+}
