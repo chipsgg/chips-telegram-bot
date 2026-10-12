@@ -208,6 +208,70 @@ function makeCtx(message, send, env) {
   };
 }
 
+// Inline mode (@bot <query> in any chat): arg-less, non-identity commands rendered as
+// text results the user can drop into the conversation. BotFather must have inline enabled.
+const INLINE = [
+  "prices",
+  "bigwins",
+  "luckiest",
+  "koth",
+  "promotions",
+  "mostplayed",
+];
+export async function inlineResults(deps, query) {
+  const q = String(query || "")
+    .trim()
+    .toLowerCase();
+  const names = INLINE.filter((n) => commands[n] && (!q || n.startsWith(q)));
+  const results = [];
+  for (const name of names) {
+    let form = null;
+    const ctx = {
+      platform: "telegram",
+      userid: null,
+      isPrivate: false,
+      getString: () => undefined,
+      rest: () => "",
+      sendText: (text) => {
+        form = { content: text };
+      },
+      sendForm: (f) => {
+        form = f;
+      },
+    };
+    try {
+      await commands[name].handler(ctx, deps);
+    } catch (err) {
+      console.warn(`[telegram] inline ${name} failed:`, err.message);
+      continue;
+    }
+    if (!form) continue;
+    const text = `${telegramMakeForm(form)}`.slice(0, 4096);
+    results.push({
+      type: "article",
+      id: name,
+      title: `/${name}`,
+      description: commands[name].description.slice(0, 100),
+      input_message_content: { message_text: text, parse_mode: "HTML" },
+      ...(form.url && form.buttonLabel
+        ? { reply_markup: linkKeyboard(form.url, form.buttonLabel) }
+        : {}),
+    });
+  }
+  return results;
+}
+
+async function answerInline(env, deps, iq) {
+  await deps.feed?.mark("telegram");
+  const results = await inlineResults(deps, iq.query);
+  await tgApi(env)("answerInlineQuery", {
+    inline_query_id: iq.id,
+    results,
+    cache_time: 30,
+    is_personal: false,
+  });
+}
+
 // "/stats@chipsgg_bot foo" -> "stats"
 const commandName = (message) => {
   const ent = (message.entities || []).find(
@@ -226,6 +290,10 @@ export async function handleTelegram(request, env, deps, waitUntil) {
     return new Response("forbidden", { status: 403 });
   }
   const update = await request.json().catch(() => null);
+  if (update?.inline_query) {
+    waitUntil(answerInline(env, deps, update.inline_query));
+    return new Response("ok");
+  }
   const message = update?.message;
   if (!message?.text) return new Response("ok");
 

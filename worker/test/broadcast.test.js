@@ -7,8 +7,10 @@ import {
   bigWinForm,
   broadcastConfig,
   detectBigWins,
+  detectKoth,
   detectPromotions,
   isBroadcastEnabled,
+  kothForm,
   promoForm,
   resolveGameImage,
   trimSeen,
@@ -183,6 +185,7 @@ test("bigWinForm: gold receipt card with author, thumbnail, fields, two buttons"
   assert.equal(f.url, "https://chips.gg/play/pragmatic-gates");
   assert.deepEqual(f.buttons, [
     { label: "Player", url: "https://chips.gg/user/carol" },
+    { label: "My stats", custom_id: "run:me" },
   ]);
   assert.doesNotMatch(
     JSON.stringify(f),
@@ -306,7 +309,7 @@ test("big win card for a hidden player: no profile link, no avatar, no Player bu
   });
   assert.equal(f.author.url, undefined);
   assert.equal(f.author.icon_url, undefined);
-  assert.deepEqual(f.buttons, []);
+  assert.deepEqual(f.buttons, [{ label: "My stats", custom_id: "run:me" }]);
   assert.doesNotMatch(f.telegram.content, /chips\.gg\/user/);
   assert.match(f.content, /\*\*Hidden\*\*/);
 });
@@ -367,4 +370,66 @@ test("announceBigWins: cold board swallowed, then posts and keeps a persisted li
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test("detectKoth: first sight swallowed; round start, king change, winner each fire once", () => {
+  const round = (over) => ({
+    id: "r1",
+    state: "active",
+    multiplier: 120.5,
+    winningsUsd: 100,
+    endTime: 1_800_000_000_000,
+    catalogGame: {
+      title: "Mental 2 ",
+      slug: "nolimitcity-mental-2",
+      images: {},
+    },
+    king: { user: { username: "alice" } },
+    winner: null,
+    ...over,
+  });
+  let { events, next } = detectKoth(round(), undefined);
+  assert.equal(events.length, 0, "cold start");
+  ({ events, next } = detectKoth(round(), next));
+  assert.equal(events.length, 0, "no change");
+  ({ events, next } = detectKoth(
+    round({ king: { user: { username: "bob" } } }),
+    next
+  ));
+  assert.deepEqual(
+    [events[0].event, events[0].username, events[0].game],
+    ["king", "bob", "Mental 2"]
+  );
+  ({ events, next } = detectKoth(
+    round({ state: "ended", winner: { username: "bob" } }),
+    next
+  ));
+  assert.deepEqual(
+    [events[0].event, events[0].username, events[0].prizeUsd],
+    ["ended", "bob", 100]
+  );
+  ({ events, next } = detectKoth(
+    round({ id: "r2", king: { user: null } }),
+    next
+  ));
+  assert.equal(events[0].event, "started");
+  // a hidden king is never announced as "new king"
+  ({ events } = detectKoth(
+    round({
+      id: "r2",
+      king: { user: { username: "Hidden", isPrivate: true } },
+    }),
+    next
+  ));
+  assert.equal(events.length, 0);
+  const f = kothForm({
+    event: "ended",
+    username: "bob",
+    game: "Mental 2",
+    prizeUsd: 100,
+    multiplier: 120.5,
+  });
+  assert.equal(f.title, "bob won KOTH");
+  assert.match(f.content, /\$100/);
+  assert.deepEqual(f.buttons, [{ label: "My stats", custom_id: "run:me" }]);
 });

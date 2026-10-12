@@ -1,3 +1,9 @@
+import {
+  COLOR,
+  assignDiscordRole,
+  discordRoleForRank,
+  removeDiscordRole,
+} from "../platform/discord-rest.js";
 /**
  * VIP rank -> Discord role sync.
  *
@@ -9,11 +15,7 @@
  *
  * Registry backends mirror lib/metrics.js: D1, node:sqlite, memory.
  */
-import {
-  assignDiscordRole,
-  discordRoleForRank,
-  removeDiscordRole,
-} from "../platform/discord-rest.js";
+import { broadcastConfig, deliver, isBroadcastEnabled } from "./broadcast.js";
 
 export const REGISTRY_SQL =
   "CREATE TABLE IF NOT EXISTS linked_discord (discord_id TEXT PRIMARY KEY, chips_userid TEXT NOT NULL, username TEXT, rank TEXT, role_id TEXT, linked_at INTEGER NOT NULL, synced_at INTEGER)";
@@ -138,6 +140,34 @@ export async function syncOne(env, registry, entry, player) {
   return ok ? "updated" : "failed";
 }
 
+// "Collector III" -> 23; family order matches the VIP ladder, numeral is the sub-level.
+const FAMILIES = ["flipper", "collector", "stacker", "hoarder", "tycoon"];
+const ROMAN = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 };
+export function rankOrder(rank) {
+  const [fam = "", num = ""] = String(rank || "")
+    .toLowerCase()
+    .split(/\s+/);
+  const f = FAMILIES.indexOf(fam);
+  return f < 0 ? -1 : f * 10 + (ROMAN[num] || 0);
+}
+
+// Rank-up post: Discord mention + new rank only, so a private chips.gg profile is never named.
+async function announceRankUp(env, { discordId, from, to }) {
+  const cfg = broadcastConfig(env, "rankup");
+  if (!isBroadcastEnabled(cfg)) return;
+  await deliver(env, cfg, {
+    plainTitle: true,
+    emoji: "",
+    title: `Rank up: ${to}`,
+    content: `<@${discordId}> moved up from ${from} to **${to}**.`,
+    color: COLOR.blue,
+    url: "https://chips.gg/vip",
+    buttonLabel: "VIP ladder",
+    buttons: [{ label: "My stats", custom_id: "run:me" }],
+    allowedMentions: { users: [discordId] },
+  });
+}
+
 /**
  * Daily pass. Bounded per run (Discord rate limits: ~50 req/s global, role edits ~10/10s per guild);
  * the registry lists least-recently-synced first so a big table rolls over several days.
@@ -161,8 +191,18 @@ export async function runRoleSync({ env, api, registry, limit = 150 }) {
       continue;
     }
     const r = await syncOne(env, registry, e, player);
-    if (r === "updated") out.updated += 1;
-    else if (r === "unchanged") out.unchanged += 1;
+    if (r === "updated") {
+      out.updated += 1;
+      const after = player?.vip?.rank || null;
+      if (e.rank && after && rankOrder(after) > rankOrder(e.rank)) {
+        out.rankups = (out.rankups || 0) + 1;
+        await announceRankUp(env, {
+          discordId: e.discordId,
+          from: e.rank,
+          to: after,
+        });
+      }
+    } else if (r === "unchanged") out.unchanged += 1;
     else if (r === "failed") out.failed += 1;
     // spread role edits out; 150 members * 250ms = ~40s, well under a DO alarm budget
     await new Promise((res) => setTimeout(res, 250));

@@ -63,14 +63,23 @@ export function discordMakeForm(form) {
   const buttons = [];
   if (url && buttonLabel)
     buttons.push({ type: 2, style: 5, label: buttonLabel.slice(0, 80), url });
-  for (const b of extraButtons || [])
-    if (b?.url && b?.label)
+  for (const b of extraButtons || []) {
+    if (!b?.label) continue;
+    if (b.url)
       buttons.push({
         type: 2,
         style: 5,
         label: b.label.slice(0, 80),
         url: b.url,
       });
+    else if (b.custom_id)
+      buttons.push({
+        type: 2,
+        style: 2,
+        label: b.label.slice(0, 80),
+        custom_id: b.custom_id,
+      });
+  }
   if (reroll)
     buttons.push({
       type: 2,
@@ -164,7 +173,11 @@ export async function postDiscordChannel(env, channelId, form) {
         authorization: `Bot ${env.DISCORD_TOKEN}`,
         "content-type": "application/json",
       },
-      body: JSON.stringify(discordMakeForm(form)),
+      body: JSON.stringify({
+        ...discordMakeForm(form),
+        // broadcasts never ping unless the form names who (rank-up congratulates one member)
+        allowed_mentions: form.allowedMentions || { parse: [] },
+      }),
     });
     if (!res.ok)
       console.warn(

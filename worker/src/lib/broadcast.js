@@ -38,17 +38,29 @@ const list = (v) =>
  * channels, so each has its own lists; either empty = that kind is off.
  *   kind "bigwin"     BROADCAST_DISCORD_CHANNELS / BROADCAST_TELEGRAM_CHATS
  *   kind "promotion"  PROMO_DISCORD_CHANNELS     / PROMO_TELEGRAM_CHATS
+ *   kind "koth"       KOTH_DISCORD_CHANNELS      / KOTH_TELEGRAM_CHATS   (unset = same as big wins)
+ *   kind "rankup"     RANKUP_DISCORD_CHANNELS                             (Discord only)
  */
 export function broadcastConfig(env = {}, kind = "bigwin") {
-  const promo = kind === "promotion";
+  const pick = (own, fallback) => list(own ?? fallback);
+  const [dc, tc] =
+    kind === "promotion"
+      ? [list(env.PROMO_DISCORD_CHANNELS), list(env.PROMO_TELEGRAM_CHATS)]
+      : kind === "koth"
+        ? [
+            pick(env.KOTH_DISCORD_CHANNELS, env.BROADCAST_DISCORD_CHANNELS),
+            pick(env.KOTH_TELEGRAM_CHATS, env.BROADCAST_TELEGRAM_CHATS),
+          ]
+        : kind === "rankup"
+          ? [list(env.RANKUP_DISCORD_CHANNELS), []]
+          : [
+              list(env.BROADCAST_DISCORD_CHANNELS),
+              list(env.BROADCAST_TELEGRAM_CHATS),
+            ];
   return {
     kind,
-    discordChannels: list(
-      promo ? env.PROMO_DISCORD_CHANNELS : env.BROADCAST_DISCORD_CHANNELS
-    ),
-    telegramChats: list(
-      promo ? env.PROMO_TELEGRAM_CHATS : env.BROADCAST_TELEGRAM_CHATS
-    ),
+    discordChannels: dc,
+    telegramChats: tc,
     minUsd: Number(env.BROADCAST_MIN_USD) || 1000,
     minMultiplier: Number(env.BROADCAST_MIN_MULTIPLIER) || 500,
     maxPerFlush: Number(env.BROADCAST_MAX_PER_FLUSH) || 3,
@@ -207,7 +219,10 @@ export function bigWinForm(e) {
     timestamp: e.at,
     url: gameUrl,
     buttonLabel: "Play it",
-    buttons: playerUrl ? [{ label: "Player", url: playerUrl }] : [],
+    buttons: [
+      ...(playerUrl ? [{ label: "Player", url: playerUrl }] : []),
+      { label: "My stats", custom_id: "run:me" },
+    ],
     photo: e.gameImage || undefined,
     links: { player: playerUrl, game: gameUrl },
     // phone layout: one receipt line, no repeated numbers
@@ -387,5 +402,116 @@ export async function announcePromotions({ env, api, storage }) {
   } catch (err) {
     console.error("[broadcast] promotions failed:", err.message);
     return { started: 0, ended: 0, error: err.message };
+  }
+}
+
+// ---------------------------------------------------------------------------------------
+// KOTH (public.koth on the feed): one object for the current round. Three moments matter:
+// a round opens, the king changes, the round ends with a winner. We persist what we last
+// announced and diff against it; first sight is swallowed like the boards.
+
+const kothPlayer = (u) => ({
+  username: u?.username || "Hidden",
+  isPrivate: Boolean(u?.isPrivate) || !u?.username,
+});
+
+export function detectKoth(koth, last) {
+  if (!koth?.id) return { events: [], next: last };
+  const king = kothPlayer(koth.king?.user);
+  const now = {
+    id: koth.id,
+    state: koth.state,
+    king: king.username,
+    multiplier: Number(koth.multiplier) || 0,
+  };
+  if (!last) return { events: [], next: now };
+  const base = {
+    kind: "koth",
+    game: String(koth.catalogGame?.title || koth.gamename || "").trim(),
+    gameSlug: koth.catalogGame?.slug || koth.catalogid || null,
+    gameImage: httpsOnly(
+      koth.catalogGame?.images?.s2 || koth.catalogGame?.images?.s1
+    ),
+    prizeUsd: Number(koth.winningsUsd) || 0,
+    multiplier: now.multiplier,
+    endTime: Number(koth.endTime) || null,
+    at: Date.now(),
+  };
+  const events = [];
+  if (now.id !== last.id && now.state !== "ended")
+    events.push({ ...base, event: "started" });
+  else if (now.state === "ended" && last.state !== "ended")
+    events.push({ ...base, event: "ended", ...kothPlayer(koth.winner) });
+  else if (
+    now.state !== "ended" &&
+    now.king !== "Hidden" &&
+    now.king !== last.king
+  )
+    events.push({ ...base, event: "king", ...king });
+  return { events, next: now };
+}
+
+export function kothForm(e) {
+  const url = "https://chips.gg/koth";
+  const who = e.isPrivate ? `**${e.username}**` : `**${e.username}**`;
+  const x = `${formatNumber(e.multiplier)}x`;
+  const ends = e.endTime
+    ? ` Round ends <t:${Math.floor(e.endTime / 1000)}:R>.`
+    : "";
+  const title =
+    e.event === "started"
+      ? `KOTH: ${e.game}`
+      : e.event === "ended"
+        ? `${e.username} won KOTH`
+        : `New king: ${e.username}`;
+  const content =
+    e.event === "started"
+      ? `A new King of the Hill round is open on **${e.game}**. Prize ${formatPrice(e.prizeUsd)}, highest multiplier takes it.${ends}`
+      : e.event === "ended"
+        ? `${who} takes **${formatPrice(e.prizeUsd)}** with ${x} on **${e.game}**.`
+        : `${who} leads with **${x}** on **${e.game}**.${ends}`;
+  return {
+    plainTitle: true,
+    emoji: "",
+    title,
+    content,
+    color: e.event === "ended" ? COLOR.gold : COLOR.blue,
+    thumbnail: e.gameImage || undefined,
+    url,
+    buttonLabel: e.event === "ended" ? "Next round" : "Be king",
+    buttons: [{ label: "My stats", custom_id: "run:me" }],
+    photo: e.gameImage || undefined,
+    telegram: {
+      content: content.replace(/<t:(\d+):R>/, (_, t) =>
+        formatDate(Number(t) * 1000)
+      ),
+      fields: [],
+    },
+  };
+}
+
+export async function announceKoth({ env, storage, koth }) {
+  const cfg = broadcastConfig(env, "koth");
+  if (!isBroadcastEnabled(cfg)) return null;
+  try {
+    const last = await storage.get("koth_last");
+    const { events, next } = detectKoth(koth, last);
+    if (next !== last) await storage.put("koth_last", next);
+    let sent = { discord: 0, telegram: 0 };
+    for (const e of events) {
+      e.gameImage = await resolveGameImage(e.gameSlug, e.gameImage);
+      const r = await deliver(env, cfg, kothForm(e));
+      sent = {
+        discord: sent.discord + r.discord,
+        telegram: sent.telegram + r.telegram,
+      };
+      console.log(
+        `[broadcast] koth ${e.event} ${e.username || ""} -> discord ${r.discord} telegram ${r.telegram}`
+      );
+    }
+    return { events: events.length, sent };
+  } catch (err) {
+    console.error("[broadcast] koth failed:", err.message);
+    return { events: 0, error: err.message };
   }
 }

@@ -244,7 +244,24 @@ const slotcall = {
 const search = {
   name: "search",
   description: "Search the game catalog. Usage: /search game_name",
-  options: { query: S("Search query", true) },
+  options: {
+    query: {
+      ...S("Search query", true),
+      // Discord autocomplete: catalog titles for what's typed so far
+      autocomplete: async (term, { api }) => {
+        if (term.trim().length < 2) return [];
+        const games = await api.public("searchGames", {
+          skip: 0,
+          limit: 10,
+          term: term.trim(),
+        });
+        return (games || [])
+          .map((g) => String(g.title || "").trim())
+          .filter(Boolean)
+          .map((t) => ({ name: t.slice(0, 100), value: t.slice(0, 100) }));
+      },
+    },
+  },
   handler: async (ctx, { api }) => {
     const query =
       ctx.platform === "telegram" ? ctx.rest(1) : arg(ctx, "query", 1);
@@ -419,6 +436,34 @@ const compare = {
   },
 };
 
+// Stats card for a player object; period = dateRange() result or null for the last 30 days.
+async function statsForm(api, player, period, title) {
+  // getPlayer ignores start/end; getUserStats honours them (or a duration enum)
+  const s =
+    (await api.public(
+      "getUserStats",
+      period
+        ? { userid: player.id, start: period.start, end: period.end }
+        : { userid: player.id, duration: "1m" }
+    )) || {};
+  const vip = player.vip || {};
+  return {
+    emoji: "👤",
+    title: title || `Player: ${player.username}`,
+    content: [
+      `**Period:** ${period ? `${period.startLabel} — ${period.endLabel}` : "last 30 days"}`,
+      `**Rank:** ${vip.rank || "Unranked"}${vip.level ? ` (level ${vip.level})` : ""}`,
+      `**Bets:** ${formatInt(s.count)}`,
+      `**Wagered:** $${formatUsd(s.wageredUsd)}`,
+      `**Bonuses:** $${formatUsd(s.bonusesUsd)}`,
+      `**PnL:** ${formatSignedUsd(s.pnlUsd)}`,
+      `**Joined:** ${player.created ? new Date(player.created).toISOString().slice(0, 10) : "unknown"}`,
+    ].join("\n"),
+    url: `https://chips.gg/user/${player.username}`,
+    buttonLabel: "View Profile",
+  };
+}
+
 const stats = {
   name: "stats",
   description: "Player stats by username. Usage: /stats username [start] [end]",
@@ -437,35 +482,32 @@ const stats = {
     try {
       const player = await api.public("getPlayer", { userid: username });
       if (!player?.id) return ctx.sendText(`User "${username}" not found.`);
-      // getPlayer ignores start/end; getUserStats honours them (or a duration enum)
-      const s =
-        (await api.public(
-          "getUserStats",
-          explicit
-            ? { userid: player.id, start: period.start, end: period.end }
-            : { userid: player.id, duration: "1m" }
-        )) || {};
-      const vip = player.vip || {};
-      return ctx.sendForm({
-        emoji: "👤",
-        title: `Player: ${player.username}`,
-        content: [
-          `**Period:** ${explicit ? `${period.startLabel} — ${period.endLabel}` : "last 30 days"}`,
-          `**Rank:** ${vip.rank || "Unranked"}${vip.level ? ` (level ${vip.level})` : ""}`,
-          `**Bets:** ${formatInt(s.count)}`,
-          `**Wagered:** $${formatUsd(s.wageredUsd)}`,
-          `**Bonuses:** $${formatUsd(s.bonusesUsd)}`,
-          `**PnL:** ${formatSignedUsd(s.pnlUsd)}`,
-          `**Joined:** ${player.created ? new Date(player.created).toISOString().slice(0, 10) : "unknown"}`,
-        ].join("\n"),
-        url: `https://chips.gg/user/${player.username}`,
-        buttonLabel: "View Profile",
-      });
+      return ctx.sendForm(
+        await statsForm(api, player, explicit ? period : null)
+      );
     } catch (e) {
       return ctx.sendText(
         `Could not fetch stats for "${username}": ${e.message}`
       );
     }
+  },
+};
+
+// Your own stats, no username to type. Needs a linked account; private reply on Discord.
+const me = {
+  name: "me",
+  description: "Your Chips.gg stats and rank (linked account).",
+  identity: true,
+  ephemeral: true,
+  handler: async (ctx, { api }) => {
+    const user = await linkedAccount(api, ctx);
+    if (!user) return ctx.sendForm(notLinked());
+    const player = await api.public("getPlayer", { userid: user.id });
+    if (!player?.id) return ctx.sendForm(notLinked());
+    return ctx.sendForm({
+      ...(await statsForm(api, player, null, `You: ${player.username}`)),
+      ephemeral: true,
+    });
   },
 };
 
@@ -705,6 +747,7 @@ export const commands = Object.fromEntries(
     koth,
     linkaccount,
     luckiest,
+    me,
     mostplayed,
     myaffiliates,
     prices,
@@ -727,6 +770,7 @@ export const discordCommandPayload = () =>
           description: o.description.slice(0, 100),
           type: o.type,
           required: Boolean(o.required),
+          ...(o.autocomplete ? { autocomplete: true } : {}),
         }))
       : undefined,
   }));

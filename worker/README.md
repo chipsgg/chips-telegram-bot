@@ -110,12 +110,23 @@ All off by default in production until the target ids are set in `wrangler.toml 
 | feature | trigger | config | status surface |
 |---|---|---|---|
 | Big-win posts | feed pushes to `stats.bets.bigwins` (coalesced 1.5s) | `BROADCAST_DISCORD_CHANNELS`, `BROADCAST_TELEGRAM_CHATS`, `BROADCAST_MIN_USD` (1000), `BROADCAST_MIN_MULTIPLIER` (500), `BROADCAST_MAX_PER_FLUSH` (3) | `/health.feed.broadcast` |
-| New-promotion posts | polled on the feed alarm (60s) | same targets | `/health.feed.promotions` |
+| New-promotion posts | polled on the feed alarm (60s) | `PROMO_DISCORD_CHANNELS`, `PROMO_TELEGRAM_CHATS` | `/health.feed.promotions` |
+| Luckiest-board posts (v4.3) | `stats.bets.luckiest` rows go through the same detector and seen-set as big wins, so a bet on both boards posts once | same as big wins | `/health.feed.broadcast` |
+| KOTH posts (v4.3) | `public.koth` diffed against the last announced state: round open, new king, winner. Hidden kings are never announced | `KOTH_DISCORD_CHANNELS`, `KOTH_TELEGRAM_CHATS` (unset = big-win targets) | `/health.feed.koth` |
+| Rank-up posts (v4.3) | role sync sees a linked member's VIP rank move up the ladder (`rankOrder`) | `RANKUP_DISCORD_CHANNELS` (empty = off) | mention + new rank only; the chips.gg username is never posted, so private profiles stay private |
 | Uptime watchdog | cron `* * * * *` | `PUBLIC_HOST`, `ALERT_TELEGRAM_CHAT` | one Telegram message per up/down transition; 2 consecutive fails to alarm |
 | VIP rank -> Discord role sync | cron `17 4 * * *` | `DISCORD_ROLES_GUILD_ID` | registry `linked_discord` (D1), filled by `/linkaccount` + `/checkaccount`; 150 members/run, least-recently-synced first |
 | Rate limit | every command | tiers in `src/lib/ratelimit.js`: 10/min per user (Discord, Telegram), 60/min per IP (API) | 429 + `Retry-After` on the API; "Easy there" reply in chat |
 | Per-command usage | every command | | `GET /api/usage?days=30` |
 | Help on bare text | Telegram DM text, or `@bot` mention in a group | `TELEGRAM_BOT_USERNAME` | |
+| `/me` (v4.3) | own stats + rank for a linked account, no username to type; private reply on Discord | | every broadcast card carries a **My stats** button (`custom_id` `run:me`) that runs it for whoever taps |
+| Discord autocomplete (v4.3) | `/search` suggests catalog titles while typing (interaction type 4, `searchGames`) | registry option `autocomplete` | |
+| Telegram inline mode (v4.3) | `@bot prices` / `bigwins` / `luckiest` / `koth` / `promotions` / `mostplayed` in any chat | BotFather `/setinline` on the bot; `/health.telegram.inline` says whether it is on | |
+
+Slash-command registration no longer needs a token on a laptop: `POST /admin/register-discord`
+with `x-admin-secret: <TELEGRAM_WEBHOOK_SECRET of that environment>` makes the Worker PUT its own
+registry to Discord (global commands propagate within ~1h). Run it once per environment after a
+release that adds or changes a command.
 
 Cold-start rule for both announcers: the first observation records the current board / promo
 list silently, so a deploy never re-posts history. On non-production, `POST /api/broadcast-test`
