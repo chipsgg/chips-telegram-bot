@@ -4,6 +4,8 @@
  *   node scripts/smoke.js http://127.0.0.1:8787
  * Read-only. Exits non-zero on any failed expectation.
  */
+import { commands } from "../src/commands/index.js";
+
 const base = (process.argv[2] || "http://127.0.0.1:8787").replace(/\/$/, "");
 // Guard: test tooling never targets production. bot.chips.gg / the prod workers.dev host are refused.
 const PROD_HOSTS = ["bot.chips.gg", "chips-bot.chips.workers.dev"];
@@ -197,7 +199,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   check(
     "/commands.json hides staff cmds",
     Array.isArray(cj.json) &&
-      cj.json.length === 18 &&
+      cj.json.length === Object.keys(commands).length - 1 &&
       !cj.json.some((c) => c.name === "affiliate"),
     `${cj.json?.length} cmds`
   );
