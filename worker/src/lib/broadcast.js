@@ -258,7 +258,21 @@ export async function announceBigWins({ env, storage, rows, currencies }) {
         `[broadcast] bigwin ${e.username} ${formatPrice(e.winningsUsd)} ${e.multiplier}x -> discord ${r.discord} telegram ${r.telegram}`
       );
     }
-    return { events: events.length, sent };
+    // lifetime tally, persisted: the only way to answer "has this ever posted?"
+    const t = (await storage.get("bigwins_total")) || {
+      events: 0,
+      discord: 0,
+      telegram: 0,
+    };
+    if (events.length) {
+      t.events += events.length;
+      t.discord += sent.discord;
+      t.telegram += sent.telegram;
+      t.lastAt = Date.now();
+      t.last = `${events.at(-1).username} ${formatPrice(events.at(-1).winningsUsd)}`;
+      await storage.put("bigwins_total", t);
+    }
+    return { events: events.length, sent, total: t };
   } catch (err) {
     console.error("[broadcast] failed:", err.message);
     return { events: 0, error: err.message };

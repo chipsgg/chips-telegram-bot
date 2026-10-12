@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   SEEN_CAP,
   THUMB_BASE,
+  announceBigWins,
   bigWinForm,
   broadcastConfig,
   detectBigWins,
@@ -308,4 +309,62 @@ test("big win card for a hidden player: no profile link, no avatar, no Player bu
   assert.deepEqual(f.buttons, []);
   assert.doesNotMatch(f.telegram.content, /chips\.gg\/user/);
   assert.match(f.content, /\*\*Hidden\*\*/);
+});
+
+test("announceBigWins: cold board swallowed, then posts and keeps a persisted lifetime tally", async () => {
+  const store = new Map();
+  const storage = {
+    get: async (k) => store.get(k),
+    put: async (k, v) => void store.set(k, v),
+  };
+  const env = { BROADCAST_DISCORD_CHANNELS: "123", DISCORD_TOKEN: "t" };
+  const posts = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    posts.push(String(url));
+    return new Response("{}", {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+  try {
+    const currencies = { usdt: { price: 1 } };
+    const row = (id, win) => ({
+      bet: {
+        id,
+        done: true,
+        win: true,
+        amount: 1,
+        winnings: win,
+        multiplier: win,
+        currency: "usdt",
+      },
+      player: { id: "p", username: "bob" },
+      game: { title: "G", slug: "g" },
+    });
+    const cold = await announceBigWins({
+      env,
+      storage,
+      rows: { a: row("a", 5000) },
+      currencies,
+    });
+    assert.equal(cold.events, 0, "first sight of the board is never announced");
+    assert.equal(cold.total.events, 0);
+    const hot = await announceBigWins({
+      env,
+      storage,
+      rows: { a: row("a", 5000), b: row("b", 9000) },
+      currencies,
+    });
+    assert.equal(hot.events, 1);
+    assert.equal(hot.total.discord, 1);
+    assert.match(hot.total.last, /bob/);
+    assert.deepEqual(store.get("bigwins_total").discord, 1, "tally persisted");
+    assert.equal(
+      posts.filter((u) => /channels\/123\/messages/.test(u)).length,
+      1
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });

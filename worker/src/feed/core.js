@@ -136,7 +136,15 @@ export class FeedCore {
   // ---- the three operations the app needs (mirrors feedClient) ----
   async status() {
     await this.ensureConnected().catch(noop);
-    return { ...this.snapshot(), activity: await this.loadActivity() };
+    const snap = this.snapshot();
+    return {
+      ...snap,
+      broadcast: {
+        ...snap.broadcast,
+        total: (await this.storage.get("bigwins_total")) || null,
+      },
+      activity: await this.loadActivity(),
+    };
   }
 
   // Durable memo for slow/rate-limited upstreams (GitHub releases). Serves the stored value
