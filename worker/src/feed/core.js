@@ -22,7 +22,11 @@
  * subscriptions (the server drops idle ones). No auth: all four feeds are public.
  */
 
-import { announceBigWins, announcePromotions } from "../lib/broadcast.js";
+import {
+  announceBigWins,
+  announceKoth,
+  announcePromotions,
+} from "../lib/broadcast.js";
 import { RateLimiter } from "../lib/ratelimit.js";
 
 export const FEED_HOST = "wss://api.chips.gg/prod/socket";
@@ -40,7 +44,7 @@ const SUBSCRIPTIONS = [
 
 // Only these branches are kept; everything else the server pushes is dropped.
 const KEEP = {
-  public: new Set(["currencies", "settings"]),
+  public: new Set(["currencies", "settings", "koth"]),
   stats: null, // keep all (bets.bigwins / bets.luckiest)
   profitshare: null,
 };
@@ -51,11 +55,8 @@ const KEEP = {
 export const anonymize = (value) => {
   if (!value || typeof value !== "object") return value;
   if (Array.isArray(value)) return value.map(anonymize);
-  if (value.player?.isPrivate)
-    return {
-      ...value,
-      player: { id: value.player.id, username: "Hidden", isPrivate: true },
-    };
+  if (value.isPrivate === true && value.username)
+    return { id: value.id, username: "Hidden", isPrivate: true };
   let out = value;
   for (const [k, v] of Object.entries(value)) {
     const a = anonymize(v);
@@ -110,6 +111,7 @@ export class FeedCore {
     this.setTimer = setTimer;
     this.announceTimer = null;
     this.lastAnnounce = null; // last announceBigWins result, surfaced in status()
+    this.lastKoth = null;
     this.lastPromoPoll = null;
     this.ws = null;
     this.rid = 0;
@@ -192,6 +194,7 @@ export class FeedCore {
       luckiest: Object.keys(this.data.stats?.bets?.luckiest || {}).length,
       currencies: Object.keys(this.data.public?.currencies || {}).length,
       broadcast: this.lastAnnounce,
+      koth: this.lastKoth,
       promotions: this.lastPromoPoll,
     };
   }
@@ -259,9 +262,13 @@ export class FeedCore {
       const [channel, , payload] = msg;
       if (!(channel in this.data) || !Array.isArray(payload)) continue;
       const [path = [], raw] = payload;
-      const value = channel === "stats" ? anonymize(raw) : raw;
+      const value = anonymize(raw);
       const keep = KEEP[channel];
-      if (channel === "stats" && (path.length === 0 || path[1] === "bigwins"))
+      // any board or KOTH change re-runs the announcers (debounced)
+      if (
+        channel === "stats" ||
+        (channel === "public" && (path.length === 0 || path[0] === "koth"))
+      )
         bigwinsChanged = true;
       if (path.length === 0) {
         // Root replace: filter to kept branches for `public` (34KB blob, we need 2 keys)
@@ -287,14 +294,30 @@ export class FeedCore {
     if (this.announceTimer) return;
     this.announceTimer = this.setTimer(() => {
       this.announceTimer = null;
+      const boards = this.data.stats?.bets || {};
       announceBigWins({
         env: this.env,
         storage: this.storage,
-        rows: this.data.stats?.bets?.bigwins,
+        // both boards through one seen-set: a bet on both posts once
+        rows: [
+          ...Object.values(boards.bigwins || {}),
+          ...Object.values(boards.luckiest || {}),
+        ],
         currencies: this.data.public?.currencies,
-      }).then((r) => {
-        this.lastAnnounce = { at: Date.now(), ...r };
-      });
+      })
+        .then((r) => {
+          this.lastAnnounce = { at: Date.now(), ...r };
+        })
+        .then(() =>
+          announceKoth({
+            env: this.env,
+            storage: this.storage,
+            koth: this.data.public?.koth,
+          })
+        )
+        .then((r) => {
+          if (r) this.lastKoth = { at: Date.now(), ...r };
+        });
     }, 1500);
   }
 

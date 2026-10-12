@@ -12,8 +12,12 @@ import {
   discordMakeForm,
   discordRoleForRank,
 } from "../src/platform/discord-rest.js";
-import { verifyDiscordRequest } from "../src/platform/discord.js";
 import {
+  handleDiscord,
+  verifyDiscordRequest,
+} from "../src/platform/discord.js";
+import {
+  inlineResults,
   mdToTelegramHtml,
   telegramMakeForm,
 } from "../src/platform/telegram.js";
@@ -63,12 +67,12 @@ const api = (routes) => {
 };
 
 test("registry: 19 commands, identity ones flagged, discord payload valid", () => {
-  assert.equal(Object.keys(commands).length, 19);
+  assert.equal(Object.keys(commands).length, 20);
   for (const n of ["linkaccount", "checkaccount", "myaffiliates", "affiliate"])
     assert.equal(commands[n].identity, true, n);
   assert.equal(commands.affiliate.staffOnly, true);
   const payload = discordCommandPayload();
-  assert.equal(payload.length, 19);
+  assert.equal(payload.length, 20);
   for (const c of payload) {
     assert.match(c.name, /^[a-z]{1,32}$/);
     assert.ok(c.description.length <= 100);
@@ -580,4 +584,179 @@ test("fetchChangelog: API 403 falls through to the atom feed", async () => {
   assert.equal(rel.length, 1);
   assert.equal(rel[0].tag, "v4.2.1");
   assert.ok(calls[1].endsWith("/releases.atom"));
+});
+
+test("/me: linked account -> own stats card, private; not linked -> how to link", async () => {
+  const routes = {
+    "auth/getUserByPlatformID": async (p) =>
+      p.platformid === "u1" ? { id: "cid", username: "alice" } : null,
+    "public/getPlayer": async (p) =>
+      p.userid === "cid"
+        ? {
+            id: "cid",
+            username: "alice",
+            vip: { rank: "Collector II", level: 12 },
+            created: 1700000000000,
+          }
+        : null,
+    "public/getUserStats": async () => ({
+      count: 42,
+      wageredUsd: 1234.5,
+      pnlUsd: -20,
+    }),
+  };
+  const c = ctx("discord");
+  await commands.me.handler(c, { api: api(routes) });
+  const f = c.result();
+  assert.equal(f.title, "You: alice");
+  assert.equal(f.ephemeral, true);
+  assert.match(f.content, /Collector II/);
+  assert.match(f.content, /42/);
+  const other = ctx("discord", {}, { userid: "nobody" });
+  await commands.me.handler(other, { api: api(routes) });
+  assert.match(other.result().title ?? other.result().text, /link/i);
+  assert.equal(
+    commands.me.options,
+    undefined,
+    "arg-less so a run:me button can trigger it"
+  );
+});
+
+test("/search autocomplete: catalog titles for the typed prefix, Discord choice shape", async () => {
+  const a = api({
+    "public/searchGames": async (p) => [
+      { title: `${p.term} Bonanza ` },
+      { title: "" },
+    ],
+  });
+  assert.deepEqual(
+    await commands.search.options.query.autocomplete("sweet", { api: a }),
+    [{ name: "sweet Bonanza", value: "sweet Bonanza" }]
+  );
+  assert.deepEqual(
+    await commands.search.options.query.autocomplete("s", { api: a }),
+    []
+  );
+  assert.equal(
+    discordCommandPayload().find((c) => c.name === "search").options[0]
+      .autocomplete,
+    true
+  );
+});
+
+test("telegram inline: arg-less feed commands become article results; prefix filters", async () => {
+  const deps = {
+    api: api({}),
+    feed: feed({
+      "public.currencies": { btc: { name: "btc", price: 50000, decimals: 8 } },
+    }),
+  };
+  const all = await inlineResults(deps, "");
+  assert.ok(all.length >= 1);
+  const prices = all.find((r) => r.id === "prices");
+  assert.ok(prices, "prices answers from the feed");
+  assert.equal(prices.type, "article");
+  assert.equal(prices.input_message_content.parse_mode, "HTML");
+  const only = await inlineResults(deps, "pri");
+  assert.deepEqual(
+    only.map((r) => r.id),
+    ["prices"]
+  );
+});
+
+test("discord: 'My stats' button runs /me privately for the clicker; autocomplete answers type 8", async () => {
+  const { publicKey, privateKey } = await crypto.subtle.generateKey(
+    "Ed25519",
+    true,
+    ["sign", "verify"]
+  );
+  const pubHex = Buffer.from(
+    await crypto.subtle.exportKey("raw", publicKey)
+  ).toString("hex");
+  const signed = async (payload) => {
+    const body = JSON.stringify(payload);
+    const ts = "1700000000";
+    const sig = Buffer.from(
+      await crypto.subtle.sign(
+        "Ed25519",
+        privateKey,
+        new TextEncoder().encode(ts + body)
+      )
+    ).toString("hex");
+    return new Request("https://x/discord", {
+      method: "POST",
+      body,
+      headers: { "x-signature-ed25519": sig, "x-signature-timestamp": ts },
+    });
+  };
+  const env = {
+    DISCORD_PUBLIC_KEY: pubHex,
+    DISCORD_APPLICATION_ID: "app",
+    ENVIRONMENT: "test",
+  };
+  const deps = {
+    api: api({
+      "auth/getUserByPlatformID": async (p) =>
+        p.platformid === "d1" ? { id: "cid", username: "alice" } : null,
+      "public/getPlayer": async () => ({
+        id: "cid",
+        username: "alice",
+        vip: { rank: "Collector II" },
+      }),
+      "public/getUserStats": async () => ({ count: 7 }),
+      "public/searchGames": async (p) => [{ title: `${p.term} Bonanza` }],
+    }),
+    metrics: { track: async () => undefined },
+    feed: {
+      mark: async () => undefined,
+      ratelimit: async () => ({ allowed: true }),
+    },
+  };
+  const followups = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    followups.push({ url: String(url), body: JSON.parse(init.body) });
+    return new Response("{}", { status: 200 });
+  };
+  const pending = [];
+  try {
+    const click = await handleDiscord(
+      await signed({
+        type: 3,
+        token: "tok",
+        data: { custom_id: "run:me" },
+        member: { user: { id: "d1" } },
+        channel_id: "c",
+      }),
+      env,
+      deps,
+      (p) => pending.push(p)
+    );
+    assert.deepEqual(await click.json(), { type: 5, data: { flags: 64 } });
+    await Promise.all(pending);
+    assert.equal(followups.length, 1);
+    assert.match(followups[0].url, /webhooks\/app\/tok\/messages\/@original/);
+    assert.equal(followups[0].body.flags & 64, 64, "ephemeral for the clicker");
+    assert.match(followups[0].body.embeds[0].title, /alice/);
+
+    const ac = await handleDiscord(
+      await signed({
+        type: 4,
+        data: {
+          name: "search",
+          options: [{ name: "query", value: "sweet", focused: true }],
+        },
+        member: { user: { id: "d1" } },
+      }),
+      env,
+      deps,
+      () => undefined
+    );
+    assert.deepEqual(await ac.json(), {
+      type: 8,
+      data: { choices: [{ name: "sweet Bonanza", value: "sweet Bonanza" }] },
+    });
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });

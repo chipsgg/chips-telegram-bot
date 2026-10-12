@@ -89,7 +89,7 @@ async function editOriginal(env, interaction, body) {
     );
 }
 
-async function runCommand(env, deps, interaction, commandName) {
+async function runCommand(env, deps, interaction, commandName, ephemeral) {
   const command = commands[commandName];
   const ctx = makeCtx(interaction, commandName);
   await deps.feed?.mark("discord");
@@ -105,7 +105,7 @@ async function runCommand(env, deps, interaction, commandName) {
   try {
     await command.handler(ctx, deps);
     let body = ctx.result() || { content: "No response." };
-    if (command.ephemeral) body = applyEphemeral(body);
+    if (command.ephemeral || ephemeral) body = applyEphemeral(body);
     await editOriginal(env, interaction, body);
     await deps.metrics.track("discord", commandName, true);
   } catch (err) {
@@ -146,9 +146,14 @@ export async function handleDiscord(request, env, deps, waitUntil) {
     });
   }
 
-  // 3 = MESSAGE_COMPONENT (reroll button)
+  // 3 = MESSAGE_COMPONENT (reroll button, "run:<cmd>" buttons on broadcast cards)
   if (interaction.type === 3) {
     const [action, name] = String(interaction.data?.custom_id || "").split(":");
+    // run:<cmd> = run that command for whoever clicked, as a private reply (any arg-less command)
+    if (action === "run" && commands[name] && !commands[name].options) {
+      waitUntil(runCommand(env, deps, interaction, name, true));
+      return Response.json({ type: 5, data: { flags: 64 } });
+    }
     if (action === "reroll" && commands[name]) {
       // Only the original invoker may reroll
       const invoker =
@@ -168,6 +173,19 @@ export async function handleDiscord(request, env, deps, waitUntil) {
       return Response.json({ type: 6 }); // DEFERRED_UPDATE_MESSAGE
     }
     return Response.json({ type: 6 });
+  }
+
+  // 4 = APPLICATION_COMMAND_AUTOCOMPLETE: the focused option's value -> up to 25 choices
+  if (interaction.type === 4) {
+    const command = commands[interaction.data?.name];
+    const focused = (interaction.data?.options || []).find((o) => o.focused);
+    const opt = focused && command?.options?.[focused.name];
+    const choices = opt?.autocomplete
+      ? await opt
+          .autocomplete(String(focused.value || ""), deps)
+          .catch(() => [])
+      : [];
+    return Response.json({ type: 8, data: { choices: choices.slice(0, 25) } });
   }
 
   return Response.json({

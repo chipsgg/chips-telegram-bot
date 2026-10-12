@@ -35,7 +35,8 @@ node scripts/smoke.js http://localhost:8787
 
 `/prices` `/bigwins` `/luckiest` `/koth` `/promotions` `/promotion` `/slotcall` `/mostplayed`
 `/search` `/stats` `/compare` `/bet` `/banner` `/chat` `/help` and, on Discord/Telegram only,
-`/linkaccount` (TOTP, DM only) `/checkaccount` `/myaffiliates` `/affiliate` (staff).
+`/me` `/linkaccount` (TOTP, DM only) `/checkaccount` `/myaffiliates` `/affiliate` (staff).
+Telegram also answers inline (`@chipsgg_official_bot prices` in any chat) once BotFather has inline on.
 
 ## HTTP API
 

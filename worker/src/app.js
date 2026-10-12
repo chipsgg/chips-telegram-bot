@@ -11,6 +11,7 @@
  *   GET  /health             200 when feed is fresh AND Discord/Telegram point at this host; else 503
  *   GET  /commands.json      command list (for the landing page)
  *   GET  /api/changelog      GitHub Releases for the landing page (memoised 10 min in feed storage)
+ *   POST /admin/register-discord  PUT the slash-command registry to Discord (x-admin-secret = webhook secret)
  *   anything else            -> null (caller serves static assets / 404)
  *
  * Runtime services are injected:
@@ -20,7 +21,7 @@
  *   registry   { upsert, list, count }  linked Discord users, for the daily role sync
  *   waitUntil  (promise) => void  keep the runtime alive until background work finishes
  */
-import { commands } from "./commands/index.js";
+import { commands, discordCommandPayload } from "./commands/index.js";
 import {
   THUMB_BASE,
   bigWinForm,
@@ -33,6 +34,7 @@ import {
 import { createApi } from "./lib/chips.js";
 import { formatPrice } from "./lib/format.js";
 import { buildHealth } from "./lib/health.js";
+import { registerCommands } from "./platform/discord-rest.js";
 import { handleDiscord } from "./platform/discord.js";
 import { handleTelegram } from "./platform/telegram.js";
 
@@ -220,6 +222,28 @@ export function createApp({ env, feed, metrics, registry }) {
       return json({ updatedAt, rows }, 200, {
         "cache-control": "public, max-age=15",
       });
+    }
+
+    // Re-register the Discord slash commands from the registry, using this deployment's own
+    // app id + token, so nobody has to carry tokens around. Guarded by the webhook secret.
+    if (
+      url.pathname === "/admin/register-discord" &&
+      request.method === "POST"
+    ) {
+      const secret = env.TELEGRAM_WEBHOOK_SECRET;
+      if (!secret || request.headers.get("x-admin-secret") !== secret)
+        return new Response("forbidden", { status: 403 });
+      const payload = discordCommandPayload();
+      const r = await registerCommands(env, payload);
+      return json(
+        {
+          ok: r.ok,
+          status: r.status,
+          commands: payload.length,
+          body: r.ok ? undefined : r.body?.slice(0, 300),
+        },
+        r.ok ? 200 : 502
+      );
     }
 
     if (url.pathname === "/api/changelog") {

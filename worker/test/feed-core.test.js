@@ -228,3 +228,32 @@ test("private players are anonymized at ingest: name, avatar, nickname gone; pub
     "no private players -> same reference"
   );
 });
+
+test("anonymize: any private user object is hidden, wherever it sits (KOTH king/winner too)", () => {
+  const out = anonymize({
+    koth: {
+      king: {
+        user: {
+          id: "k1",
+          username: "secretking",
+          isPrivate: true,
+          avatar: "a",
+        },
+        vip: { rank: "Flipper III" },
+      },
+      winner: {
+        id: "w1",
+        username: "openwinner",
+        isPrivate: false,
+        avatar: "b",
+      },
+    },
+  });
+  assert.deepEqual(out.koth.king.user, {
+    id: "k1",
+    username: "Hidden",
+    isPrivate: true,
+  });
+  assert.equal(out.koth.king.vip.rank, "Flipper III");
+  assert.equal(out.koth.winner.username, "openwinner");
+});

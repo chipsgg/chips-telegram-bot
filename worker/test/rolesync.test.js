@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   memoryRegistry,
+  rankOrder,
   runRoleSync,
   sqliteRegistry,
   syncOne,
@@ -156,6 +157,7 @@ test("runRoleSync: walks the registry, tolerates missing players, unconfigured -
       unchanged: 1,
       failed: 0,
       missing: 1,
+      rankups: 1,
     });
   } finally {
     globalThis.setTimeout = origTimeout;
@@ -163,4 +165,12 @@ test("runRoleSync: walks the registry, tolerates missing players, unconfigured -
   assert.deepEqual(await runRoleSync({ env: {}, api, registry: reg }), {
     skipped: "unconfigured",
   });
+});
+
+test("rankOrder: family ladder then numeral; unknown ranks never count as a rank-up", () => {
+  assert.ok(rankOrder("Collector I") > rankOrder("Flipper V"));
+  assert.ok(rankOrder("Tycoon V") > rankOrder("Hoarder IV"));
+  assert.ok(rankOrder("Stacker III") > rankOrder("Stacker II"));
+  assert.equal(rankOrder("Unranked"), -1);
+  assert.equal(rankOrder(null), -1);
 });

@@ -40,6 +40,9 @@ BROADCAST_MIN_MULTIPLIER = "500"
 # new-promotion posts: separate targets, off until a channel is chosen
 PROMO_DISCORD_CHANNELS = ""
 PROMO_TELEGRAM_CHATS = ""
+# KOTH round open / new king / winner: unset = same channels as big wins. Rank-ups: Discord only, empty = off.
+KOTH_DISCORD_CHANNELS = "1251613676750897192"
+RANKUP_DISCORD_CHANNELS = ""
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "production"
 
@@ -96,6 +99,9 @@ BROADCAST_MIN_USD = "300"
 BROADCAST_MIN_MULTIPLIER = "500"
 PROMO_DISCORD_CHANNELS = "1550642665006170153"
 PROMO_TELEGRAM_CHATS = "147051786"
+KOTH_DISCORD_CHANNELS = "1550642665006170153"
+KOTH_TELEGRAM_CHATS = "147051786"
+RANKUP_DISCORD_CHANNELS = "1550642665006170153"
 CHIPS_API_HOST = "https://api.chips.gg/prod/api"
 ENVIRONMENT = "dev"
 

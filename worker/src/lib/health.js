@@ -28,6 +28,7 @@ async function telegramWiring(env, host) {
     return {
       configured: true,
       bot: me.result?.username ? `@${me.result.username}` : null,
+      inline: Boolean(me.result?.supports_inline_queries),
       webhook: info.url || null,
       wired: info.url === expected,
       pending: info.pending_update_count ?? null,
