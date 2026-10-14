@@ -21,23 +21,31 @@ export class ChipsError extends Error {
   }
 }
 
-export function createApi({ host, token }) {
+export function createApi({ host, token, fetchImpl }) {
   const base = (host || "https://api.chips.gg/prod/api").replace(/\/$/, "");
+  const doFetch = fetchImpl || ((...a) => fetch(...a));
 
   const RETRY_MS = [500, 1500, 3000];
+  // The app-level throttle answers HTTP 500 with this body (not 429). Two commands from one
+  // player a couple of seconds apart trip it, so it gets the same backoff as a WAF 503.
+  const isThrottle = (status, text) =>
+    status === 500 && /please wait|try again later/i.test(text);
 
   async function call(channel, method, params = {}, attempt = 0) {
     const headers = { "content-type": "application/json", "user-agent": UA };
     if (token) headers.authorization = `Bearer ${token}`;
-    const res = await fetch(`${base}/${channel}/${method}`, {
+    const res = await doFetch(`${base}/${channel}/${method}`, {
       method: "POST",
       headers,
       body: JSON.stringify(params ?? {}),
     });
     const text = await res.text();
 
-    // WAF throttle / transient upstream: 503, 502, 429 -> backoff and retry
-    if ([429, 502, 503].includes(res.status) && attempt < RETRY_MS.length) {
+    // WAF throttle / transient upstream: 503, 502, 429 (or the app throttle) -> backoff, retry
+    if (
+      ([429, 502, 503].includes(res.status) || isThrottle(res.status, text)) &&
+      attempt < RETRY_MS.length
+    ) {
       console.warn(
         `[chips] ${channel}/${method} -> ${res.status}, retry ${attempt + 1}`
       );

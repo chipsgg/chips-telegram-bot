@@ -217,6 +217,29 @@ const commandName = (message) => {
   return message.text.slice(1, ent.length).split("@")[0].toLowerCase();
 };
 
+/**
+ * Which command a Telegram message runs, or null to stay silent.
+ *   /cmd anywhere            -> cmd
+ *   bare text, private chat  -> start   (link status, or the link flow with the host as the reason)
+ *   bare text + @bot, group  -> help
+ *   bare group chatter       -> null    (never answer general chatter)
+ */
+export function resolveTelegramCommand(message, botUsername) {
+  const name = commandName(message);
+  if (name) return name;
+  if (message.chat?.type === "private") return "start";
+  const botUser = (botUsername || "").toLowerCase();
+  const mentioned =
+    botUser &&
+    (message.entities || []).some(
+      (e) =>
+        e.type === "mention" &&
+        message.text.slice(e.offset, e.offset + e.length).toLowerCase() ===
+          `@${botUser}`
+    );
+  return mentioned ? "help" : null;
+}
+
 export async function handleTelegram(request, env, deps, waitUntil) {
   if (
     env.TELEGRAM_WEBHOOK_SECRET &&
@@ -232,22 +255,8 @@ export async function handleTelegram(request, env, deps, waitUntil) {
   const send = tgApi(env);
   const ctx = makeCtx(message, send, env);
 
-  let name = commandName(message);
-  // Not a command: in a private chat any text gets the help card; in a group only an
-  // explicit @mention of the bot does (never answer general chatter).
-  if (!name) {
-    const botUser = (env.TELEGRAM_BOT_USERNAME || "").toLowerCase();
-    const mentioned =
-      botUser &&
-      (message.entities || []).some(
-        (e) =>
-          e.type === "mention" &&
-          message.text.slice(e.offset, e.offset + e.length).toLowerCase() ===
-            `@${botUser}`
-      );
-    if (ctx.isPrivate || mentioned) name = "help";
-    else return new Response("ok");
-  }
+  const name = resolveTelegramCommand(message, env.TELEGRAM_BOT_USERNAME);
+  if (!name) return new Response("ok");
   const command = commands[name];
   if (!command) return new Response("ok");
   waitUntil(
