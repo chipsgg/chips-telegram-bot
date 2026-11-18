@@ -358,7 +358,7 @@ export async function telegramCsat(q, env) {
   let text = "Thanks for the rating!";
   try {
     const r = vote ? await env.RELAY.csat(vote) : { error: "bad button" };
-    if (r?.error) text = "That rating was already recorded.";
+    if (!r?.ok) text = "That rating was already recorded or has expired.";
     else if (q.message)
       await send("editMessageReplyMarkup", {
         chat_id: q.message.chat.id,

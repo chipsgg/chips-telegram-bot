@@ -159,11 +159,14 @@ export async function handleDiscord(request, env, deps, waitUntil) {
       const r = await env.RELAY?.csat(vote).catch((err) => ({
         error: err.message,
       }));
-      if (r && !r.error)
+      if (r?.ok)
         return Response.json({ type: 7, data: { components: [REPLY_ROW] } });
       return Response.json({
         type: 4,
-        data: { content: "That rating was already recorded.", flags: 64 },
+        data: {
+          content: "That rating was already recorded or has expired.",
+          flags: 64,
+        },
       });
     }
     const [action, name] = String(interaction.data?.custom_id || "").split(":");

@@ -5,7 +5,7 @@ import { createHmac } from "node:crypto";
 import { test } from "node:test";
 import { commands } from "../src/commands/index.js";
 import { verifyInitData } from "../src/inbox.js";
-import { memoryLinks, resolveLink } from "../src/lib/links.js";
+import { LINK_TTL_MS, memoryLinks, resolveLink } from "../src/lib/links.js";
 import { discordSend } from "../src/platform/discord-rest.js";
 import { handleDiscord } from "../src/platform/discord.js";
 import { handleTelegram, telegramSend } from "../src/platform/telegram.js";
@@ -282,6 +282,32 @@ test("telegram: CSAT tap -> RELAY.csat, buttons removed, callback answered", asy
   });
 });
 
+test("telegram: a vote the relay refuses ({ok:false}: used/expired) is not thanked, buttons stay", async () => {
+  const RELAY = { csat: async () => ({ ok: false }) };
+  const net = fakeFetch(() => null);
+  try {
+    await telegram(
+      {
+        update_id: 9,
+        callback_query: {
+          id: "cq2",
+          data: "csat:old:4",
+          message: { message_id: 51, chat: { id: 1001 } },
+        },
+      },
+      { TELEGRAM_TOKEN: "T", RELAY },
+      {}
+    );
+  } finally {
+    net.restore();
+  }
+  assert.equal(tgMethod(net.calls, "editMessageReplyMarkup").length, 0);
+  assert.equal(
+    tgMethod(net.calls, "answerCallbackQuery")[0].text,
+    "That rating was already recorded or has expired."
+  );
+});
+
 test("telegramSend: label + escaped text + CSAT keyboard; 403 -> 'blocked by user'", async () => {
   let net = fakeFetch(() => ({
     json: { ok: true, result: { message_id: 321 } },
@@ -428,6 +454,13 @@ test("verifyInitData: valid -> {platform_id, uid}; tampered, expired and unlinke
     "telegram",
     "1001"
   );
+  // sign-in asks the API every time (the cached U42 alone is not enough): the API links 1001 -> U42
+  deps.api = {
+    auth: async (_m, p) => {
+      if (p.platformid === "1001") return { id: "U42", username: "bob" };
+      throw new Error("no user found");
+    },
+  };
   const good = signInitData("123:ABC", fields);
   assert.deepEqual(await verifyInitData(deps, { init_data: good }, now), {
     platform_id: "1001",
@@ -491,6 +524,32 @@ test("resolveLink: hits cached, misses never cached, API calls respect the 1.6 s
   });
   assert.equal(await resolveLink(deps, "telegram", "2", clock), null);
   assert.deepEqual(lookups, ["1", "2", "2"]); // the hit came from the cache, the miss did not
+});
+
+test("resolveLink: a day-old hit is asked again, an unlink drops it, maxAge 0 always asks", async () => {
+  let t = 0;
+  let linked = true;
+  const clock = { now: () => t, sleep: async () => undefined, next: 0 };
+  const lookups = [];
+  const api = {
+    auth: async (_m, p) => {
+      lookups.push(p.platformid);
+      if (linked) return { id: "U1", username: "ann" };
+      throw new Error("user not found");
+    },
+  };
+  const deps = { api, links: memoryLinks() };
+  await resolveLink(deps, "telegram", "1", clock); // asks
+  t = LINK_TTL_MS - 1;
+  assert.equal((await resolveLink(deps, "telegram", "1", clock)).uid, "U1"); // cached
+  assert.equal(lookups.length, 1);
+  await resolveLink(deps, "telegram", "1", clock, 0); // sign-in: asks
+  assert.equal(lookups.length, 2);
+  linked = false; // chips.gg unlinked it
+  t += LINK_TTL_MS;
+  assert.equal(await resolveLink(deps, "telegram", "1", clock), null);
+  assert.equal(lookups.length, 3);
+  assert.equal(await deps.links.get("telegram", "1"), null); // the row is gone
 });
 
 test("/support: linked -> Reply action; unlinked -> link prompt", async () => {

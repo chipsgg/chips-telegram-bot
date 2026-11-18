@@ -120,7 +120,8 @@ export async function verifyInitData(
   }
   if (!id) return { error: "no user" };
   try {
-    const link = await resolveLink(deps, "telegram", String(id));
+    // maxAge 0: the edge mints a 30-day session from this, so it never rides a cached link
+    const link = await resolveLink(deps, "telegram", String(id), undefined, 0);
     return { platform_id: String(id), uid: link?.uid ?? null };
   } catch (err) {
     console.error("[inbox] initData lookup failed:", err.message);
