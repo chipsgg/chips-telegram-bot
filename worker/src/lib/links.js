@@ -7,8 +7,9 @@
  * linked_discord but never writes it: that table belongs to the role sync (lib/rolesync.js).
  *
  * Backends: D1, or memory when there is no handle (tests, the Node adapter, which has no inbox).
- * A hit is trusted for LINK_TTL_MS, then the API is asked again: chips.gg unlinks (an account-takeover cleanup) must
- * reach the inbox. A Telegram row the API no longer links is deleted; a Discord one is left to rolesync, whose table it is.
+ * A hit is trusted for LINK_TTL_MS from the API's last yes (linked_at, both tables), then the API is asked again: chips.gg
+ * unlinks (an account-takeover cleanup) must reach the inbox. A Telegram row the API no longer links is deleted; a Discord
+ * one is left to rolesync, whose table it is, and stays stale, so every message asks again and is refused.
  */
 import { linkedAccount } from "../commands/identity.js";
 
@@ -16,8 +17,12 @@ const GET_SQL = {
   telegram:
     "SELECT chips_userid, username, linked_at AS at FROM linked_telegram WHERE telegram_id = ?1",
   discord:
-    "SELECT chips_userid, username, COALESCE(synced_at, linked_at) AS at FROM linked_discord WHERE discord_id = ?1",
+    "SELECT chips_userid, username, linked_at AS at FROM linked_discord WHERE discord_id = ?1",
 };
+// linked_discord is rolesync's (it inserts); the inbox only refreshes linked_at on a row it has, after the API said yes.
+// synced_at can't date a hit: the role sync re-reads the player, never the link.
+const PUT_DISCORD_SQL =
+  "UPDATE linked_discord SET chips_userid = ?2, username = COALESCE(?3, username), linked_at = ?4 WHERE discord_id = ?1";
 const DEL_SQL = "DELETE FROM linked_telegram WHERE telegram_id = ?1";
 export const LINK_TTL_MS = 24 * 3600_000;
 const PUT_SQL =
@@ -48,9 +53,8 @@ export function d1Links(db) {
       return r ? { uid: r.chips_userid, username: r.username, at: r.at } : null;
     },
     put: async (platform, id, uid, username, at = Date.now()) => {
-      if (platform !== "telegram") return;
       await db
-        .prepare(PUT_SQL)
+        .prepare(platform === "telegram" ? PUT_SQL : PUT_DISCORD_SQL)
         .bind(String(id), uid, username ?? null, at)
         .run()
         .catch((err) => console.error("[links] put failed:", err.message));

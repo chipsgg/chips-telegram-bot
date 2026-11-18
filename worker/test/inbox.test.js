@@ -5,7 +5,13 @@ import { createHmac } from "node:crypto";
 import { test } from "node:test";
 import { commands } from "../src/commands/index.js";
 import { verifyInitData } from "../src/inbox.js";
-import { LINK_TTL_MS, memoryLinks, resolveLink } from "../src/lib/links.js";
+import {
+  LINK_TTL_MS,
+  d1Links,
+  memoryLinks,
+  resolveLink,
+} from "../src/lib/links.js";
+import { REGISTRY_SQL } from "../src/lib/rolesync.js";
 import { discordSend } from "../src/platform/discord-rest.js";
 import { handleDiscord } from "../src/platform/discord.js";
 import { handleTelegram, telegramSend } from "../src/platform/telegram.js";
@@ -524,6 +530,50 @@ test("resolveLink: hits cached, misses never cached, API calls respect the 1.6 s
   });
   assert.equal(await resolveLink(deps, "telegram", "2", clock), null);
   assert.deepEqual(lookups, ["1", "2", "2"]); // the hit came from the cache, the miss did not
+});
+
+test("resolveLink (D1 SQL): a Discord link is dated by the API's last yes, not by rolesync's synced_at", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const sq = new DatabaseSync(":memory:");
+  sq.exec(REGISTRY_SQL);
+  // D1's surface over node:sqlite, just what links.js calls
+  const db = {
+    prepare: (s) => ({
+      bind: (...a) => ({
+        first: async () => sq.prepare(s).get(...a),
+        run: async () => sq.prepare(s).run(...a),
+      }),
+    }),
+  };
+  let t = 10 * LINK_TTL_MS;
+  let linked = true;
+  const clock = { now: () => t, sleep: async () => undefined, next: 0 };
+  const lookups = [];
+  const api = {
+    auth: async (_m, p) => {
+      lookups.push(p.platformid);
+      if (linked) return { id: "U7", username: "dee" };
+      throw new Error("user not found");
+    },
+  };
+  // linked 10 days ago; the role sync touched it just now
+  sq.prepare(
+    "INSERT INTO linked_discord (discord_id, chips_userid, linked_at, synced_at) VALUES ('555', 'U7', 0, ?)"
+  ).run(t);
+  const deps = { api, links: d1Links(db) };
+  assert.equal((await resolveLink(deps, "discord", "555", clock)).uid, "U7");
+  assert.equal(lookups.length, 1); // synced_at did not count: the API was asked
+  assert.equal(
+    sq.prepare("SELECT linked_at FROM linked_discord").get().linked_at,
+    t
+  ); // its yes refreshed linked_at
+  await resolveLink(deps, "discord", "555", clock);
+  assert.equal(lookups.length, 1); // fresh now: cached
+  linked = false;
+  t += LINK_TTL_MS;
+  assert.equal(await resolveLink(deps, "discord", "555", clock), null);
+  assert.equal(await resolveLink(deps, "discord", "555", clock), null); // stays refused; the row is rolesync's
+  assert.equal(lookups.length, 3);
 });
 
 test("resolveLink: a day-old hit is asked again, an unlink drops it, maxAge 0 always asks", async () => {
