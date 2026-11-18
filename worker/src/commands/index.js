@@ -19,6 +19,7 @@ import {
   timeUntil,
   toUsd,
 } from "../lib/format.js";
+import { resolveLink } from "../lib/links.js";
 import {
   assignDiscordRole,
   discordRoleForRank,
@@ -480,7 +481,7 @@ const linkaccount = {
   },
   identity: true,
   ephemeral: true,
-  handler: async (ctx, { api, env, registry }) => {
+  handler: async (ctx, { api, env, registry, links }) => {
     if (ctx.platform === "telegram" && !ctx.isPrivate) {
       await ctx.deleteMessage?.();
       return ctx.sendText(
@@ -507,6 +508,12 @@ const linkaccount = {
         code: Number(totp),
       });
       const player = await api.public("getPlayer", { userid: account.userid });
+      await links?.put(
+        ctx.platform,
+        ctx.userid,
+        account.userid,
+        player.username
+      );
       const lines = [
         `Your ${ctx.platform} account is now linked to **${player.username}**.`,
       ];
@@ -548,6 +555,18 @@ const linkaccount = {
   },
 };
 
+const linkUsage = (ctx) =>
+  ctx.platform === "discord"
+    ? "/linkaccount username:<name> totp:<code>"
+    : "/linkaccount <username> <6-digit code>";
+
+const platformLabel = (ctx) =>
+  ctx.platform === "discord"
+    ? "Discord"
+    : ctx.platform === "telegram"
+      ? "Telegram"
+      : "this";
+
 const notLinked = (extra = "") => ({
   emoji: "🔗",
   title: "No Linked Account",
@@ -556,6 +575,114 @@ const notLinked = (extra = "") => ({
   url: "https://chips.gg",
   ephemeral: true,
 });
+
+// The unlinked card: the link flow with the host as the reason. Also the support inbox's answer
+// to an unlinked player (platform/telegram.js, /support), so nothing of theirs is stored.
+export const linkPrompt = (ctx) => {
+  const where = platformLabel(ctx);
+  return {
+    emoji: "🔗",
+    title: "Link your Chips.gg account",
+    content: [
+      `Your host wants to reach you here — but this ${where} account isn't linked to Chips.gg yet, so we can't tell it's you.`,
+      "",
+      `Link it in one message:\n\`${linkUsage(ctx)}\``,
+      "",
+      "The code is the one in your authenticator app; we never ask for a password. Once linked, your host can message you here and your VIP rank follows you.",
+      "",
+      "/help lists everything else I can do.",
+    ].join("\n"),
+    buttonLabel: "Open Chips.gg",
+    url: "https://chips.gg",
+    ephemeral: true,
+  };
+};
+
+// The DM greeting. Telegram sends `/start` when a player first opens the bot, and the webhook
+// routes any bare private-chat text here as well; on Discord it is an ordinary (ephemeral)
+// slash command because the Interactions endpoint never sees plain messages.
+//
+// Hit: confirm the link, so the player knows their host can message them on this account.
+// Miss: the link flow, with the host as the reason to bother — this is the case that matters,
+// an unlinked VIP is unreachable until they do it.
+const start = {
+  name: "start",
+  description:
+    "Check that your Chips.gg account is linked so your host can reach you here.",
+  identity: true,
+  ephemeral: true,
+  handler: async (ctx, { api, env, registry }) => {
+    // Link status is the player's business: in a Telegram group, send them to the DM.
+    if (ctx.platform === "telegram" && !ctx.isPrivate)
+      return ctx.sendText(
+        "Message me privately for this one: open my profile and press Start."
+      );
+    const where = platformLabel(ctx);
+    const p = await linkedAccount(api, ctx);
+    if (!p) return ctx.sendForm(linkPrompt(ctx));
+    // rank is best-effort: the platform-id lookup carries no VIP data
+    let rank = null;
+    try {
+      const player = await api.public("getPlayer", { userid: p.id });
+      rank = player?.vip?.rank || null;
+    } catch (err) {
+      console.warn("[start] getPlayer failed:", err.message);
+    }
+    // same registry pickup as /checkaccount, so the daily role sync learns about this player
+    if (ctx.platform === "discord" && p.id && env?.DISCORD_ROLES_GUILD_ID)
+      await registry?.upsert({
+        discordId: String(ctx.userid),
+        chipsUserid: p.id,
+        username: p.username,
+        rank,
+        roleId: null,
+      });
+    const lines = [
+      `Welcome back, **${p.username}** — this ${where} account is linked to your Chips.gg account.`,
+    ];
+    if (rank) lines.push(`VIP rank: ${rank}`);
+    lines.push(
+      "",
+      "Your host can reach you here. /help lists everything else I can do."
+    );
+    return ctx.sendForm({
+      emoji: "👋",
+      title: "You're linked",
+      content: lines.join("\n"),
+      buttonLabel: "View Profile",
+      url: `https://chips.gg/user/${p.username}`,
+      ephemeral: true,
+    });
+  },
+};
+
+// Support inbox entry. Telegram: any private message already is one (platform/telegram.js), so
+// this just says so. Discord: the Interactions endpoint never sees DMs, so a Reply button opens
+// a modal whose submit is the message (platform/discord.js).
+const support = {
+  name: "support",
+  description: "Message the Chips.gg support team and your VIP host.",
+  identity: true,
+  ephemeral: true,
+  handler: async (ctx, deps) => {
+    if (ctx.platform === "telegram" && !ctx.isPrivate)
+      return ctx.sendText(
+        "Message me privately for this one: open my profile and press Start."
+      );
+    const link = await resolveLink(deps, ctx.platform, String(ctx.userid));
+    if (!link) return ctx.sendForm(linkPrompt(ctx));
+    return ctx.sendForm({
+      emoji: "💬",
+      title: "Chips Support",
+      content:
+        ctx.platform === "discord"
+          ? "Press **Reply** to write to the team. Answers arrive in your DMs with me."
+          : "Write your message here: text, a photo or a file. The team answers in this chat.",
+      actions: [{ label: "Reply", id: "support:reply" }],
+      ephemeral: true,
+    });
+  },
+};
 
 const checkaccount = {
   name: "checkaccount",
@@ -712,7 +839,9 @@ export const commands = Object.fromEntries(
     promotions,
     search,
     slotcall,
+    start,
     stats,
+    support,
   ].map((c) => [c.name, c])
 );
 

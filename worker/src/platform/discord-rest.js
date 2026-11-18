@@ -18,6 +18,7 @@ export const COLOR = { blue: 0x0065f2, gold: 0xf9c334, green: 0x2ecc71 };
  *   author      { name, url, icon_url }  (player line for big wins)
  *   timestamp   ms epoch -> embed timestamp
  *   buttons     extra link buttons [{ label, url }] beside the primary one
+ *   actions     custom-id buttons [{ label, id }] (Discord only; the support Reply button)
  *   plainTitle  skip the emoji-wrapped title style
  */
 export function discordMakeForm(form) {
@@ -38,6 +39,7 @@ export function discordMakeForm(form) {
     timestamp,
     buttons: extraButtons,
     plainTitle,
+    actions,
   } = form;
   const embed = {
     title: plainTitle
@@ -71,6 +73,8 @@ export function discordMakeForm(form) {
         label: b.label.slice(0, 80),
         url: b.url,
       });
+  for (const a of actions || [])
+    buttons.push({ type: 2, style: 1, label: a.label, custom_id: a.id });
   if (reroll)
     buttons.push({
       type: 2,
@@ -223,4 +227,68 @@ export async function listGuildRoles(env, guildId) {
     headers: { authorization: `Bot ${env.DISCORD_TOKEN}` },
   });
   return res.ok ? res.json() : [];
+}
+
+// The support DM's Reply button; platform/discord.js answers it with the message modal.
+export const REPLY_ROW = {
+  type: 1,
+  components: [
+    { type: 2, style: 1, label: "Reply", custom_id: "support:reply" },
+  ],
+};
+
+/**
+ * InboxBridge.send on Discord: open the DM, post "**label**\ntext" with the files, CSAT buttons
+ * (custom_id = button.data) and the Reply button. One multipart message, so it lands whole or
+ * not at all. Throws "dms closed" (code 50007) so the relay can tell the agent.
+ */
+export async function discordSend(
+  env,
+  { platform_id, label, text, attachments = [], buttons = [] }
+) {
+  const call = async (path, init) => {
+    const res = await fetch(`${DISCORD_API}${path}`, {
+      method: "POST",
+      ...init,
+      headers: { authorization: `Bot ${env.DISCORD_TOKEN}`, ...init.headers },
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok)
+      throw new Error(
+        json.code === 50007
+          ? "dms closed"
+          : `discord ${res.status}: ${json.message || "error"}`
+      );
+    return json;
+  };
+  const dm = await call("/users/@me/channels", {
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ recipient_id: String(platform_id) }),
+  });
+  const fd = new FormData();
+  const csat = buttons.map((b) => ({
+    type: 2,
+    style: 2,
+    label: b.text,
+    custom_id: b.data,
+  }));
+  fd.append(
+    "payload_json",
+    JSON.stringify({
+      content: `**${label}**\n${text || ""}`.slice(0, 2000),
+      allowed_mentions: { parse: [] },
+      components: [
+        ...(csat.length ? [{ type: 1, components: csat }] : []),
+        REPLY_ROW,
+      ],
+      attachments: attachments.map((a, i) => ({ id: i, filename: a.name })),
+    })
+  );
+  for (const [i, a] of attachments.entries()) {
+    const res = await fetch(a.url);
+    if (!res.ok) throw new Error(`attachment fetch ${res.status}: ${a.name}`);
+    fd.append(`files[${i}]`, await res.blob(), a.name);
+  }
+  const msg = await call(`/channels/${dm.id}/messages`, { body: fd });
+  return { ext_id: msg.id };
 }

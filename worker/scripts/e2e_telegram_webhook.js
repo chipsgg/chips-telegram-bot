@@ -40,6 +40,8 @@ const cmds = process.argv.includes("--all")
       "/linkaccount bob 123456",
       "/myaffiliates",
       "/help@chipsgg_dev_bot",
+      "/start",
+      "hello?",
     ]
   : [
       "/prices btc",
@@ -51,13 +53,17 @@ const cmds = process.argv.includes("--all")
 let id = Math.floor(Date.now() / 1000);
 for (const text of cmds) {
   const cmdLen = text.split(" ")[0].length;
+  // bare text (no leading slash) carries no bot_command entity, exactly like a real DM
+  const entities = text.startsWith("/")
+    ? [{ type: "bot_command", offset: 0, length: cmdLen }]
+    : [];
   const update = {
     update_id: id++,
     message: {
       message_id: id,
       date: Math.floor(Date.now() / 1000),
       text,
-      entities: [{ type: "bot_command", offset: 0, length: cmdLen }],
+      entities,
       from: { id: Number(chatId), is_bot: false, first_name: "e2e" },
       chat:
         chatType === "private"

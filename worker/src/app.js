@@ -18,6 +18,7 @@
  *   feed       { status(), mark(platform), get(...paths) }   (DO stub or in-process FeedCore)
  *   metrics    { track(platform, command, ok), read(), usage() }
  *   registry   { upsert, list, count }  linked Discord users, for the daily role sync
+ *   links      { get, put }             platform id -> Chips uid cache (lib/links.js; optional)
  *   waitUntil  (promise) => void  keep the runtime alive until background work finishes
  */
 import { commands } from "./commands/index.js";
@@ -74,12 +75,13 @@ function apiCtx(url) {
 
 const swallow = (p) => Promise.resolve(p).catch(() => undefined);
 
-export function createApp({ env, feed, metrics, registry }) {
+export function createApp({ env, feed, metrics, registry, links }) {
   const deps = {
     env,
     feed,
     metrics,
     registry,
+    links,
     api: createApi({ host: env.CHIPS_API_HOST, token: env.CHIPS_TOKEN }),
   };
 

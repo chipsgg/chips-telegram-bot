@@ -5,10 +5,14 @@
  * -> run the handler in ctx.waitUntil -> PATCH the original response via webhook.
  * Component (button) interactions: type 3, customId "reroll:<command>" re-runs that command
  * and updates the message in place (type 7 is not usable after a webhook edit, so we PATCH).
+ * Support inbox (no message-content intent: the bot never reads DMs): "support:reply" opens
+ * a modal, its submit (type 5) goes to RELAY.inbound; "csat:<token>:<n>" goes to RELAY.csat.
  */
-import { commands } from "../commands/index.js";
+import { commands, linkPrompt } from "../commands/index.js";
+import { parseCsat, relayInbound, storeFile } from "../inbox.js";
+import { resolveLink } from "../lib/links.js";
 import { rateLimitMessage } from "../lib/ratelimit.js";
-import { applyEphemeral, discordMakeForm } from "./discord-rest.js";
+import { REPLY_ROW, applyEphemeral, discordMakeForm } from "./discord-rest.js";
 
 const DISCORD_API = "https://discord.com/api/v10";
 
@@ -146,8 +150,25 @@ export async function handleDiscord(request, env, deps, waitUntil) {
     });
   }
 
-  // 3 = MESSAGE_COMPONENT (reroll button)
+  // 3 = MESSAGE_COMPONENT (reroll, support Reply, CSAT buttons)
   if (interaction.type === 3) {
+    if (interaction.data?.custom_id === "support:reply")
+      return Response.json(SUPPORT_MODAL);
+    const vote = parseCsat(interaction.data?.custom_id);
+    if (vote) {
+      const r = await env.RELAY?.csat(vote).catch((err) => ({
+        error: err.message,
+      }));
+      if (r?.ok)
+        return Response.json({ type: 7, data: { components: [REPLY_ROW] } });
+      return Response.json({
+        type: 4,
+        data: {
+          content: "That rating was already recorded or has expired.",
+          flags: 64,
+        },
+      });
+    }
     const [action, name] = String(interaction.data?.custom_id || "").split(":");
     if (action === "reroll" && commands[name]) {
       // Only the original invoker may reroll
@@ -170,8 +191,110 @@ export async function handleDiscord(request, env, deps, waitUntil) {
     return Response.json({ type: 6 });
   }
 
+  // 5 = MODAL_SUBMIT (the support message)
+  if (
+    interaction.type === 5 &&
+    interaction.data?.custom_id === "support:modal"
+  ) {
+    waitUntil(discordInbound(interaction, env, deps));
+    return Response.json({ type: 5, data: { flags: 64 } });
+  }
+
   return Response.json({
     type: 4,
     data: { content: "Unsupported interaction.", flags: 64 },
   });
+}
+
+// Label (18) wrapping a paragraph text input (4) and a file upload (19).
+const SUPPORT_MODAL = {
+  type: 9,
+  data: {
+    custom_id: "support:modal",
+    title: "Message Chips Support",
+    components: [
+      {
+        type: 18,
+        label: "Your message",
+        component: {
+          type: 4,
+          custom_id: "text",
+          style: 2,
+          max_length: 2000,
+          required: true,
+        },
+      },
+      {
+        type: 18,
+        label: "Screenshots or files",
+        description: "Optional, up to 4.",
+        component: {
+          type: 19,
+          custom_id: "files",
+          min_values: 0,
+          max_values: 4,
+          required: false,
+        },
+      },
+    ],
+  },
+};
+
+// custom_id -> value (text input) or values (file upload ids), at any nesting (rows or labels)
+export const modalFields = (components, out = {}) => {
+  for (const c of components || []) {
+    if (c.custom_id) out[c.custom_id] = c.values ?? c.value;
+    modalFields(c.components ?? (c.component ? [c.component] : []), out);
+  }
+  return out;
+};
+
+/**
+ * A support modal submit. Linked: files to R2 (dc/), RELAY.inbound with idem dc:<interaction
+ * id>, the relay's auto-reply in the ephemeral answer. Unlinked: the link prompt, nothing stored.
+ */
+export async function discordInbound(interaction, env, deps) {
+  const userId = String(interaction.member?.user?.id || interaction.user?.id);
+  const reply = (body) => editOriginal(env, interaction, applyEphemeral(body));
+  try {
+    await deps.feed?.mark("discord");
+    const link = await resolveLink(deps, "discord", userId);
+    if (!link)
+      return await reply(discordMakeForm(linkPrompt({ platform: "discord" })));
+    const fields = modalFields(interaction.data.components);
+    const resolved = interaction.data.resolved?.attachments || {};
+    const attachments = [];
+    for (const [i, id] of (fields.files || []).entries()) {
+      const f = resolved[id];
+      if (!f) continue;
+      const a = await storeFile(env, "dc", `${interaction.id}/${i}`, {
+        url: f.url,
+        name: f.filename,
+        type: f.content_type || "application/octet-stream",
+        size: f.size,
+      });
+      if (a.error) return await reply({ content: a.error });
+      attachments.push(a);
+    }
+    const r = await relayInbound(env, {
+      channel: "discord",
+      link,
+      platformId: userId,
+      idem: `dc:${interaction.id}`,
+      extId: interaction.id,
+      text: fields.text,
+      attachments,
+    });
+    if (r?.error) throw new Error(r.error);
+    const sent = "Sent to Chips Support. Answers arrive in your DMs with me.";
+    await reply({
+      content: [sent, r?.auto?.text].filter(Boolean).join("\n\n"),
+    });
+  } catch (err) {
+    console.error("[inbox] discord inbound failed:", err.message);
+    await reply({
+      content:
+        "Sorry, your message didn't reach the team. Please try again in a minute.",
+    });
+  }
 }
