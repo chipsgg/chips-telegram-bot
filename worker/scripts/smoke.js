@@ -190,6 +190,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     "myaffiliates",
     "affiliate",
     "start",
+    "support",
   ]) {
     const r = await get(`/api/command/${n}?username=x`);
     check(`/${n} hidden over HTTP (404)`, r.status === 404);

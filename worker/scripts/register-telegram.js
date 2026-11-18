@@ -48,7 +48,7 @@ if (!secret) {
 const wh = await api("setWebhook", {
   url: `${base.replace(/\/$/, "")}/telegram`,
   secret_token: secret,
-  allowed_updates: ["message"],
+  allowed_updates: ["message", "callback_query"], // callback_query = support CSAT taps
   drop_pending_updates: true,
   max_connections: 40,
 });

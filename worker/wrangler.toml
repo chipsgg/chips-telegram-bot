@@ -65,6 +65,17 @@ database_name = "chips-bot-metrics"
 database_id = "6f8f9eb1-f9f7-4678-833a-a8a6aa40be79"
 migrations_dir = "migrations"
 
+# Chips Desk support inbox (src/inbox.js). Player messages go to the relay over RPC; the relay
+# calls back through the InboxBridge entrypoint (export in src/index.js). Player files -> R2.
+[[services]]
+binding = "RELAY"
+service = "vipdesk-relay"
+entrypoint = "InboxInternal"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "vipdesk-files"
+
 [observability]
 enabled = true
 
@@ -117,6 +128,16 @@ binding = "DB"
 database_name = "chips-bot-metrics-dev"
 database_id = "3c834ab5-355a-487b-8c96-069e03ba5411"
 migrations_dir = "migrations"
+
+[[env.dev.services]]
+binding = "RELAY"
+service = "vipdesk-relay-staging"
+entrypoint = "InboxInternal"
+
+# the staging relay's FILES bucket, so it can read what the dev bot stores
+[[env.dev.r2_buckets]]
+binding = "FILES"
+bucket_name = "vipdesk-staging-files"
 
 [env.dev.observability]
 enabled = true

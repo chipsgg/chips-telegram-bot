@@ -19,6 +19,7 @@ import {
   timeUntil,
   toUsd,
 } from "../lib/format.js";
+import { resolveLink } from "../lib/links.js";
 import {
   assignDiscordRole,
   discordRoleForRank,
@@ -480,7 +481,7 @@ const linkaccount = {
   },
   identity: true,
   ephemeral: true,
-  handler: async (ctx, { api, env, registry }) => {
+  handler: async (ctx, { api, env, registry, links }) => {
     if (ctx.platform === "telegram" && !ctx.isPrivate) {
       await ctx.deleteMessage?.();
       return ctx.sendText(
@@ -507,6 +508,12 @@ const linkaccount = {
         code: Number(totp),
       });
       const player = await api.public("getPlayer", { userid: account.userid });
+      await links?.put(
+        ctx.platform,
+        ctx.userid,
+        account.userid,
+        player.username
+      );
       const lines = [
         `Your ${ctx.platform} account is now linked to **${player.username}**.`,
       ];
@@ -569,6 +576,28 @@ const notLinked = (extra = "") => ({
   ephemeral: true,
 });
 
+// The unlinked card: the link flow with the host as the reason. Also the support inbox's answer
+// to an unlinked player (platform/telegram.js, /support), so nothing of theirs is stored.
+export const linkPrompt = (ctx) => {
+  const where = platformLabel(ctx);
+  return {
+    emoji: "🔗",
+    title: "Link your Chips.gg account",
+    content: [
+      `Your host wants to reach you here — but this ${where} account isn't linked to Chips.gg yet, so we can't tell it's you.`,
+      "",
+      `Link it in one message:\n\`${linkUsage(ctx)}\``,
+      "",
+      "The code is the one in your authenticator app; we never ask for a password. Once linked, your host can message you here and your VIP rank follows you.",
+      "",
+      "/help lists everything else I can do.",
+    ].join("\n"),
+    buttonLabel: "Open Chips.gg",
+    url: "https://chips.gg",
+    ephemeral: true,
+  };
+};
+
 // The DM greeting. Telegram sends `/start` when a player first opens the bot, and the webhook
 // routes any bare private-chat text here as well; on Discord it is an ordinary (ephemeral)
 // slash command because the Interactions endpoint never sees plain messages.
@@ -590,24 +619,7 @@ const start = {
       );
     const where = platformLabel(ctx);
     const p = await linkedAccount(api, ctx);
-    if (!p) {
-      return ctx.sendForm({
-        emoji: "🔗",
-        title: "Link your Chips.gg account",
-        content: [
-          `Your host wants to reach you here — but this ${where} account isn't linked to Chips.gg yet, so we can't tell it's you.`,
-          "",
-          `Link it in one message:\n\`${linkUsage(ctx)}\``,
-          "",
-          "The code is the one in your authenticator app; we never ask for a password. Once linked, your host can message you here and your VIP rank follows you.",
-          "",
-          "/help lists everything else I can do.",
-        ].join("\n"),
-        buttonLabel: "Open Chips.gg",
-        url: "https://chips.gg",
-        ephemeral: true,
-      });
-    }
+    if (!p) return ctx.sendForm(linkPrompt(ctx));
     // rank is best-effort: the platform-id lookup carries no VIP data
     let rank = null;
     try {
@@ -639,6 +651,34 @@ const start = {
       content: lines.join("\n"),
       buttonLabel: "View Profile",
       url: `https://chips.gg/user/${p.username}`,
+      ephemeral: true,
+    });
+  },
+};
+
+// Support inbox entry. Telegram: any private message already is one (platform/telegram.js), so
+// this just says so. Discord: the Interactions endpoint never sees DMs, so a Reply button opens
+// a modal whose submit is the message (platform/discord.js).
+const support = {
+  name: "support",
+  description: "Message the Chips.gg support team and your VIP host.",
+  identity: true,
+  ephemeral: true,
+  handler: async (ctx, deps) => {
+    if (ctx.platform === "telegram" && !ctx.isPrivate)
+      return ctx.sendText(
+        "Message me privately for this one: open my profile and press Start."
+      );
+    const link = await resolveLink(deps, ctx.platform, String(ctx.userid));
+    if (!link) return ctx.sendForm(linkPrompt(ctx));
+    return ctx.sendForm({
+      emoji: "💬",
+      title: "Chips Support",
+      content:
+        ctx.platform === "discord"
+          ? "Press **Reply** to write to the team. Answers arrive in your DMs with me."
+          : "Write your message here: text, a photo or a file. The team answers in this chat.",
+      actions: [{ label: "Reply", id: "support:reply" }],
       ephemeral: true,
     });
   },
@@ -801,6 +841,7 @@ export const commands = Object.fromEntries(
     slotcall,
     start,
     stats,
+    support,
   ].map((c) => [c.name, c])
 );
 

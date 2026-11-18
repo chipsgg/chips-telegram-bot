@@ -63,19 +63,20 @@ const api = (routes) => {
   };
 };
 
-test("registry: 20 commands, identity ones flagged, discord payload valid", () => {
-  assert.equal(Object.keys(commands).length, 20);
+test("registry: 21 commands, identity ones flagged, discord payload valid", () => {
+  assert.equal(Object.keys(commands).length, 21);
   for (const n of [
     "linkaccount",
     "checkaccount",
     "myaffiliates",
     "affiliate",
     "start",
+    "support",
   ])
     assert.equal(commands[n].identity, true, n);
   assert.equal(commands.affiliate.staffOnly, true);
   const payload = discordCommandPayload();
-  assert.equal(payload.length, 20);
+  assert.equal(payload.length, 21);
   for (const c of payload) {
     assert.match(c.name, /^[a-z]{1,32}$/);
     assert.ok(c.description.length <= 100);

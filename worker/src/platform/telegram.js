@@ -2,14 +2,17 @@
  * Telegram webhook (Bot API over fetch, no Telegraf).
  * Register once:  POST https://api.telegram.org/bot<TOKEN>/setWebhook
  *                 { url: "https://bot.chips.gg/telegram", secret_token: <TELEGRAM_WEBHOOK_SECRET>,
- *                   allowed_updates: ["message"], drop_pending_updates: true }
+ *                   allowed_updates: ["message", "callback_query"], drop_pending_updates: true }
+ * (callback_query carries the support inbox's CSAT taps; scripts/register-telegram.js sets both.)
  * Telegram sends X-Telegram-Bot-Api-Secret-Token on every update; we reject mismatches.
  *
  * Markdown -> Telegram HTML is done here with a tiny converter covering what the
  * forms actually use: **bold**, *italic*, `code`, [text](url), line breaks.
  */
-import { commands } from "../commands/index.js";
+import { commands, linkPrompt } from "../commands/index.js";
+import { parseCsat, relayInbound, storeFile } from "../inbox.js";
 import { tokenGetter, tokenize } from "../lib/format.js";
+import { resolveLink } from "../lib/links.js";
 import { rateLimitMessage } from "../lib/ratelimit.js";
 
 const esc = (s) =>
@@ -114,11 +117,19 @@ export function tgApi(env) {
     if (!json.ok)
       console.warn(
         `[telegram] ${method} failed:`,
-        json.description || res.status
+        json.description || "no description"
       );
     return json;
   };
 }
+
+const tgUpload = async (env, method, fd) => {
+  const res = await fetch(
+    `https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/${method}`,
+    { method: "POST", body: fd }
+  );
+  return res.json().catch(() => ({}));
+};
 
 // Download an image and upload it via multipart sendPhoto (Telegram won't fetch dynamic URLs)
 async function sendPhotoBytes(env, chatId, url, caption, reply_markup) {
@@ -139,15 +150,11 @@ async function sendPhotoBytes(env, chatId, url, caption, reply_markup) {
     fd.append("parse_mode", "HTML");
     if (reply_markup) fd.append("reply_markup", JSON.stringify(reply_markup));
     fd.append("photo", blob, `banner.${type.includes("png") ? "png" : "jpg"}`);
-    const res = await fetch(
-      `https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/sendPhoto`,
-      { method: "POST", body: fd }
-    );
-    const json = await res.json().catch(() => ({}));
+    const json = await tgUpload(env, "sendPhoto", fd);
     if (!json.ok)
       console.warn(
         "[telegram] sendPhoto(bytes) failed:",
-        json.description || res.status
+        json.description || "no description"
       );
     return json;
   } catch (err) {
@@ -157,7 +164,7 @@ async function sendPhotoBytes(env, chatId, url, caption, reply_markup) {
 }
 
 function makeCtx(message, send, env) {
-  const tokens = tokenize(message.text);
+  const tokens = tokenize(message.text ?? message.caption ?? "");
   const getString = tokenGetter(tokens);
   const chatId = message.chat.id;
   const reply = (extra) =>
@@ -249,7 +256,21 @@ export async function handleTelegram(request, env, deps, waitUntil) {
     return new Response("forbidden", { status: 403 });
   }
   const update = await request.json().catch(() => null);
+  if (update?.callback_query && env.RELAY) {
+    waitUntil(telegramCsat(update.callback_query, env));
+    return new Response("ok");
+  }
   const message = update?.message;
+  // Support inbox: a private non-command message from a person (text, photo or file)
+  if (
+    env.RELAY &&
+    message?.chat?.type === "private" &&
+    (message.text || message.photo || message.document) &&
+    !(message.text && commandName(message))
+  ) {
+    waitUntil(telegramInbound(update, env, deps));
+    return new Response("ok");
+  }
   if (!message?.text) return new Response("ok");
 
   const send = tgApi(env);
@@ -279,4 +300,139 @@ export async function handleTelegram(request, env, deps, waitUntil) {
     })()
   );
   return new Response("ok");
+}
+
+const SORRY =
+  "Sorry, your message didn't reach the team. Please try again in a minute.";
+
+/**
+ * A private message into the support inbox. Linked: files to R2 (tg/), RELAY.inbound with
+ * idem tg:<update_id> (Telegram redelivers the same update_id), then the relay's auto-reply.
+ * Unlinked: the link prompt and nothing stored.
+ */
+export async function telegramInbound(update, env, deps) {
+  const m = update.message;
+  const ctx = makeCtx(m, tgApi(env), env);
+  try {
+    await deps.feed?.mark("telegram");
+    const link = await resolveLink(deps, "telegram", String(m.from?.id));
+    if (!link) return await ctx.sendForm(linkPrompt(ctx));
+    const attachments = [];
+    const file = m.document || m.photo?.at(-1); // photo sizes ascend; take the largest
+    if (file) {
+      const got = await tgApi(env)("getFile", { file_id: file.file_id });
+      if (!got.ok) throw new Error(`getFile: ${got.description}`);
+      const a = await storeFile(env, "tg", update.update_id, {
+        url: `https://api.telegram.org/file/bot${env.TELEGRAM_TOKEN}/${got.result.file_path}`,
+        name: m.document?.file_name || "photo.jpg",
+        type: m.document
+          ? m.document.mime_type || "application/octet-stream"
+          : "image/jpeg",
+        size: file.file_size || 0,
+      });
+      if (a.error) return await ctx.sendText(a.error);
+      attachments.push(a);
+    }
+    const r = await relayInbound(env, {
+      channel: "telegram",
+      link,
+      platformId: m.chat.id,
+      idem: `tg:${update.update_id}`,
+      extId: m.message_id,
+      text: m.text ?? m.caption,
+      attachments,
+    });
+    if (r?.error) throw new Error(r.error);
+    if (r?.auto?.text) await ctx.sendText(r.auto.text);
+  } catch (err) {
+    console.error("[inbox] telegram inbound failed:", err.message);
+    await ctx.sendText(SORRY);
+  }
+}
+
+// A CSAT tap (callback_data csat:<token>:<n>): record it, drop the buttons, say thanks.
+export async function telegramCsat(q, env) {
+  const send = tgApi(env);
+  const vote = parseCsat(q.data);
+  let text = "Thanks for the rating!";
+  try {
+    const r = vote ? await env.RELAY.csat(vote) : { error: "bad button" };
+    if (r?.error) text = "That rating was already recorded.";
+    else if (q.message)
+      await send("editMessageReplyMarkup", {
+        chat_id: q.message.chat.id,
+        message_id: q.message.message_id,
+        reply_markup: { inline_keyboard: [] },
+      });
+  } catch (err) {
+    console.error("[inbox] csat failed:", err.message);
+    text = "Couldn't record that, please try again.";
+  }
+  await send("answerCallbackQuery", { callback_query_id: q.id, text });
+}
+
+const tgThrow = (r) => {
+  if (r?.ok) return r.result;
+  throw new Error(
+    r?.error_code === 403
+      ? "blocked by user"
+      : r?.description || "telegram error"
+  );
+};
+
+/**
+ * InboxBridge.send on Telegram: "<b>label</b>\ntext" with the CSAT keyboard, then each file
+ * (fetched from its signed URL and uploaded: the URL expires). ext_id is the text message.
+ * ponytail: a failed file after the text throws, so the relay's retry repeats the text too.
+ */
+export async function telegramSend(
+  env,
+  { platform_id, label, text, attachments = [], buttons = [] }
+) {
+  const msg = tgThrow(
+    await tgApi(env)("sendMessage", {
+      chat_id: platform_id,
+      text: `<b>${esc(label)}</b>\n${esc(String(text || "").slice(0, 3900))}`,
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+      ...(buttons.length
+        ? {
+            reply_markup: {
+              inline_keyboard: [
+                buttons.map((b) => ({ text: b.text, callback_data: b.data })),
+              ],
+            },
+          }
+        : {}),
+    })
+  );
+  for (const a of attachments) {
+    const res = await fetch(a.url);
+    if (!res.ok) throw new Error(`attachment fetch ${res.status}: ${a.name}`);
+    const photo = /^image\/(jpeg|png)$/.test(a.type);
+    const fd = new FormData();
+    fd.append("chat_id", String(platform_id));
+    fd.append(photo ? "photo" : "document", await res.blob(), a.name);
+    tgThrow(await tgUpload(env, photo ? "sendPhoto" : "sendDocument", fd));
+  }
+  return { ext_id: String(msg.message_id) };
+}
+
+// InboxBridge.notify: a companion push, with the Mini App behind a web_app button.
+export async function telegramNotify(env, { platform_id, text, url }) {
+  const msg = tgThrow(
+    await tgApi(env)("sendMessage", {
+      chat_id: platform_id,
+      text: esc(String(text || "").slice(0, 4000)),
+      parse_mode: "HTML",
+      ...(url
+        ? {
+            reply_markup: {
+              inline_keyboard: [[{ text: "Open", web_app: { url } }]],
+            },
+          }
+        : {}),
+    })
+  );
+  return { ext_id: String(msg.message_id) };
 }
