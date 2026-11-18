@@ -248,8 +248,9 @@ export function resolveTelegramCommand(message, botUsername) {
 }
 
 export async function handleTelegram(request, env, deps, waitUntil) {
+  // fail closed: an update reaches the support inbox, so an unset secret is a refusal, never an open door
   if (
-    env.TELEGRAM_WEBHOOK_SECRET &&
+    !env.TELEGRAM_WEBHOOK_SECRET ||
     request.headers.get("x-telegram-bot-api-secret-token") !==
       env.TELEGRAM_WEBHOOK_SECRET
   ) {

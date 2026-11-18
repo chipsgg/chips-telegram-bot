@@ -57,6 +57,18 @@ export class InboxBridge extends WorkerEntrypoint {
     if (p?.platform === "discord") return discordSend(this.env, p);
     throw new Error(`unknown platform ${p?.platform}`);
   }
+  // ponytail: Telegram only (the companion pushes there); Discord when someone needs it
+  notify(p) {
+    if (p?.platform !== "telegram") throw new Error("notify: telegram only");
+    return telegramNotify(this.env, p);
+  }
+}
+
+/**
+ * The edge's one call (its BOT binding names this entrypoint): a Mini App's initData -> the linked player. Its own
+ * class so the public edge can't reach send() and post as the bot.
+ */
+export class InitDataCheck extends WorkerEntrypoint {
   verifyInitData(p) {
     return verifyInitData(
       {
@@ -69,10 +81,5 @@ export class InboxBridge extends WorkerEntrypoint {
       },
       p
     );
-  }
-  // ponytail: Telegram only (the companion pushes there); Discord when someone needs it
-  notify(p) {
-    if (p?.platform !== "telegram") throw new Error("notify: telegram only");
-    return telegramNotify(this.env, p);
   }
 }

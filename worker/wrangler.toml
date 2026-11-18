@@ -66,7 +66,7 @@ database_id = "6f8f9eb1-f9f7-4678-833a-a8a6aa40be79"
 migrations_dir = "migrations"
 
 # Chips Desk support inbox (src/inbox.js). Player messages go to the relay over RPC; the relay
-# calls back through the InboxBridge entrypoint (export in src/index.js). Player files -> R2.
+# calls back through the InboxBridge entrypoint (export in src/index.js; the edge gets InitDataCheck). Player files -> R2.
 [[services]]
 binding = "RELAY"
 service = "vipdesk-relay"

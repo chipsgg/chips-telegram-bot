@@ -71,9 +71,15 @@ async function telegram(update, env, deps) {
   const waits = [];
   const req = new Request("https://x/telegram", {
     method: "POST",
+    headers: { "x-telegram-bot-api-secret-token": "S" },
     body: JSON.stringify(update),
   });
-  const res = await handleTelegram(req, env, deps, (p) => waits.push(p));
+  const res = await handleTelegram(
+    req,
+    { TELEGRAM_WEBHOOK_SECRET: "S", ...env },
+    deps,
+    (p) => waits.push(p)
+  );
   await Promise.all(waits);
   return res;
 }
@@ -386,6 +392,29 @@ function signInitData(token, fields) {
   const hash = createHmac("sha256", secret).update(check).digest("hex");
   return new URLSearchParams({ ...fields, hash }).toString();
 }
+
+test("telegram webhook: no secret configured, or a wrong one -> 403, nothing reaches the inbox", async () => {
+  const RELAY = fakeRelay();
+  for (const [env, hdr] of [
+    [{ TELEGRAM_TOKEN: "T", RELAY }, {}],
+    [
+      { TELEGRAM_TOKEN: "T", RELAY, TELEGRAM_WEBHOOK_SECRET: "S" },
+      { "x-telegram-bot-api-secret-token": "nope" },
+    ],
+  ]) {
+    const req = new Request("https://x/telegram", {
+      method: "POST",
+      headers: hdr,
+      body: JSON.stringify(tgMsg({ text: "forged" })),
+    });
+    const deps = await linkedDeps(env, "telegram", "555");
+    assert.equal(
+      (await handleTelegram(req, env, deps, () => undefined)).status,
+      403
+    );
+  }
+  assert.equal(RELAY.calls.inbound.length, 0);
+});
 
 test("verifyInitData: valid -> {platform_id, uid}; tampered, expired and unlinked handled", async () => {
   const now = 1_800_000_000_000;
