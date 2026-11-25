@@ -34,6 +34,7 @@ import {
 import { createApi } from "./lib/chips.js";
 import { formatPrice } from "./lib/format.js";
 import { buildHealth } from "./lib/health.js";
+import { registerPlatforms } from "./lib/register.js";
 import { listGuildMembers, listGuildRoles } from "./platform/discord-rest.js";
 import { handleDiscord } from "./platform/discord.js";
 import { handleTelegram } from "./platform/telegram.js";
@@ -223,6 +224,14 @@ export function createApp({ env, feed, metrics, registry, links }) {
       return json({ updatedAt, rows }, 200, {
         "cache-control": "public, max-age=15",
       });
+    }
+
+    // Telegram webhook/commands/menu button + Discord commands, set by the Worker itself.
+    if (url.pathname === "/admin/register" && request.method === "POST") {
+      const secret = env.TELEGRAM_WEBHOOK_SECRET;
+      if (!secret || request.headers.get("x-admin-secret") !== secret)
+        return new Response("forbidden", { status: 403 });
+      return Response.json(await registerPlatforms(env));
     }
 
     // Member export (CSV) for a guild the bot is in, joined with the linked-account registry.

@@ -1,7 +1,3 @@
-/**
- * Cloudflare Workers entry. All routing lives in ./app.js; this file wires the
- * Cloudflare services: Durable Object feed, D1 metrics, ASSETS for the landing page.
- */
 import { WorkerEntrypoint } from "cloudflare:workers";
 import { createApp } from "./app.js";
 import { feedClient } from "./feed/chips-feed.js";
@@ -9,6 +5,11 @@ import { verifyInitData } from "./inbox.js";
 import { createApi } from "./lib/chips.js";
 import { d1Links } from "./lib/links.js";
 import { d1Metrics } from "./lib/metrics.js";
+/**
+ * Cloudflare Workers entry. All routing lives in ./app.js; this file wires the
+ * Cloudflare services: Durable Object feed, D1 metrics, ASSETS for the landing page.
+ */
+import { healTelegram } from "./lib/register.js";
 import { d1Registry, runRoleSync } from "./lib/rolesync.js";
 import { discordSend } from "./platform/discord-rest.js";
 import { telegramNotify, telegramSend } from "./platform/telegram.js";
@@ -33,6 +34,7 @@ export default {
   //   "17 4 * * *"  daily VIP rank -> Discord role sync
   async scheduled(event, env, ctx) {
     if (event.cron === "17 4 * * *") {
+      ctx.waitUntil(healTelegram(env).catch((e) => console.warn(e.message)));
       ctx.waitUntil(
         runRoleSync({
           env,

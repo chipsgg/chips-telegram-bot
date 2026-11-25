@@ -31,6 +31,8 @@ DISCORD_ROLES_GUILD_ID = "541035273547415552"
 TELEGRAM_BOT_USERNAME = "chipsgg_official_bot"
 # uptime watchdog (cron below): probes PUBLIC_HOST/health, one Telegram message per up/down transition
 PUBLIC_HOST = "bot.chips.gg"
+# Telegram menu button (Mini App); empty = no button
+COMPANION_URL = "https://chat.chips.gg/app/"
 ALERT_TELEGRAM_CHAT = "147051786"
 # big-win posts: Chips Casino #big-wins (Jacob, Sep 18 2026). Empty = off.
 BROADCAST_DISCORD_CHANNELS = "1251613676750897192"
@@ -100,6 +102,7 @@ BUILT_AT = ""
 DISCORD_ROLES_GUILD_ID = ""
 TELEGRAM_BOT_USERNAME = "chipsgg_dev_bot"
 PUBLIC_HOST = "bot-cf.chips.gg"
+COMPANION_URL = "https://chat.chips.gg/app/"
 ALERT_TELEGRAM_CHAT = "147051786"
 BROADCAST_DISCORD_CHANNELS = "1550642665006170153"
 BROADCAST_TELEGRAM_CHATS = "147051786"
