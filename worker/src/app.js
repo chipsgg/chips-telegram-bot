@@ -77,7 +77,7 @@ function apiCtx(url) {
 
 const swallow = (p) => Promise.resolve(p).catch(() => undefined);
 
-export function createApp({ env, feed, metrics, registry, links }) {
+export function createApp({ env, feed, metrics, registry, links, gateway }) {
   const deps = {
     env,
     feed,
@@ -121,6 +121,7 @@ export function createApp({ env, feed, metrics, registry, links }) {
       const health = await buildHealth({
         env,
         feed,
+        gateway,
         host: url.hostname,
         fresh: url.searchParams.has("fresh"),
       });

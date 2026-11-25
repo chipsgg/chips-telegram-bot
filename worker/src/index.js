@@ -11,10 +11,12 @@ import { d1Metrics } from "./lib/metrics.js";
  */
 import { healTelegram } from "./lib/register.js";
 import { d1Registry, runRoleSync } from "./lib/rolesync.js";
+import { gatewayClient } from "./platform/discord-gateway.js";
 import { discordSend } from "./platform/discord-rest.js";
 import { telegramNotify, telegramSend } from "./platform/telegram.js";
 
 export { ChipsFeed } from "./feed/chips-feed.js";
+export { DiscordGateway } from "./platform/discord-gateway.js";
 
 export default {
   async fetch(request, env, ctx) {
@@ -24,13 +26,15 @@ export default {
       metrics: d1Metrics(env.DB),
       registry: d1Registry(env.DB),
       links: d1Links(env.DB),
+      gateway: env.DISCORD_GW ? gatewayClient(env) : null,
     });
     const res = await app(request, (p) => ctx.waitUntil(p));
     return res ?? env.ASSETS.fetch(request);
   },
 
   // wrangler.toml [triggers] crons:
-  //   "* * * * *"   watchdog: probe our own public /health, alert on transitions
+  //   "* * * * *"   watchdog: probe our own public /health, alert on transitions;
+  //                 wake the Discord gateway DO (reconnects within a minute of a deploy)
   //   "17 4 * * *"  daily VIP rank -> Discord role sync
   async scheduled(event, env, ctx) {
     if (event.cron === "17 4 * * *") {
@@ -44,6 +48,12 @@ export default {
       );
       return;
     }
+    if (env.DISCORD_GW)
+      ctx.waitUntil(
+        gatewayClient(env)
+          .ensure()
+          .catch((e) => console.error("[gateway] ensure failed:", e.message))
+      );
     ctx.waitUntil(feedClient(env).watchdog());
   },
 };

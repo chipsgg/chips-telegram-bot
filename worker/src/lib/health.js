@@ -121,10 +121,11 @@ async function wiring(env, host, fresh = false) {
   return wiringCache.value;
 }
 
-export async function buildHealth({ env, feed, host, fresh = false }) {
-  const [feedStatus, platforms] = await Promise.all([
+export async function buildHealth({ env, feed, gateway, host, fresh = false }) {
+  const [feedStatus, platforms, gw] = await Promise.all([
     feed.status().catch((e) => ({ connected: false, error: e.message })),
     wiring(env, host, fresh),
+    gateway?.status(),
   ]);
 
   const activity = feedStatus.activity || {};
@@ -146,10 +147,18 @@ export async function buildHealth({ env, feed, host, fresh = false }) {
   const gatewayOk =
     !discord.gateway ||
     (discord.gateway.lastSeenAgoSec ?? Number.POSITIVE_INFINITY) < 300;
+  // The gateway DO (platform/discord-gateway.js) acks a heartbeat every ~41 s. Only "on" counts
+  // against ok; "shadow" is a trial run next to the box and only reports.
+  if (gw) discord.gatewayDo = gw;
+  const gwDoOk =
+    gw?.mode !== "on" ||
+    (gw.connected &&
+      (gw.lastAckAgoSec ?? gw.connectedAgoSec ?? Number.POSITIVE_INFINITY) <
+        180); // first ACK takes up to ~41 s
 
   const feedOk = Boolean(feedStatus.connected && !feedStatus.stale);
   const wiredOk = [telegram, discord].every((p) => !p.configured || p.wired);
-  const ok = feedOk && wiredOk && gatewayOk;
+  const ok = feedOk && wiredOk && gatewayOk && gwDoOk;
 
   const problems = [];
   if (!feedStatus.connected) problems.push("feed: websocket disconnected");
@@ -175,6 +184,10 @@ export async function buildHealth({ env, feed, host, fresh = false }) {
   if (!gatewayOk)
     problems.push(
       "discord: gateway box silent for >5 min (plain DMs not arriving)"
+    );
+  if (!gwDoOk)
+    problems.push(
+      `discord: gateway ${gw.fatal ? `closed by Discord (${gw.fatal})` : gw.connected ? "has no heartbeat ack for >3 min" : "disconnected"} (plain DMs not arriving)`
     );
 
   const { activity: _a, ...feedRest } = feedStatus;
