@@ -11,6 +11,8 @@
  */
 
 const CACHE_TTL_MS = 60_000;
+import { hasTaps } from "./register.js";
+
 let wiringCache = { at: 0, host: null, value: null };
 
 const ago = (ts) => (ts ? Math.round((Date.now() - ts) / 1000) : null);
@@ -30,6 +32,7 @@ async function telegramWiring(env, host) {
       bot: me.result?.username ? `@${me.result.username}` : null,
       webhook: info.url || null,
       wired: info.url === expected,
+      taps: hasTaps(info), // support rating buttons reach us
       pending: info.pending_update_count ?? null,
       lastError: info.last_error_message
         ? {
