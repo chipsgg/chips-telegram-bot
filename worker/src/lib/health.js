@@ -137,10 +137,19 @@ export async function buildHealth({ env, feed, host, fresh = false }) {
 
   const telegram = platform("telegram");
   const discord = platform("discord");
+  // Plain DMs need the gateway box (gateway/); it pings every minute once GATEWAY_SECRET is set.
+  if (env.GATEWAY_SECRET)
+    discord.gateway = {
+      lastSeenAgoSec: ago(activity.gateway),
+      pings: activity.gateway_count || 0,
+    };
+  const gatewayOk =
+    !discord.gateway ||
+    (discord.gateway.lastSeenAgoSec ?? Number.POSITIVE_INFINITY) < 300;
 
   const feedOk = Boolean(feedStatus.connected && !feedStatus.stale);
   const wiredOk = [telegram, discord].every((p) => !p.configured || p.wired);
-  const ok = feedOk && wiredOk;
+  const ok = feedOk && wiredOk && gatewayOk;
 
   const problems = [];
   if (!feedStatus.connected) problems.push("feed: websocket disconnected");
@@ -161,6 +170,11 @@ export async function buildHealth({ env, feed, host, fresh = false }) {
   if (discord.configured && !discord.wired)
     problems.push(
       `discord: interactions endpoint is ${discord.endpoint || "unset"}, expected https://${host}/discord`
+    );
+
+  if (!gatewayOk)
+    problems.push(
+      "discord: gateway box silent for >5 min (plain DMs not arriving)"
     );
 
   const { activity: _a, ...feedRest } = feedStatus;

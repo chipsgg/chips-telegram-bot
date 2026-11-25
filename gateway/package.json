@@ -1,0 +1,15 @@
+{
+  "name": "@chipsgg/bot-gateway",
+  "private": true,
+  "type": "module",
+  "description": "Holds the Discord gateway for the Worker bot and forwards plain DMs to it (see README.md)",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "14.28.1"
+  }
+}

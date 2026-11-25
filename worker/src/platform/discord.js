@@ -5,14 +5,19 @@
  * -> run the handler in ctx.waitUntil -> PATCH the original response via webhook.
  * Component (button) interactions: type 3, customId "reroll:<command>" re-runs that command
  * and updates the message in place (type 7 is not usable after a webhook edit, so we PATCH).
- * Support inbox (no message-content intent: the bot never reads DMs): "support:reply" opens
- * a modal, its submit (type 5) goes to RELAY.inbound; "csat:<token>:<n>" goes to RELAY.csat.
+ * Support inbox: "support:reply" opens a modal, its submit (type 5) goes to RELAY.inbound;
+ * "csat:<token>:<n>" goes to RELAY.csat. Plain DMs arrive via the gateway box (gateway/, discordDm).
  */
 import { commands, linkPrompt } from "../commands/index.js";
 import { parseCsat, relayInbound, storeFile } from "../inbox.js";
 import { resolveLink } from "../lib/links.js";
 import { rateLimitMessage } from "../lib/ratelimit.js";
-import { REPLY_ROW, applyEphemeral, discordMakeForm } from "./discord-rest.js";
+import {
+  REPLY_ROW,
+  applyEphemeral,
+  discordMakeForm,
+  postDiscordChannel,
+} from "./discord-rest.js";
 
 const DISCORD_API = "https://discord.com/api/v10";
 
@@ -249,52 +254,106 @@ export const modalFields = (components, out = {}) => {
   return out;
 };
 
+const SORRY =
+  "Sorry, your message didn't reach the team. Please try again in a minute.";
+
 /**
- * A support modal submit. Linked: files to R2 (dc/), RELAY.inbound with idem dc:<interaction
- * id>, the relay's auto-reply in the ephemeral answer. Unlinked: the link prompt, nothing stored.
+ * Shared by the modal and plain DMs. Linked: files to R2 (dc/<key>/i), RELAY.inbound with idem
+ * dc:<key> (interaction and message ids are both snowflakes, so they never collide).
+ * Returns { form } (link prompt, nothing stored), { content } (file refused) or { sent, auto }.
  */
+async function toInbox(env, deps, { userId, key, text, files }) {
+  await deps.feed?.mark("discord");
+  const link = await resolveLink(deps, "discord", userId);
+  if (!link) return { form: linkPrompt({ platform: "discord" }) };
+  const attachments = [];
+  for (const [i, f] of files.entries()) {
+    const a = await storeFile(env, "dc", `${key}/${i}`, {
+      url: f.url,
+      name: f.filename,
+      type: f.content_type || "application/octet-stream",
+      size: f.size,
+    });
+    if (a.error) return { content: a.error };
+    attachments.push(a);
+  }
+  const r = await relayInbound(env, {
+    channel: "discord",
+    link,
+    platformId: userId,
+    idem: `dc:${key}`,
+    extId: key,
+    text,
+    attachments,
+  });
+  if (r?.error) throw new Error(r.error);
+  return { sent: true, auto: r?.auto?.text };
+}
+
+/** A support modal submit; the answer is the interaction's ephemeral reply. */
 export async function discordInbound(interaction, env, deps) {
   const userId = String(interaction.member?.user?.id || interaction.user?.id);
   const reply = (body) => editOriginal(env, interaction, applyEphemeral(body));
   try {
-    await deps.feed?.mark("discord");
-    const link = await resolveLink(deps, "discord", userId);
-    if (!link)
-      return await reply(discordMakeForm(linkPrompt({ platform: "discord" })));
     const fields = modalFields(interaction.data.components);
     const resolved = interaction.data.resolved?.attachments || {};
-    const attachments = [];
-    for (const [i, id] of (fields.files || []).entries()) {
-      const f = resolved[id];
-      if (!f) continue;
-      const a = await storeFile(env, "dc", `${interaction.id}/${i}`, {
-        url: f.url,
-        name: f.filename,
-        type: f.content_type || "application/octet-stream",
-        size: f.size,
-      });
-      if (a.error) return await reply({ content: a.error });
-      attachments.push(a);
-    }
-    const r = await relayInbound(env, {
-      channel: "discord",
-      link,
-      platformId: userId,
-      idem: `dc:${interaction.id}`,
-      extId: interaction.id,
+    const files = (fields.files || [])
+      .map((id) => resolved[id])
+      .filter(Boolean);
+    const out = await toInbox(env, deps, {
+      userId,
+      key: interaction.id,
       text: fields.text,
-      attachments,
+      files,
     });
-    if (r?.error) throw new Error(r.error);
+    if (out.form) return await reply(discordMakeForm(out.form));
     const sent = "Sent to Chips Support. Answers arrive in your DMs with me.";
     await reply({
-      content: [sent, r?.auto?.text].filter(Boolean).join("\n\n"),
+      content: out.sent
+        ? [sent, out.auto].filter(Boolean).join("\n\n")
+        : out.content,
     });
   } catch (err) {
     console.error("[inbox] discord inbound failed:", err.message);
-    await reply({
-      content:
-        "Sorry, your message didn't reach the team. Please try again in a minute.",
+    await reply({ content: SORRY });
+  }
+}
+
+const SNOWFLAKE = /^\d{17,20}$/;
+
+/**
+ * A plain DM, poked by the gateway box with { channel_id, id }. Nothing else from the box is
+ * trusted: the channel must be a DM (type 1) and the message is re-read from Discord, so author,
+ * text and files are Discord's. Like Telegram: silent on success except the relay's auto-reply.
+ */
+export async function discordDm(env, deps, { channel_id, id }) {
+  if (!SNOWFLAKE.test(channel_id) || !SNOWFLAKE.test(id)) return "bad ids";
+  const get = async (path) => {
+    const res = await fetch(`${DISCORD_API}${path}`, {
+      headers: { authorization: `Bot ${env.DISCORD_TOKEN}` },
     });
+    if (!res.ok) throw new Error(`discord ${res.status} ${path.split("/")[1]}`);
+    return res.json();
+  };
+  const channel = await get(`/channels/${channel_id}`);
+  if (channel.type !== 1) return "not a dm";
+  const m = await get(`/channels/${channel_id}/messages/${id}`);
+  if (m.author?.bot || !(m.content || m.attachments?.length)) return "ignored";
+  const say = (form) => postDiscordChannel(env, channel_id, form);
+  try {
+    const out = await toInbox(env, deps, {
+      userId: m.author.id,
+      key: m.id,
+      text: m.content,
+      files: m.attachments || [],
+    });
+    if (out.form) await say(out.form);
+    else if (out.content || out.auto)
+      await say({ content: out.content || out.auto });
+    return "ok";
+  } catch (err) {
+    console.error("[inbox] discord dm failed:", err.message);
+    await say({ content: SORRY });
+    return "failed";
   }
 }

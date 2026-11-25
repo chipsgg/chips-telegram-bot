@@ -35,8 +35,9 @@ import { createApi } from "./lib/chips.js";
 import { formatPrice } from "./lib/format.js";
 import { buildHealth } from "./lib/health.js";
 import { registerPlatforms } from "./lib/register.js";
+import { seal } from "./lib/seal.js";
 import { listGuildMembers, listGuildRoles } from "./platform/discord-rest.js";
-import { handleDiscord } from "./platform/discord.js";
+import { discordDm, handleDiscord } from "./platform/discord.js";
 import { handleTelegram } from "./platform/telegram.js";
 
 export const json = (data, status = 200, headers = {}) =>
@@ -86,6 +87,10 @@ export function createApp({ env, feed, metrics, registry, links }) {
     api: createApi({ host: env.CHIPS_API_HOST, token: env.CHIPS_TOKEN }),
   };
 
+  const isAdmin = (request) =>
+    Boolean(env.TELEGRAM_WEBHOOK_SECRET) &&
+    request.headers.get("x-admin-secret") === env.TELEGRAM_WEBHOOK_SECRET;
+
   return async function handle(request, waitUntil = swallow) {
     const url = new URL(request.url);
 
@@ -93,6 +98,24 @@ export function createApp({ env, feed, metrics, registry, links }) {
       return handleDiscord(request, env, deps, waitUntil);
     if (request.method === "POST" && url.pathname === "/telegram")
       return handleTelegram(request, env, deps, waitUntil);
+
+    // The gateway box (gateway/) pokes plain DMs here as { channel_id, id }, and { ping: true }
+    // every minute for /health. Off (403) unless GATEWAY_SECRET is set.
+    if (request.method === "POST" && url.pathname === "/discord/gateway") {
+      const secret = env.GATEWAY_SECRET;
+      if (!secret || request.headers.get("x-gateway-secret") !== secret)
+        return new Response("forbidden", { status: 403 });
+      const body = await request.json().catch(() => ({}));
+      if (body.ping) await feed.mark("gateway");
+      else if (env.RELAY)
+        waitUntil(
+          discordDm(env, deps, body).then(
+            (r) => console.log("[gateway] dm", body.id, r),
+            (e) => console.error("[gateway] dm failed:", body.id, e.message)
+          )
+        );
+      return new Response("ok");
+    }
 
     if (url.pathname === "/health") {
       const health = await buildHealth({
@@ -228,18 +251,24 @@ export function createApp({ env, feed, metrics, registry, links }) {
 
     // Telegram webhook/commands/menu button + Discord commands, set by the Worker itself.
     if (url.pathname === "/admin/register" && request.method === "POST") {
-      const secret = env.TELEGRAM_WEBHOOK_SECRET;
-      if (!secret || request.headers.get("x-admin-secret") !== secret)
-        return new Response("forbidden", { status: 403 });
+      if (!isAdmin(request)) return new Response("forbidden", { status: 403 });
       return Response.json(await registerPlatforms(env));
+    }
+
+    // One-time hand-off of the Discord token to the gateway box: sealed to DISCORD_SEAL_PUB (a
+    // public key made on the box), so the response is useless anywhere else. Delete that secret
+    // afterwards and this answers 404.
+    if (url.pathname === "/admin/seal-discord" && request.method === "POST") {
+      if (!isAdmin(request)) return new Response("forbidden", { status: 403 });
+      if (!env.DISCORD_SEAL_PUB || !env.DISCORD_TOKEN)
+        return new Response("off", { status: 404 });
+      return Response.json(await seal(env.DISCORD_SEAL_PUB, env.DISCORD_TOKEN));
     }
 
     // Member export (CSV) for a guild the bot is in, joined with the linked-account registry.
     // Needs the GUILD_MEMBERS privileged intent enabled on the app; guarded by the webhook secret.
     if (url.pathname === "/admin/members.csv") {
-      const secret = env.TELEGRAM_WEBHOOK_SECRET;
-      if (!secret || request.headers.get("x-admin-secret") !== secret)
-        return new Response("forbidden", { status: 403 });
+      if (!isAdmin(request)) return new Response("forbidden", { status: 403 });
       const guild = url.searchParams.get("guild") || env.DISCORD_ROLES_GUILD_ID;
       if (!guild) return new Response("guild required", { status: 400 });
       try {
