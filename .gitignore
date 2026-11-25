@@ -16,3 +16,7 @@ dev.json
 scratch/
 # node runtime sqlite metrics
 worker/data/
+
+# gateway token hand-off (gateway/unseal.js)
+seal.key
+sealed.json

@@ -1,0 +1,19 @@
+[Unit]
+Description=Chips bot Discord gateway (plain DMs -> bot.chips.gg)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=gw
+WorkingDirectory=/opt/chips-telegram-bot/gateway
+EnvironmentFile=/opt/chips-telegram-bot/gateway/gateway.env
+ExecStart=/usr/bin/node index.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
