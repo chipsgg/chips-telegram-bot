@@ -21,6 +21,8 @@ binding = "ASSETS"
 not_found_handling = "404-page"
 
 [vars]
+# Discord gateway DO: "on" files plain DMs, "shadow" connects + counts only, unset = off
+DISCORD_GATEWAY = "shadow"
 # VERSION / COMMIT / BUILT_AT are stamped at deploy time by scripts/deploy.js (--var); these are fallbacks
 VERSION = "unstamped"
 COMMIT = "unknown"
@@ -57,9 +59,18 @@ ENVIRONMENT = "production"
 name = "CHIPS_FEED"
 class_name = "ChipsFeed"
 
+# Discord gateway (plain DMs), mode from DISCORD_GATEWAY in [vars]
+[[durable_objects.bindings]]
+name = "DISCORD_GW"
+class_name = "DiscordGateway"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["ChipsFeed"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["DiscordGateway"]
 
 [[d1_databases]]
 binding = "DB"
@@ -95,6 +106,7 @@ routes = [
 crons = ["* * * * *", "17 4 * * *"]
 
 [env.dev.vars]
+DISCORD_GATEWAY = "on"
 VERSION = "unstamped-dev"
 COMMIT = "unknown"
 BUILT_AT = ""
@@ -122,9 +134,17 @@ not_found_handling = "404-page"
 name = "CHIPS_FEED"
 class_name = "ChipsFeed"
 
+[[env.dev.durable_objects.bindings]]
+name = "DISCORD_GW"
+class_name = "DiscordGateway"
+
 [[env.dev.migrations]]
 tag = "v1"
 new_sqlite_classes = ["ChipsFeed"]
+
+[[env.dev.migrations]]
+tag = "v2"
+new_sqlite_classes = ["DiscordGateway"]
 
 [[env.dev.d1_databases]]
 binding = "DB"
