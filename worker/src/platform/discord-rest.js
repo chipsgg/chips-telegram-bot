@@ -285,7 +285,8 @@ export async function discordSend(
     })
   );
   for (const [i, a] of attachments.entries()) {
-    const res = await fetch(a.url);
+    // the signed link is on the relay's own host: public fetch() from here got 522, the binding goes direct
+    const res = await env.RELAY.fetch(a.url);
     if (!res.ok) throw new Error(`attachment fetch ${res.status}: ${a.name}`);
     fd.append(`files[${i}]`, await res.blob(), a.name);
   }

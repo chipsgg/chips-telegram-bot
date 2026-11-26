@@ -362,13 +362,20 @@ test("telegramSend: label + escaped text + CSAT keyboard; 403 -> 'blocked by use
 test("discordSend: DM opened, one multipart message with CSAT + Reply rows and the file; 50007 -> 'dms closed'", async () => {
   let net = fakeFetch((url) => {
     if (url.endsWith("/users/@me/channels")) return { json: { id: "DM1" } };
-    if (url === "https://relay/signed/a.png")
-      return new Response(new Uint8Array([1, 2]));
     if (url.endsWith("/channels/DM1/messages")) return { json: { id: "MSG9" } };
   });
   try {
     const r = await discordSend(
-      { DISCORD_TOKEN: "D" },
+      {
+        DISCORD_TOKEN: "D",
+        // the file comes over the relay binding only (a public fetch of the relay's host got 522 in prod)
+        RELAY: {
+          fetch: async (u) =>
+            u === "https://relay/signed/a.png"
+              ? new Response(new Uint8Array([1, 2]))
+              : new Response(null, { status: 404 }),
+        },
+      },
       {
         platform_id: "555",
         label: "Chips Support · Anna",

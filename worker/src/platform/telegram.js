@@ -408,7 +408,8 @@ export async function telegramSend(
     })
   );
   for (const a of attachments) {
-    const res = await fetch(a.url);
+    // the signed link is on the relay's own host: public fetch() from here got 522, the binding goes direct
+    const res = await env.RELAY.fetch(a.url);
     if (!res.ok) throw new Error(`attachment fetch ${res.status}: ${a.name}`);
     const photo = /^image\/(jpeg|png)$/.test(a.type);
     const fd = new FormData();
