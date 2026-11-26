@@ -22,7 +22,7 @@ not_found_handling = "404-page"
 
 [vars]
 # Discord gateway DO: "on" files plain DMs, "shadow" connects + counts only, unset = off
-DISCORD_GATEWAY = "shadow"
+DISCORD_GATEWAY = "on"
 # VERSION / COMMIT / BUILT_AT are stamped at deploy time by scripts/deploy.js (--var); these are fallbacks
 VERSION = "unstamped"
 COMMIT = "unknown"
